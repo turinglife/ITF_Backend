@@ -1,16 +1,16 @@
 //
-// ITF File Camera Class Interfaces, $Date$, $Revision$
+// ITF Remote Camera Class, $Date$, $Revision$
 // Copyright (C) 2015-2018 MMLab, EE, The Chinese University of HongKong
 //
 
-#ifndef ITF_FC_H
-#define ITF_FC_H
+#ifndef ITF_RC_H
+#define ITF_RC_H
 
 
 #include "common.hpp"
 
 
-class CFILECAMERA {
+class CRC {
 
 
 public:
@@ -29,4 +29,4 @@ private:
 
 
 
-#endif // ITF_FC_H
+#endif // ITF_RC_H
