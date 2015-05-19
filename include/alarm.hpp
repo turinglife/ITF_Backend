@@ -10,7 +10,7 @@
 #include "common.hpp"
 
 
-class CALARM {
+class CAlarm {
 
     
 public:

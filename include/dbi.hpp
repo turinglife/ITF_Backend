@@ -10,7 +10,7 @@
 #include "common.hpp"
 
 
-class CDBI {
+class CDbi {
 
     
 public:

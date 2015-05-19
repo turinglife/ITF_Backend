@@ -10,7 +10,7 @@
 #include "common.hpp"
 
 
-class CBUFFER {
+class CBuffer {
 
     
 public:

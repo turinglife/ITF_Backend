@@ -10,7 +10,7 @@
 #include "common.hpp"
 
 
-class CRCRSTP {
+class CRemoteCameraRtsp {
 
     
 public:

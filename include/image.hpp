@@ -12,7 +12,7 @@
 #include "common.hpp"
 
 
-class CIMAGE {
+class CImage {
 
     
 public:

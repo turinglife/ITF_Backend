@@ -4,7 +4,7 @@
 
 
 
-void CDBI::b() {
+void CDbi::b() {
 
 
 

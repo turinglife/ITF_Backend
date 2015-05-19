@@ -9,20 +9,25 @@
 
 #include "common.hpp"
 
+#include "remote_camera.hpp"
 
-class CRCHTTP {
+//
+// Class representing 'http' cameras, i.e. those which are
+// accessed over a network connection using http
+//
+class CRemoteCameraHttp : public CRemoteCamera {
 
+protected:
+    
     
 public:
-    void b();
-
-
-private:
-    int a;
-
+    CRemoteCameraHttp(const std::string &p_host, const std::string &p_port, const std::string &p_path);
+    ~CRemoteCameraHttp();
     
-   
-
+    int Connect();                                      
+    int Disconnect();  
+    int Capture();
+    
 };
 
 

@@ -8,20 +8,29 @@
 
 
 #include "common.hpp"
+#include "camera.hpp"
 
+//
+// Class representing 'remote' cameras, i.e. those which are
+// accessed over a network connection.
+//
+class CRemoteCamera : public CCamera {
 
-class CRC {
-
+protected:
+    std::string protocol;
+    std::string host;
+    std::string port;
+    std::string path;
+    std::string username;
+    std::string password;
 
 public:
-    void b();
-
-
-private:
-    int a;
-
-
-
+    CRemoteCamera(const std::string &p_protocol, const std::string &p_host, const std::string &p_port, const std::string &p_path);
+    virtual ~CRemoteCamera();
+    
+    virtual int Connect() = 0;
+    virtual int Disconnect() = 0;
+    virtual int Capture() = 0;            
 
 };
 

@@ -10,7 +10,7 @@
 #include "common.hpp"
 
 
-class CCOMM {
+class CComm {
 
     
 public:

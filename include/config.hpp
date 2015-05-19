@@ -10,7 +10,7 @@
 #include "common.hpp"
 
 
-class CCONFIG {
+class CConfig {
 
     
 public:

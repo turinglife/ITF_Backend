@@ -3,7 +3,7 @@
 #include "alarm.hpp"
 
 
-void CALARM::b() {
+void CAlarm::b() {
 
 
     return;

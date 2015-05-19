@@ -8,15 +8,19 @@
 
 
 #include "common.hpp"
+#include "camera.hpp"
 
 
-class CTASK {
+class CTask {
 
 
 public:
-    void LoadRemoteTaskConfig();
-    void LoadFileTaskConfig();
-
+    
+    typedef enum { REMOTE_CAMERA_HTTP, REMOTE_CAMERA_RTSP, LOCAL_CAMERA, FILE_CAMERA } CameraType_t;
+    
+    
+    void LoadTask(unsigned int task_id);
+    int Capture();
 
 private:
     typedef struct {
@@ -28,6 +32,8 @@ private:
     int shm_id;
     BufferHead *pbufferhead_;
 
+    
+    CCamera *camera;
 
 
 };

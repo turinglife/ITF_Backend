@@ -10,7 +10,7 @@
 #include "common.hpp"
 
 
-class CFILECAMERA {
+class CFileCamera {
 
 
 public:
