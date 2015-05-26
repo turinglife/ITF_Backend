@@ -57,9 +57,10 @@ DAEMON_WARNS := $(addprefix $(BUILD_DIR)/, ${DAEMON_SRCS:.cpp=.o.$(WARNS_EXT)})
 ################################################
 INCLUDE_DIRS += ./include
 
-LIBRARIES += opencv_highgui opencv_imgproc opencv_video opencv_contrib \
-			boost_system \
-			glog 
+LIBRARIES += opencv_core opencv_highgui opencv_imgproc opencv_video opencv_contrib \
+			 boost_system \
+			 sqlitecpp sqlite3 \
+			 glog 
 
 WARNINGS := -Wall -Wno-sign-compare
 
