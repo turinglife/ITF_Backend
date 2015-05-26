@@ -6,27 +6,21 @@
 #ifndef ITF_FC_H
 #define ITF_FC_H
 
-
 #include "common.hpp"
+#include "camera.hpp"
 
-
-class CFileCamera {
-
-
+class CFileCamera : public CCamera {
 public:
-    void b();
+    CFileCamera(const std::string& filename);
+    ~CFileCamera();
 
+    int Connect();
+    int Disconnect();
+    int Capture();
 
 private:
-    int a;
-
-
-
+    std::string filename_;
 
 };
-
-
-
-
 
 #endif // ITF_FC_H

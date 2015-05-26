@@ -6,6 +6,8 @@
 #ifndef ITF_CAMERA_H
 #define ITF_CAMERA_H
 
+#include <opencv2/highgui/highgui.hpp>
+
 #include "common.hpp"
 
 
@@ -13,19 +15,17 @@
 // Abstract base class for cameras. This is intended to express common attributes and interfaces
 //
 class CCamera {
-
-protected:
-    unsigned int width;
-    unsigned int height;
-    unsigned int channels;
-    unsigned int framesize;
-    
 public:
     CCamera();
     virtual ~CCamera();
     
+    virtual int Connect() = 0;
+    virtual int Disconnect() = 0;
     virtual int Capture() = 0;
 
+protected:
+    cv::VideoCapture cap_;
+    cv::Mat curr_frame_;
 };
 
 

@@ -9,13 +9,8 @@
 
 CCamera::CCamera() {
     
-    
-    
 }
 
-
 CCamera::~CCamera() {
-    
-    
-    
+
 }

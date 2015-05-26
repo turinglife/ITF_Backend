@@ -11,20 +11,13 @@
 
 
 class CAlarm {
-
-    
 public:
     void b();
-
 
 private:
     int a;
 
-    
-   
 };
-
-
 
 
 

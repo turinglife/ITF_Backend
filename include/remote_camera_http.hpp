@@ -16,12 +16,8 @@
 // accessed over a network connection using http
 //
 class CRemoteCameraHttp : public CRemoteCamera {
-
-protected:
-    
-    
 public:
-    CRemoteCameraHttp(const std::string &p_host, const std::string &p_port, const std::string &p_path);
+    CRemoteCameraHttp(const std::string &p_host, unsigned int p_port, const std::string &p_path, const std::string& p_username, const std::string& p_password);
     ~CRemoteCameraHttp();
     
     int Connect();                                      
@@ -29,9 +25,6 @@ public:
     int Capture();
     
 };
-
-
-
 
 
 #endif // ITF_RCHTTP_H

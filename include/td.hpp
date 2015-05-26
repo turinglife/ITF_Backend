@@ -32,12 +32,4 @@ private:
 
 };
 
-
-
-
-
-
-
-
-
 #endif // ITF_TD_H

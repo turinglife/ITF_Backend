@@ -15,12 +15,18 @@ class CTask {
 
 
 public:
+    enum CameraType_t {
+        REMOTE_CAMERA_HTTP,     // 0
+        REMOTE_CAMERA_RTSP,     // 1
+        LOCAL_CAMERA,                  // 2
+        FILE_CAMERA                       // 3
+    };
     
-    typedef enum { REMOTE_CAMERA_HTTP, REMOTE_CAMERA_RTSP, LOCAL_CAMERA, FILE_CAMERA } CameraType_t;
-    
-    
-    void LoadTask(unsigned int task_id);
+    CTask();
+    ~CTask();
+    bool LoadTask(const std::string& task_name, const std::string& db_name);
     int Capture();
+    void ShowDetails();
 
 private:
     typedef struct {
@@ -33,16 +39,18 @@ private:
     BufferHead *pbufferhead_;
 
     
-    CCamera *camera;
+    CCamera *camera_;
 
-
+    std::string task_name_;
+    int type_ = 0;
+    int width_ = 0;
+    int height_ = 0;
+    std::string address_;
+    unsigned int port_ = 0;
+    std::string host_;
+    std::string username_;
+    std::string password_;
 };
-
-
-
-
-
-
 
 
 
