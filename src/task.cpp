@@ -15,7 +15,7 @@
 #include "local_camera.hpp"
 #include "file_camera.hpp"
 
-#include "SQLiteCpp.hpp"
+
 
 CTask::CTask() { }
 

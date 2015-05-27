@@ -10,6 +10,7 @@
 #include "common.hpp"
 #include "camera.hpp"
 
+#include "SQLiteCpp.h"
 
 class CTask {
 
@@ -21,7 +22,7 @@ public:
         LOCAL_CAMERA,                  // 2
         FILE_CAMERA                       // 3
     };
-    
+
     CTask();
     ~CTask();
     bool LoadTask(const std::string& task_name, const std::string& db_name);
@@ -38,7 +39,7 @@ private:
     int shm_id;
     BufferHead *pbufferhead_;
 
-    
+
     CCamera *camera_;
 
     std::string task_name_;
