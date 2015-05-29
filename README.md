@@ -17,3 +17,7 @@ Analyser Num | Patch Num | Counting FPS | Memory Used
 :---: | :---: | :---: | :---:
 1 | 171 | 11 | about 320 MB
 6 | 171 | 2 | about 2000 MB
+
+
+opencv compile flags
+cmake -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local -D WITH_FFMPEG=ON -D WITH_V4L=ON -D WITH_QT=ON -D WITH_CUDA=ON ..
