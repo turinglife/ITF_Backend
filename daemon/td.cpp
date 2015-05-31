@@ -1,89 +1,160 @@
 //
-// ITF Task Daemon, $Date$, $Revision$
-// Copyright (C) 2015-2018 MMLab, EE, The Chinese University of HongKong
+// Copyright 2015 CUHK
 //
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
+#include <sys/un.h>
 
+#include <opencv2/highgui/highgui.hpp>
+
+#include <boost/interprocess/shared_memory_object.hpp>
+#include <boost/interprocess/mapped_region.hpp>
+
+#include <iostream>
+#include <string>
+#include <thread>
+
+#include "SQLiteCpp/SQLiteCpp.h"
 #include "task.hpp"
-#include "buffer.hpp"
 
-void error(const char *msg) {
-    perror(msg);
-    exit(1);
-}
+static bool on = true;
 
-bool CheckDB(char* task_id) {
-    return true;
-}
+void show(std::string path);
 
-int main(int argc, char *argv[]) {
-    // Init socket
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0)
-        error("ERROR opening socket");
+int main(int argc, char* argv[]) {
+    std::string task_name(argv[1]);
+    // Initialize a task object acccording to information retrieved from database.
+    CTask task;
+    if  (!task.LoadTask(task_name, "db/ITF.db")) {
+        std::cout << "load task fail" << std::endl;
+        return -1;
+    }
 
-    struct sockaddr_in serv_addr;
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(2345);
+    task.ShowDetails();
 
-    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
-        error("ERROR on binding");
+    std::string socket_path = "td_" + task_name;
+
+    int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        perror("ERROR socket");
+        return -1;
+    }
+
+    struct sockaddr_un serv_addr;
+    serv_addr.sun_family = AF_UNIX;
+    // strcpy(serv_addr.sun_path, argv[1]);
+    snprintf(serv_addr.sun_path, socket_path.length() + 1, "%s", socket_path.c_str());
+
+    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+        perror("ERROR bind");
+        return -1;
+    }
 
     listen(sockfd, 5);
 
-    struct sockaddr_in cli_addr;
-    socklen_t clilen = sizeof(cli_addr);
+    std::thread t1;
 
-    // Init logger
-    // TODO(wangkun): DBI
+    std::cout << getpid() << ": td is ready" << std::endl;
+    while (true) {
+        struct sockaddr_un cli_addr;
+        socklen_t clilen = sizeof(cli_addr);
 
-
-    // Check the input parameters
-    while (1) {
-        std::cout << getpid() << ": Wait for client" << std::endl;
         int newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-        if (newsockfd < 0)
-            error("ERROR on accept");
-        std::cout << getpid() << ": Found one client" << std::endl;
+        if (newsockfd < 0) {
+            perror("ERROR accept");
+            return -1;
+        }
 
-        pid_t pid = fork();
+        char message[256];
 
-        if (pid < 0)
-            error("ERROR on fork");
-        if (pid == 0)  {
-            std::cout << getpid() << ": Enter" << std::endl;
-            close(sockfd);
+        if (read(newsockfd, message, 255) < 0) {
+            perror("ERROR read");
+            exit(1);
+        }
 
-            char message[256];
+        printf("%d: td receive: (%s)\n", getpid(), message);
+        close(newsockfd);
 
-            if (read(newsockfd, message, 255) < 0)
-                error("ERROR reading from socket");
+        if (strncmp(message, "show", 4) == 0) {
+            std::cout << "show()" << std::endl;
 
-            printf("%d: Here is the message: (%s)\n", getpid(), message);
+            on = false;
+            if (t1.joinable())
+                t1.join();
+            on = true;
+            t1 = std::thread(show, "http://root:xgwangpj@137.189.35.204:10184/mjpg/video.mjpg");
+        }
 
-            // Initialize a task object acccording to information retrieved from database.
-            CTask task;
-            // unsigned int task_id = 0;
-            if  (task.LoadTask(message, "db/ITF.db")) {
-                // Capture frames
-                task.Capture();
-            }
+        if (strncmp(message, "close", 4) == 0) {
+            std::cout << "close()" << std::endl;
 
-            std::cout << getpid() << ": Exit" << std::endl;
-            exit(0);
-        } else {
-            close(newsockfd);
+            on = false;
+        }
+
+        if (strncmp(message, "quit", 4) == 0) {
+            std::cout << "quit()" << std::endl;
+
+            on = false;
+            if (t1.joinable())
+                t1.join();
+
+            break;
         }
     }
 
     close(sockfd);
 
+    if (unlink(socket_path.c_str()) == -1) {
+        std::cout << "ERROR unlink: " << socket_path << std::endl;
+        return -1;
+    }
+
+    std::cout << "td is done" << std::endl;
     return 0;
+}
+
+
+void show(std::string path) {
+    cv::VideoCapture cap(path);
+    if (!cap.isOpened()) {
+        std::cout << "Cannot Open Video" << std::endl;
+        return;
+    }
+    cv::Mat ini_frame;
+    cap >> ini_frame;
+    int imgSize = ini_frame.total() * ini_frame.elemSize();
+
+    using boost::interprocess::shared_memory_object;
+    using boost::interprocess::open_or_create;
+    using boost::interprocess::read_write;
+
+    shared_memory_object shm(open_or_create, "buffer", read_write);
+    shm.truncate(imgSize);
+
+    using boost::interprocess::mapped_region;
+    mapped_region region(shm, read_write);
+
+    cv::namedWindow(path);
+    while (on) {
+        cv::Mat frame;
+        cap >> frame;
+        if (frame.empty()) {
+            break;
+        }
+        memcpy(region.get_address(), frame.data, imgSize);
+
+        cv::imshow(path, frame);
+        cv::waitKey(10);
+    }
+
+    std::cout << path << ": Video is Over" << std::endl;
+    if (shared_memory_object::remove("buffer"))
+        std::cout << "buffer" << " is released!" << std::endl;
+    else
+        std::cout << "buffer" << " is NOT released!" << std::endl;
 }

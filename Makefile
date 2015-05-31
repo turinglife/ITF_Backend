@@ -66,8 +66,12 @@ INCLUDE_DIRS += ./include ./include/SQLiteCpp
 
 LIBRARIES += opencv_core opencv_highgui opencv_imgproc opencv_video opencv_contrib \
 			 boost_system \
+			 rt \
 			 sqlite3 \
-			 glog 
+			 glog \
+			 protobuf \
+			 mlpack \
+			 itf
 
 WARNINGS := -Wall -Wno-sign-compare
 
@@ -112,7 +116,7 @@ COMMON_FLAGS += $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
 CXXFLAGS += -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS)
 LINKFLAGS += -pthread -fPIC $(COMMON_FLAGS) $(WARNINGS)
 LDFLAGS += $(foreach librarydir,$(LIBRARY_DIRS),-L$(librarydir)) \
-	   $(foreach library,$(LIBRARIES),-l$(library)) -Wl,--whole-archive libSQLiteCpp.a -Wl,--no-whole-archive 
+	   $(foreach library,$(LIBRARIES),-l$(library)) -Wl,--whole-archive -Wl,--no-whole-archive 
 
 # 'superclean' target recursively* deletes all files ending with an extension
 # in $(SUPERCLEAN_EXTS) below.

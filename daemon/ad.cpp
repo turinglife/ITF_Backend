@@ -1,91 +1,235 @@
 //
-// ITF Task Daemon, $Date$, $Revision$
-// Copyright (C) 2015-2018 MMLab, EE, The Chinese University of HongKong
+// Copyright 2015 CUHK
 //
+
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <netinet/in.h>
+#include <sys/un.h>
 
-#include "task.hpp"
-#include "buffer.hpp"
+#include <opencv2/highgui/highgui.hpp>
 
-void error(const char *msg) {
-    perror(msg);
-    exit(1);
-}
+#include <boost/interprocess/shared_memory_object.hpp>
+#include <boost/interprocess/mapped_region.hpp>
 
-bool CheckDB(char* task_id) {
-    return true;
-}
+#include <google/protobuf/text_format.h>
+#include <google/protobuf/io/coded_stream.h>
+#include <google/protobuf/io/zero_copy_stream_impl.h>
 
-int main(int argc, char *argv[]) {
-    // Init socket
-    int sockfd = socket(AF_INET, SOCK_STREAM, 0);
-    if (sockfd < 0)
-        error("ERROR opening socket");
+#include <itf/extracters/extracter_factory.hpp>
+#include <itf/segmenters/segmenter_factory.hpp>
+#include <itf/util/Util.hpp>
 
-    struct sockaddr_in serv_addr;
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(2345);
+#include <iostream>
+#include <string>
+#include <vector>
+#include <thread>
 
-    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0)
-        error("ERROR on binding");
+static bool on = true;
+
+void density(std::string path);
+void segmentation(std::string path);
+
+int main(int argc, char* argv[]) {
+    std::string socket_path = "ad_" + std::string(argv[1]);
+
+    int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        perror("ERROR socket");
+        exit(1);
+    }
+
+    struct sockaddr_un serv_addr;
+    serv_addr.sun_family = AF_UNIX;
+    // strcpy(serv_addr.sun_path, argv[1]);
+    snprintf(serv_addr.sun_path, socket_path.length() + 1, "%s", socket_path.c_str());
+
+    if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+        perror("ERROR bind");
+        exit(1);
+    }
 
     listen(sockfd, 5);
 
-    struct sockaddr_in cli_addr;
-    socklen_t clilen = sizeof(cli_addr);
+    std::thread t1;
 
-    // Init logger
-    // TODO(wangkun): DBI
+    std::cout << getpid() << ": ad is ready" << std::endl;
+    while (true) {
+        struct sockaddr_un cli_addr;
+        socklen_t clilen = sizeof(cli_addr);
 
-
-    // Check the input parameters
-    while (1) {
-        std::cout << getpid() << ": Wait for client" << std::endl;
         int newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
-        if (newsockfd < 0)
-            error("ERROR on accept");
-        std::cout << getpid() << ": Found one client" << std::endl;
+        if (newsockfd < 0) {
+            perror("ERROR accept");
+            exit(1);
+        }
 
-        pid_t pid = fork();
+        char message[256];
 
-        if (pid < 0)
-            error("ERROR on fork");
-        if (pid == 0)  {
-            close(sockfd);
+        if (read(newsockfd, message, 255) < 0) {
+            perror("ERROR read");
+            exit(1);
+        }
 
-            char message[256];
+        printf("%d: Here is the message: (%s)\n", getpid(), message);
+        close(newsockfd);
 
-            if (read(newsockfd, message, 255) < 0)
-                error("ERROR reading from socket");
+        if (strncmp(message, "density", 7) == 0) {
+            std::cout << "density()" << std::endl;
 
-            printf("%d: Here is the message: (%s)\n", getpid(), message);
+            on = false;
+            if (t1.joinable())
+                t1.join();
+            on = true;
+            t1 = std::thread(density, "ad");
+        }
 
-            // Search database and check whether table exists according to task id.
-            // TODO(wangkun): This part could be done in CTask
+        if (strncmp(message, "segmentation", 12) == 0) {
+            std::cout << "segmentation()" << std::endl;
 
-            // Initialize a task object acccording to information retrieved from database.
-            CTask task;
-            // unsigned int task_id = 0;
-            if  (task.LoadTask(message, "ITF.db")) {
-                // Capture frames
-                task.Capture();
-            }
+            on = false;
+            if (t1.joinable())
+                t1.join();
+            on = true;
+            t1 = std::thread(segmentation, "ad");
+        }
 
-            exit(0);
-        } else {
-            close(newsockfd);
+        if (strncmp(message, "close", 4) == 0) {
+            std::cout << "close()" << std::endl;
+
+            on = false;
+        }
+
+        if (strncmp(message, "quit", 4) == 0) {
+            std::cout << "quit()" << std::endl;
+
+            on = false;
+            on = false;
+            if (t1.joinable())
+                t1.join();
+
+            break;
         }
     }
 
-
     close(sockfd);
 
+    if (unlink(socket_path.c_str()) == -1) {
+        std::cout << "ERROR unlink: " << socket_path << std::endl;
+        return -1;
+    }
+
+    std::cout << "ad is done" << std::endl;
+
     return 0;
+}
+
+void density(std::string path) {
+    /* Setup Extracter */
+    itf::ExtracterParameter ep;
+    // Read configuration file
+    if (!itf::Util::ReadProtoFromTextFile("./model/density_extracter.prototxt", &ep)) {
+        std::cout << "Cannot read .prototxt file!" << std::endl;
+        exit(-1);
+    }
+    // Create extracter factory
+    itf::CExtracterFactory *ef = new itf::CExtracterFactory();
+    // Factory instantiates an object of the specific type of extracter
+    itf::IExtracter *iextracter = ef->SpawnExtracter(itf::Density);
+    iextracter->SetExtracterParameters(ep);
+
+
+    int rows = 576;
+    int cols = 704;
+    std::string pmap_path = "/home/kwang/Documents/MATLAB/ITF_MATLAB_TOOL/csv/010184_pers.csv";
+    std::string roi_path = "/home/kwang/Documents/MATLAB/ITF_MATLAB_TOOL/csv/010184_roi.csv";
+
+    iextracter->SetImagesDim(rows, cols);
+    cv::Mat pmap;
+    iextracter->LoadPerspectiveMap(pmap_path, &pmap);
+    iextracter->LoadROI(roi_path);
+
+    itf::Util util;
+
+    using boost::interprocess::shared_memory_object;
+    using boost::interprocess::open_only;
+    using boost::interprocess::read_only;
+
+    shared_memory_object shm(open_only, "buffer", read_only);
+
+    using boost::interprocess::mapped_region;
+    mapped_region region(shm, read_only);
+
+    while (on) {
+        cv::Mat frame(rows, cols, CV_8UC3);
+        int imgSize = frame.total() * frame.elemSize();
+        memcpy(frame.data, region.get_address(), imgSize);
+
+        iextracter->LoadImages(frame, frame);
+
+        // Extract density feature from a frame loaded above
+        std::vector<float> feature = iextracter->ExtractFeatures();
+
+        cv::Mat density_map(rows, cols, CV_32F, feature.data());
+
+        // std::cout << cv::sum(density_map)[0] << std::endl;
+
+        // Generate a heat map
+        cv::Mat heat = util.GenerateHeatMap(density_map, pmap);
+        cv::imshow(path, heat);
+
+        cv::waitKey(10);
+    }
+
+    std::cout << path << ": Video is Over" << std::endl;
+
+    delete ef;
+}
+
+void segmentation(std::string path) {
+    itf::SegmenterParameter sp;
+
+    if (!itf::Util::ReadProtoFromTextFile("./model/fcnn_segmenter.prototxt", &sp)) {
+        std::cout << "Cannot read .prototxt file!" << std::endl;
+        exit(-1);
+    }
+    // Create segmenter factory
+    itf::CSegmenterFactory *sf = new itf::CSegmenterFactory();
+    // Factory instantiate an object of the specific type of segmenter
+    itf::ISegmenter *isegmenter = sf->SpawnSegmenter(itf::FCNN);
+
+    isegmenter->SetParameters(sp);
+
+    int rows = 576;
+    int cols = 704;
+
+    using boost::interprocess::shared_memory_object;
+    using boost::interprocess::open_only;
+    using boost::interprocess::read_only;
+
+    shared_memory_object shm(open_only, "buffer", read_only);
+
+    using boost::interprocess::mapped_region;
+    mapped_region region(shm, read_only);
+
+    while (on) {
+        cv::Mat frame(rows, cols, CV_8UC3);
+        int imgSize = frame.total() * frame.elemSize();
+        memcpy(frame.data, region.get_address(), imgSize);
+
+        cv::Mat foreground;
+        cv::Mat img_bgmodel;
+        isegmenter->process(frame, foreground, img_bgmodel);
+        foreground = foreground > 0.5;
+        cv::imshow(path, foreground);
+
+        cv::waitKey(10);
+    }
+
+    std::cout << path << ": Video is Over" << std::endl;
+
+    delete sf;
 }

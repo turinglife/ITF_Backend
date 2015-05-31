@@ -16,7 +16,6 @@
 #include "file_camera.hpp"
 
 
-
 CTask::CTask() { }
 
 CTask::~CTask() {
@@ -25,11 +24,10 @@ CTask::~CTask() {
 
 bool CTask::LoadTask(const std::string& task_name, const std::string& db_name) {
     // Retrieve information from database according to task id.
-    int num_records = 0;
     try {
         SQLite::Database db(db_name);
 
-        SQLite::Statement   query(db, "SELECT * FROM Tasks WHERE task_name=?");
+        SQLite::Statement query(db, "SELECT * FROM Tasks WHERE task_name=?");
         query.bind(1, task_name);
 
         // Init a task object with appropriate parameters.
@@ -43,18 +41,11 @@ bool CTask::LoadTask(const std::string& task_name, const std::string& db_name) {
             host_ = query.getColumn(6).getText();
             username_ = query.getColumn(7).getText();
             password_ = query.getColumn(8).getText();
-            num_records++;
         }
     } catch (std::exception& e) {
         std::cout << "exception: " << e.what() << std::endl;
-    }
-
-    if (!num_records) {
-        std::cout << getpid() << ": No Such Task" << std::endl;
         return false;
     }
-
-    ShowDetails();
 
     // Instantiate a concrete camera.
     CameraType_t CameraType = static_cast<CameraType_t>(type_);
@@ -94,11 +85,8 @@ int CTask::Capture() {
         std::cout << "The camera has not been initialized yet." << std::endl;
         return 0;
     }
-
-    // while (true) {
-        // Capture a new next image
     camera_->Capture();
-    // }
+
     return 1;
 }
 
