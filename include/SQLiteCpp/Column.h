@@ -12,8 +12,8 @@
 
 #include <sqlite3.h>
 
-#include <SQLiteCpp/Statement.h>
-#include <SQLiteCpp/Exception.h>
+#include "Statement.h"
+#include "Exception.h"
 
 #include <string>
 

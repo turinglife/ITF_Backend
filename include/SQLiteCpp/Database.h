@@ -12,7 +12,7 @@
 
 #include <sqlite3.h>
 
-#include <SQLiteCpp/Column.h>
+#include "Column.h"
 
 #include <string>
 
