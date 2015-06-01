@@ -21,8 +21,8 @@ public:
     ~CRemoteCameraHttp();
     
     int Connect();                                      
-    int Disconnect();  
-    int Capture();
+    int Disconnect();
+    int Capture(cv::Mat& output);
     
 };
 

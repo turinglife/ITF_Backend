@@ -19,7 +19,7 @@ CRemoteCameraHttp::~CRemoteCameraHttp() {
 
 int CRemoteCameraHttp::Connect() {
     // example: http://root:xgwangpj@137.189.35.204:10184/mjpg/video.mjpg
-    cap_.open(protocol_ + "://" + username_ + ":" + password_  + "@" + path_ + "/" + host_);
+    cap_.open(protocol_ + "://" + username_ + ":" + password_  + "@" + path_ + ":" + std::to_string(port_) + "/" + host_);
     
     if (cap_.isOpened())
         return 1;
@@ -32,8 +32,11 @@ int CRemoteCameraHttp::Disconnect() {
     return 0;
 }
 
-int CRemoteCameraHttp::Capture() {
-    
-    
-    return 0;
+int CRemoteCameraHttp::Capture(cv::Mat& output) {
+    if (!cap_.isOpened()) {
+        std::cout << "cap_ is not opened" << std::endl;
+        return 0;
+    }
+    cap_ >> output;
+    return 1;
 }

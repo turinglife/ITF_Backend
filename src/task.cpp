@@ -30,6 +30,7 @@ bool CTask::LoadTask(const std::string& task_name, const std::string& db_name) {
         SQLite::Statement query(db, "SELECT * FROM Tasks WHERE task_name=?");
         query.bind(1, task_name);
 
+        bool has_records = false;
         // Init a task object with appropriate parameters.
         while (query.executeStep()) {
             task_name_ = task_name;
@@ -41,6 +42,11 @@ bool CTask::LoadTask(const std::string& task_name, const std::string& db_name) {
             host_ = query.getColumn(6).getText();
             username_ = query.getColumn(7).getText();
             password_ = query.getColumn(8).getText();
+            has_records = true;
+        }
+        if (!has_records) {
+            std::cout << "No Such Task" << std::endl;
+            return false;
         }
     } catch (std::exception& e) {
         std::cout << "exception: " << e.what() << std::endl;
@@ -53,9 +59,12 @@ bool CTask::LoadTask(const std::string& task_name, const std::string& db_name) {
     if (CameraType == REMOTE_CAMERA_HTTP) {
         // RemoteCameraHttp
         camera_ = new CRemoteCameraHttp(host_, port_, address_, username_, password_);
-        camera_->Connect();
-
+        if (!camera_->Connect()) {
+            std::cout << "Camera Connect Fail" << std::endl;
+            return false;
+        }
         std::cout << getpid() << ": REMOTE_CAMERA_HTTP is initialized" << std::endl;
+
     } else if (CameraType == REMOTE_CAMERA_RTSP) {
         // RemoteCameraRtsp
         std::cout << "To Be Continued" << std::endl;
@@ -79,13 +88,13 @@ bool CTask::LoadTask(const std::string& task_name, const std::string& db_name) {
     return true;
 }
 
-int CTask::Capture() {
+int CTask::Capture(cv::Mat& frame) {
     // check if camera is initialized already
     if (camera_ == 0) {
         std::cout << "The camera has not been initialized yet." << std::endl;
         return 0;
     }
-    camera_->Capture();
+    camera_->Capture(frame);
 
     return 1;
 }

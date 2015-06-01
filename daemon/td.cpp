@@ -22,20 +22,22 @@
 #include "SQLiteCpp/SQLiteCpp.h"
 #include "task.hpp"
 
-static bool on = true;
 
-void show(std::string path);
+
+static bool on = true;
+CTask task;
+
+void show();
+
 
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
     // Initialize a task object acccording to information retrieved from database.
-    CTask task;
+    
     if  (!task.LoadTask(task_name, "db/ITF.db")) {
         std::cout << "load task fail" << std::endl;
         return -1;
     }
-
-    task.ShowDetails();
 
     std::string socket_path = "td_" + task_name;
 
@@ -87,7 +89,7 @@ int main(int argc, char* argv[]) {
             if (t1.joinable())
                 t1.join();
             on = true;
-            t1 = std::thread(show, "http://root:xgwangpj@137.189.35.204:10184/mjpg/video.mjpg");
+            t1 = std::thread(show);
         }
 
         if (strncmp(message, "close", 4) == 0) {
@@ -119,40 +121,41 @@ int main(int argc, char* argv[]) {
 }
 
 
-void show(std::string path) {
-    cv::VideoCapture cap(path);
-    if (!cap.isOpened()) {
-        std::cout << "Cannot Open Video" << std::endl;
-        return;
-    }
+void show() {
+    // cv::VideoCapture cap(path);
+    // if (!cap.isOpened()) {
+    //     std::cout << "Cannot Open Video" << std::endl;
+    //     return;
+    // }
     cv::Mat ini_frame;
-    cap >> ini_frame;
+    // cap >> ini_frame;
+    task.Capture(ini_frame);
+
     int imgSize = ini_frame.total() * ini_frame.elemSize();
 
     using boost::interprocess::shared_memory_object;
     using boost::interprocess::open_or_create;
     using boost::interprocess::read_write;
 
-    shared_memory_object shm(open_or_create, "buffer", read_write);
+    shared_memory_object shm(open_or_create, task.task_name().c_str(), read_write);
     shm.truncate(imgSize);
 
     using boost::interprocess::mapped_region;
     mapped_region region(shm, read_write);
 
-    cv::namedWindow(path);
     while (on) {
         cv::Mat frame;
-        cap >> frame;
+        task.Capture(frame);
         if (frame.empty()) {
             break;
         }
         memcpy(region.get_address(), frame.data, imgSize);
 
-        cv::imshow(path, frame);
+        cv::imshow(task.task_name(), frame);
         cv::waitKey(10);
     }
 
-    std::cout << path << ": Video is Over" << std::endl;
+    std::cout << task.task_name() << ": Video is Over" << std::endl;
     if (shared_memory_object::remove("buffer"))
         std::cout << "buffer" << " is released!" << std::endl;
     else

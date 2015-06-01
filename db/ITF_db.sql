@@ -10,16 +10,19 @@ CREATE TABLE Tasks (
     port INTEGER,
     host TEXT,
     username TEXT,
-    password TEXT
+    password TEXT,
+
+    pers_path TEXT,
+    roi_path TEXT
 );
 
 
 -- INSERT VALUES
-INSERT INTO Tasks (task_name, type, width, height, address, port, host, username, password)
-VALUES ('task_one', 0, 704, 576, '137.189.35.204', 10182, 'mjpg/video.mjpg', 'root', 'xgwangpj');
+INSERT INTO Tasks (task_name, type, width, height, address, port, host, username, password, pers_path, roi_path)
+VALUES ('task_one', 0, 704, 576, '137.189.35.204', 10182, 'mjpg/video.mjpg', 'root', 'xgwangpj', './data/010182_pers.csv', './data/010182_roi.csv');
 
-INSERT INTO Tasks (task_name, type, width, height, address, port, host, username, password)
-VALUES ('task_two', 0, 704, 576, '137.189.35.204', 10183, 'mjpg/video.mjpg', 'root', 'xgwangpj');
+INSERT INTO Tasks (task_name, type, width, height, address, port, host, username, password, pers_path, roi_path)
+VALUES ('task_two', 0, 704, 576, '137.189.35.204', 10183, 'mjpg/video.mjpg', 'root', 'xgwangpj', './data/010183_pers.csv', './data/010183_roi.csv');
 
-INSERT INTO Tasks (task_name, type, width, height, address, port, host, username, password)
-VALUES ('task_three', 0, 704, 576, '137.189.35.204', 10184, 'mjpg/video.mjpg', 'root', 'xgwangpj');
+INSERT INTO Tasks (task_name, type, width, height, address, port, host, username, password, pers_path, roi_path)
+VALUES ('task_three', 0, 704, 576, '137.189.35.204', 10184, 'mjpg/video.mjpg', 'root', 'xgwangpj', './data/010184_pers.csv', './data/010184_roi.csv');
