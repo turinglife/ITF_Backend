@@ -76,7 +76,10 @@ bool CTask::LoadTask(const std::string& task_name, const std::string& db_name) {
     } else if (CameraType == FILE_CAMERA) {
         // FileCamera
         camera_ = new CFileCamera(address_);
-        camera_->Connect();
+         if (!camera_->Connect()) {
+            std::cout << "Camera Connect Fail" << std::endl;
+            return false;
+        }
 
         std::cout << getpid() << ": FILE_CAMERA is initialized" << std::endl;
     } else {
