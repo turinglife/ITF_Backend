@@ -58,7 +58,7 @@ bool action_open() {
     pid_t mpid = fork();
     switch (mpid) {
         case -1:
-            std::cout << "Create ad/td Fail!" << std::endl;
+            std::cout << "Create ad/cd Fail!" << std::endl;
             break;
 
         case 0: {
