@@ -15,10 +15,6 @@
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 
-#include <google/protobuf/text_format.h>
-#include <google/protobuf/io/coded_stream.h>
-#include <google/protobuf/io/zero_copy_stream_impl.h>
-
 #include <itf/extracters/extracter_factory.hpp>
 #include <itf/segmenters/segmenter_factory.hpp>
 #include <itf/util/Util.hpp>
@@ -34,7 +30,17 @@ void density(std::string path);
 void segmentation(std::string path);
 
 int main(int argc, char* argv[]) {
-    std::string socket_path = "ad_" + std::string(argv[1]);
+    std::string task_name(argv[1]);
+
+
+
+
+
+
+
+
+
+    std::string socket_path = "ad_" + task_name;
 
     int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sockfd < 0) {
@@ -49,7 +55,7 @@ int main(int argc, char* argv[]) {
 
     if (bind(sockfd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         perror("ERROR bind");
-        exit(1);
+        return -1;
     }
 
     listen(sockfd, 5);
@@ -64,7 +70,7 @@ int main(int argc, char* argv[]) {
         int newsockfd = accept(sockfd, (struct sockaddr *) &cli_addr, &clilen);
         if (newsockfd < 0) {
             perror("ERROR accept");
-            exit(1);
+            return -1;
         }
 
         char message[256];
@@ -74,7 +80,7 @@ int main(int argc, char* argv[]) {
             exit(1);
         }
 
-        printf("%d: Here is the message: (%s)\n", getpid(), message);
+        printf("%d: ad receive: (%s)\n", getpid(), message);
         close(newsockfd);
 
         if (strncmp(message, "density", 7) == 0) {
@@ -84,7 +90,7 @@ int main(int argc, char* argv[]) {
             if (t1.joinable())
                 t1.join();
             on = true;
-            t1 = std::thread(density, "ad");
+            t1 = std::thread(density, task_name);
         }
 
         if (strncmp(message, "segmentation", 12) == 0) {
@@ -94,7 +100,7 @@ int main(int argc, char* argv[]) {
             if (t1.joinable())
                 t1.join();
             on = true;
-            t1 = std::thread(segmentation, "ad");
+            t1 = std::thread(segmentation, task_name);
         }
 
         if (strncmp(message, "close", 4) == 0) {
@@ -123,7 +129,6 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "ad is done" << std::endl;
-
     return 0;
 }
 
@@ -141,11 +146,11 @@ void density(std::string path) {
     itf::IExtracter *iextracter = ef->SpawnExtracter(itf::Density);
     iextracter->SetExtracterParameters(ep);
 
-
     int rows = 576;
     int cols = 704;
-    std::string pmap_path = "/home/kwang/Documents/MATLAB/ITF_MATLAB_TOOL/csv/010184_pers.csv";
-    std::string roi_path = "/home/kwang/Documents/MATLAB/ITF_MATLAB_TOOL/csv/010184_roi.csv";
+    std::string pmap_path = "./data/010182_pers.csv";
+    std::string roi_path = "./data/010182_roi.csv";
+
 
     iextracter->SetImagesDim(rows, cols);
     cv::Mat pmap;
@@ -158,7 +163,7 @@ void density(std::string path) {
     using boost::interprocess::open_only;
     using boost::interprocess::read_only;
 
-    shared_memory_object shm(open_only, "buffer", read_only);
+    shared_memory_object shm(open_only, path.c_str(), read_only);
 
     using boost::interprocess::mapped_region;
     mapped_region region(shm, read_only);
@@ -210,7 +215,7 @@ void segmentation(std::string path) {
     using boost::interprocess::open_only;
     using boost::interprocess::read_only;
 
-    shared_memory_object shm(open_only, "buffer", read_only);
+    shared_memory_object shm(open_only, path.c_str(), read_only);
 
     using boost::interprocess::mapped_region;
     mapped_region region(shm, read_only);

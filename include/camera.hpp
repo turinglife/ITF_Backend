@@ -21,7 +21,7 @@ public:
     
     virtual int Connect() = 0;
     virtual int Disconnect() = 0;
-    virtual int Capture() = 0;
+    virtual int Capture(cv::Mat& output) = 0;
 
 protected:
     cv::VideoCapture cap_;

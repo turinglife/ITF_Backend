@@ -16,7 +16,7 @@ public:
 
     int Connect();
     int Disconnect();
-    int Capture();
+    int Capture(cv::Mat& output);
 
 private:
     std::string filename_;

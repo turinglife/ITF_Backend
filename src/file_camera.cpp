@@ -19,6 +19,6 @@ int CFileCamera::Disconnect() {
     return 1;
 }
 
-int CFileCamera::Capture() {
+int CFileCamera::Capture(cv::Mat& output) {
     return 1;
 }

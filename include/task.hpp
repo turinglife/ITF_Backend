@@ -26,8 +26,10 @@ public:
     CTask();
     ~CTask();
     bool LoadTask(const std::string& task_name, const std::string& db_name);
-    int Capture();
+    int Capture(cv::Mat& frame);
     void ShowDetails();
+
+    inline std::string task_name() const { return task_name_; }
 
 private:
     typedef struct {
