@@ -39,7 +39,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    std::string socket_path = "td_" + task_name;
+    std::string socket_path = "cd_" + task_name;
 
     int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sockfd < 0) {
@@ -61,7 +61,7 @@ int main(int argc, char* argv[]) {
 
     std::thread t1;
 
-    std::cout << getpid() << ": td is ready" << std::endl;
+    std::cout << getpid() << ": cd is ready" << std::endl;
     while (true) {
         struct sockaddr_un cli_addr;
         socklen_t clilen = sizeof(cli_addr);
@@ -79,7 +79,7 @@ int main(int argc, char* argv[]) {
             exit(1);
         }
 
-        printf("%d: td receive: (%s)\n", getpid(), message);
+        printf("%d: cd receive: (%s)\n", getpid(), message);
         close(newsockfd);
 
         if (strncmp(message, "show", 4) == 0) {
@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    std::cout << "td is done" << std::endl;
+    std::cout << "cd is done" << std::endl;
     return 0;
 }
 
