@@ -24,6 +24,9 @@
 #include <vector>
 #include <thread>
 
+#include "type.hpp"
+#include "SQLiteCpp/SQLiteCpp.h"
+
 static bool on = true;
 
 void density(std::string path);
@@ -133,6 +136,23 @@ int main(int argc, char* argv[]) {
 }
 
 void density(std::string path) {
+    using boost::interprocess::shared_memory_object;
+    using boost::interprocess::open_only;
+    using boost::interprocess::read_only;
+
+    shared_memory_object shm(open_only, path.c_str(), read_only);
+
+    using boost::interprocess::mapped_region;
+    mapped_region region_header(shm, read_only);
+    HeaderInfo head;
+    memcpy(&head, region_header.get_address(), sizeof(head));
+
+    int rows = head.height;
+    int cols = head.width;
+    mapped_region region_frame(shm, read_only, sizeof(head));
+
+
+
     /* Setup Extracter */
     itf::ExtracterParameter ep;
     // Read configuration file
@@ -146,32 +166,43 @@ void density(std::string path) {
     itf::IExtracter *iextracter = ef->SpawnExtracter(itf::Density);
     iextracter->SetExtracterParameters(ep);
 
-    int rows = 576;
-    int cols = 704;
-    std::string pmap_path = "./data/010182_pers.csv";
-    std::string roi_path = "./data/010182_roi.csv";
+    std::string pers_path;
+    std::string roi_path;
+
+    try {
+        SQLite::Database db("./db/ITF.db");
+
+        SQLite::Statement query(db, "SELECT pers_path, roi_path FROM Tasks WHERE task_name=?");
+        query.bind(1, path);
+
+        bool has_records = false;
+        // Init a task object with appropriate parameters.
+        while (query.executeStep()) {
+            pers_path = query.getColumn(0).getText();
+            roi_path = query.getColumn(1).getText();
+            has_records = true;
+        }
+        if (!has_records) {
+            std::cout << "No Such Pers or ROI" << std::endl;
+            return;
+        }
+    } catch (std::exception& e) {
+        std::cout << "exception: " << e.what() << std::endl;
+        return;
+    }
 
 
     iextracter->SetImagesDim(rows, cols);
     cv::Mat pmap;
-    iextracter->LoadPerspectiveMap(pmap_path, &pmap);
+    iextracter->LoadPerspectiveMap(pers_path, &pmap);
     iextracter->LoadROI(roi_path);
 
     itf::Util util;
 
-    using boost::interprocess::shared_memory_object;
-    using boost::interprocess::open_only;
-    using boost::interprocess::read_only;
-
-    shared_memory_object shm(open_only, path.c_str(), read_only);
-
-    using boost::interprocess::mapped_region;
-    mapped_region region(shm, read_only);
-
     while (on) {
         cv::Mat frame(rows, cols, CV_8UC3);
         int imgSize = frame.total() * frame.elemSize();
-        memcpy(frame.data, region.get_address(), imgSize);
+        memcpy(frame.data, region_frame.get_address(), imgSize);
 
         iextracter->LoadImages(frame, frame);
 
@@ -218,12 +249,12 @@ void segmentation(std::string path) {
     shared_memory_object shm(open_only, path.c_str(), read_only);
 
     using boost::interprocess::mapped_region;
-    mapped_region region(shm, read_only);
+    mapped_region region_frame(shm, read_only);
 
     while (on) {
         cv::Mat frame(rows, cols, CV_8UC3);
         int imgSize = frame.total() * frame.elemSize();
-        memcpy(frame.data, region.get_address(), imgSize);
+        memcpy(frame.data, region_frame.get_address(), imgSize);
 
         cv::Mat foreground;
         cv::Mat img_bgmodel;

@@ -21,6 +21,7 @@
 
 #include "SQLiteCpp/SQLiteCpp.h"
 #include "task.hpp"
+#include "type.hpp"
 
 
 
@@ -33,7 +34,6 @@ void show();
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
     // Initialize a task object acccording to information retrieved from database.
-    
     if  (!task.LoadTask(task_name, "db/ITF.db")) {
         std::cout << "load task fail" << std::endl;
         return -1;
@@ -122,26 +122,36 @@ int main(int argc, char* argv[]) {
 
 
 void show() {
-    // cv::VideoCapture cap(path);
-    // if (!cap.isOpened()) {
-    //     std::cout << "Cannot Open Video" << std::endl;
-    //     return;
-    // }
     cv::Mat ini_frame;
-    // cap >> ini_frame;
     task.Capture(ini_frame);
 
-    int imgSize = ini_frame.total() * ini_frame.elemSize();
+    HeaderInfo head;
+    head.width = ini_frame.cols;
+    head.height = ini_frame.rows;
+    head.elem = ini_frame.elemSize();
+
+    int img_size = ini_frame.total() * ini_frame.elemSize();
+    int header_size = sizeof(head);
 
     using boost::interprocess::shared_memory_object;
     using boost::interprocess::open_or_create;
     using boost::interprocess::read_write;
 
+    struct shm_remove {
+        shm_remove() { shared_memory_object::remove(task.task_name().c_str()); }
+        ~shm_remove() { shared_memory_object::remove(task.task_name().c_str()); }
+    };
+
     shared_memory_object shm(open_or_create, task.task_name().c_str(), read_write);
-    shm.truncate(imgSize);
+    shm.truncate(img_size + header_size);
 
     using boost::interprocess::mapped_region;
-    mapped_region region(shm, read_write);
+
+    mapped_region region_header(shm, read_write, 0, header_size);
+    memcpy(region_header.get_address(), &head, header_size);
+
+    mapped_region region_frame(shm, read_write, header_size);
+
 
     while (on) {
         cv::Mat frame;
@@ -149,14 +159,14 @@ void show() {
         if (frame.empty()) {
             break;
         }
-        memcpy(region.get_address(), frame.data, imgSize);
+        memcpy(region_frame.get_address(), frame.data, img_size);
 
         cv::imshow(task.task_name(), frame);
         cv::waitKey(10);
     }
 
     std::cout << task.task_name() << ": Video is Over" << std::endl;
-    if (shared_memory_object::remove("buffer"))
+    if (shared_memory_object::remove(task.task_name().c_str()))
         std::cout << "buffer" << " is released!" << std::endl;
     else
         std::cout << "buffer" << " is NOT released!" << std::endl;

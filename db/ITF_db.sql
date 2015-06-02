@@ -26,3 +26,6 @@ VALUES ('task_two', 0, 704, 576, '137.189.35.204', 10183, 'mjpg/video.mjpg', 'ro
 
 INSERT INTO Tasks (task_name, type, width, height, address, port, host, username, password, pers_path, roi_path)
 VALUES ('task_three', 0, 704, 576, '137.189.35.204', 10184, 'mjpg/video.mjpg', 'root', 'xgwangpj', './data/010184_pers.csv', './data/010184_roi.csv');
+
+INSERT INTO Tasks (task_name, type, width, height, address, port, host, username, password, pers_path, roi_path)
+VALUES ('task_four', 3, 720, 576, './data/200608.mp4', 0, '', '', '', './data/200608_pers.csv', './data/200608_roi.csv');
