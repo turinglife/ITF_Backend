@@ -92,7 +92,7 @@ ifeq ($(UNAME), Linux)
 endif
 
 # Linux
-ifeq ($(UNAME), 1)
+ifeq ($(LINUX), 1)
 	CXX := /usr/bin/g++
 	GCCVERSION := $(shell $(CXX) -dumpversion | cut -f1,2 -d.)
 	# older versions of gcc are too dumb to build boost with -Wuninitalized
