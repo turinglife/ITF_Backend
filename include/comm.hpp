@@ -14,14 +14,18 @@ class CComm {
 
     
 public:
-    void b();
-
-
-private:
-    int a;
 
     
-   
+    void establish(const std::string &);
+    void connect();
+    void distroy();
+    void send();
+    void receive(std::string &);
+
+private:
+    int sockfd_;
+    int newsockfd_;
+
 
 };
 

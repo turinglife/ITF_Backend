@@ -8,39 +8,44 @@
 
 
 #include "common.hpp"
-#include "camera.hpp"
 
 #include "SQLiteCpp.h"
+
+#include "remote_camera_http.hpp"
+#include "remote_camera_rtsp.hpp"
+#include "local_camera.hpp"
+#include "file_camera.hpp"
+#include "camera.hpp"
 
 class CTask {
 
 
 public:
     enum CameraType_t {
-        REMOTE_CAMERA_HTTP,     // 0
-        REMOTE_CAMERA_RTSP,     // 1
-        LOCAL_CAMERA,                  // 2
-        FILE_CAMERA                       // 3
+        REMOTE_CAMERA_HTTP,     
+        REMOTE_CAMERA_RTSP,     
+        LOCAL_CAMERA,                  
+        FILE_CAMERA
     };
 
     CTask();
     ~CTask();
     bool LoadTask(const std::string& task_name, const std::string& db_name);
     int Capture(cv::Mat& frame);
+    int Analyze();
     void ShowDetails();
 
     inline std::string task_name() const { return task_name_; }
 
 private:
-    typedef struct {
-        unsigned int size;
-        unsigned int last_write_index;
-        unsigned int last_read_index;
-    } BufferHead;
+    //typedef struct {
+    //    unsigned int size;
+    //    unsigned int last_write_index;
+    //    unsigned int last_read_index;
+    //} BufferHead;
 
-    int shm_id;
-    BufferHead *pbufferhead_;
-
+    //int shm_id;
+    //BufferHead *pbufferhead_;
 
     CCamera *camera_;
 
@@ -53,6 +58,15 @@ private:
     std::string host_;
     std::string username_;
     std::string password_;
+    
+    int action_;  // capture, segmentation, counting
+    
+    typedef struct {
+        struct timeval *timestamp;
+        cv::Mat *frame;
+    }Snapshot_t;
+    Snapshot_t snapshot;
+    
 };
 
 

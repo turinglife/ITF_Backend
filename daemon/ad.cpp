@@ -35,14 +35,6 @@ void segmentation(std::string path);
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
 
-
-
-
-
-
-
-
-
     std::string socket_path = "ad_" + task_name;
 
     int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);

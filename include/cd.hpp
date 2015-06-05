@@ -1,16 +1,16 @@
 //
-// ITF Task Daemon, $Date$, $Revision$
+// ITF Capture Daemon, $Date$, $Revision$
 // Copyright (C) 2015-2018 MMLab, EE, The Chinese University of HongKong
 //
 
-#ifndef ITF_TD_H
-#define ITF_TD_H
+#ifndef ITF_CD_H
+#define ITF_CD_H
 
 
 #include "common.hpp"
 
 
-class CTD {
+class CCD {
 
 
 public:
@@ -32,4 +32,4 @@ private:
 
 };
 
-#endif // ITF_TD_H
+#endif // ITF_CD_H

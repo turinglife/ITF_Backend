@@ -5,15 +5,6 @@
 
 #include "task.hpp"
 
-#include <sys/types.h>
-#include <unistd.h>
-
-#include <string>
-
-#include "remote_camera_http.hpp"
-#include "remote_camera_rtsp.hpp"
-#include "local_camera.hpp"
-#include "file_camera.hpp"
 
 
 CTask::CTask() { }
