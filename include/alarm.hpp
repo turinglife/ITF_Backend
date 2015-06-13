@@ -15,7 +15,6 @@ public:
     void b();
 
 private:
-    int a;
 
 };
 
