@@ -100,7 +100,6 @@ void show() {
 
     CBuffer buffer(img_size, task.task_name());
 
-    cv::namedWindow(task.task_name() + "_frame", CV_WINDOW_OPENGL);
     while (on) {
         cv::Mat frame;
         task.Capture(frame);
