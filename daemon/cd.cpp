@@ -23,7 +23,6 @@
 #include "SQLiteCpp/SQLiteCpp.h"
 #include "task.hpp"
 #include "buffer.hpp"
-#include "type.hpp"
 
 
 static bool on = true;
@@ -31,21 +30,18 @@ CTask task;
 
 void show();
 
-
 int main(int argc, char* argv[]) {
-    
     std::string task_name(argv[1]);
-    
+
     // Initialize a task object acccording to information retrieved from database.
     if  (!task.LoadTask(task_name, "db/ITF.db")) {
         std::cout << "load task fail" << std::endl;
         return -1;
     }
-    
 
     // Establish a new communication connection with other processes.
     std::string socket_name = "cd_" + task_name;
-    
+
     CComm comm;
     comm.establish(socket_name);
 
@@ -53,7 +49,6 @@ int main(int argc, char* argv[]) {
 
     std::cout << getpid() << ": cd is ready" << std::endl;
     while (true) {
-
         std::string action;
         comm.receive(action);
 
@@ -83,9 +78,8 @@ int main(int argc, char* argv[]) {
             break;
         }
     }
-    
+
     comm.distroy();
-    
 
     if (unlink(socket_name.c_str()) == -1) {
         std::cout << "ERROR unlink: " << socket_name << std::endl;
@@ -93,7 +87,6 @@ int main(int argc, char* argv[]) {
     }
 
     std::cout << "cd is done" << std::endl;
-    
 
     return 0;
 }
@@ -102,11 +95,10 @@ int main(int argc, char* argv[]) {
 void show() {
     cv::Mat ini_frame;
     task.Capture(ini_frame);
-    
+
     int img_size = ini_frame.total() * ini_frame.elemSize();
-    
+
     CBuffer buffer(img_size, task.task_name());
-    //buffer.init();
 
     while (on) {
         cv::Mat frame;
@@ -117,13 +109,9 @@ void show() {
 
         buffer.put(frame);
 
-        cv::imshow(task.task_name(), frame);
+        cv::imshow(task.task_name() + "_frame", frame);
         cv::waitKey(10);
     }
 
     std::cout << task.task_name() << ": Video is Over" << std::endl;
-    //if (buffer.destroy())
-    //    std::cout << "buffer" << " is released!" << std::endl;
-    //else
-    //    std::cout << "buffer" << " is NOT released!" << std::endl;
 }

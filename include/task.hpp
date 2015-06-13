@@ -6,6 +6,7 @@
 #ifndef ITF_TASK_H
 #define ITF_TASK_H
 
+#include <string>
 
 #include "common.hpp"
 
@@ -18,35 +19,32 @@
 #include "camera.hpp"
 
 class CTask {
-
-
-public:
+ public:
     enum CameraType_t {
-        REMOTE_CAMERA_HTTP,     
-        REMOTE_CAMERA_RTSP,     
-        LOCAL_CAMERA,                  
+        REMOTE_CAMERA_HTTP,
+        REMOTE_CAMERA_RTSP,
+        LOCAL_CAMERA,
         FILE_CAMERA
+    };
+    enum FunType_t {
+        COUNT,
+        SEGMENT
     };
 
     CTask();
     ~CTask();
     bool LoadTask(const std::string& task_name, const std::string& db_name);
     int Capture(cv::Mat& frame);
-    int Analyze();
+    std::thread Analyze(FunType_t ft, std::string path);
+    void Do_Count(std::string path);
+    void Do_Segment(std::string path);
     void ShowDetails();
 
     inline std::string task_name() const { return task_name_; }
 
-private:
-    //typedef struct {
-    //    unsigned int size;
-    //    unsigned int last_write_index;
-    //    unsigned int last_read_index;
-    //} BufferHead;
+    bool on = false;
 
-    //int shm_id;
-    //BufferHead *pbufferhead_;
-
+ private:
     CCamera *camera_;
 
     std::string task_name_;
@@ -58,17 +56,15 @@ private:
     std::string host_;
     std::string username_;
     std::string password_;
-    
+
     int action_;  // capture, segmentation, counting
-    
+
     typedef struct {
         struct timeval *timestamp;
         cv::Mat *frame;
     }Snapshot_t;
     Snapshot_t snapshot;
-    
 };
 
 
-
-#endif // ITF_TASK_H
+#endif  // ITF_TASK_H
