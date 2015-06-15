@@ -71,8 +71,8 @@ LIBRARIES += opencv_core opencv_highgui opencv_imgproc opencv_video opencv_contr
 			 glog \
 			 protobuf \
 			 mlpack \
-			 itf
-
+			 itf \
+			 mysqlcppconn
 WARNINGS := -Wall -Wno-sign-compare
 
 
@@ -109,7 +109,7 @@ ORIGIN := \$$ORIGIN
 LIBRARY_DIRS += $(LIB_BUILD_DIR)
 
 # Automatic dependency generation
-CXXFLAGS += -MMD -MP -std=c++11
+CXXFLAGS += -MMD -MP -std=c++11 -Wall
 
 # Complete build flags
 COMMON_FLAGS += $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
@@ -160,7 +160,7 @@ $(DAEMON_BINS): %.bin : %.o | $(DYNAMIC_NAME)
 
 $(EXAMPLES_BINS): %.bin : %.o | $(DYNAMIC_NAME)
 	@ echo CXX/LD -o $@
-	@ $(CXX) $< -o $@
+	@ $(CXX) $< -o $@ -l$(PROJECT)
 
 # clean rubbish
 clean:
