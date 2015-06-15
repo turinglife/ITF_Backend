@@ -16,9 +16,12 @@
 #include <string>
 #include <map>
 
+#include "dbi.hpp"
+
 bool action_open();
 bool action_socket();
 bool action_quit();
+bool action_mysql();
 
 int main(int argc, char *argv[]) {
     typedef bool(*StringFunc)();
@@ -27,11 +30,12 @@ int main(int argc, char *argv[]) {
     stringToFuncMap.insert(std::make_pair("open", &action_open));
     stringToFuncMap.insert(std::make_pair("socket", &action_socket));
     stringToFuncMap.insert(std::make_pair("quit", &action_quit));
+    stringToFuncMap.insert(std::make_pair("mysql", &action_mysql));
 
     bool on = true;
     while (on) {
         // suspend for one second
-        usleep(1000 * 1000);
+        sleep(1);
 
         std::cout << "Action: ";
         std::string action;
@@ -130,3 +134,23 @@ bool action_quit() {
 
     return false;
 }
+
+bool action_mysql() {
+    CDbi db;
+    if (!db.Connect("root", "root", "tcp://127.0.0.1:3306")) {
+        std::cout << "MySQL Connect Failed!" << std::endl;
+        return false;
+    }
+        
+    std::cout << "MySQL Connected!" << std::endl;
+
+    if (!db.UseDB("test")) {
+        std::cout << "MySQL Choose Database Failed!" << std::endl;
+        return false;
+    }
+
+    std::cout << "MySQL DB OK!" << std::endl;
+
+    return true;
+}
+
