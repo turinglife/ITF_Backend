@@ -35,9 +35,9 @@ class CTask {
     ~CTask();
     bool LoadTask(const std::string& task_name, const std::string& db_name);
     int Capture(cv::Mat& frame);
-    std::thread Analyze(FunType_t ft, std::string path);
-    void Do_Count(std::string path);
-    void Do_Segment(std::string path);
+    std::thread Analyze(FunType_t ft);
+    void Do_Count();
+    void Do_Segment();
     void ShowDetails();
 
     inline std::string task_name() const { return task_name_; }

@@ -116,24 +116,24 @@ void CTask::ShowDetails() {
     std::cout << std::endl;
 }
 
-std::thread CTask::Analyze(FunType_t ft, std::string path) {
+std::thread CTask::Analyze(FunType_t ft) {
     switch (ft) {
         case COUNT:
-            return std::thread(&CTask::Do_Count, this, path);
+            return std::thread(&CTask::Do_Count, this);
         case SEGMENT:
-            return std::thread(&CTask::Do_Segment, this, path);
+            return std::thread(&CTask::Do_Segment, this);
         default:
             std::cout << "No Such Function!" << std::endl;
             exit(-1);
     }
 }
 
-void CTask::Do_Count(std::string path) {
+void CTask::Do_Count() {
     using boost::interprocess::shared_memory_object;
     using boost::interprocess::open_only;
     using boost::interprocess::read_only;
 
-    shared_memory_object shm(open_only, path.c_str(), read_only);
+    shared_memory_object shm(open_only, task_name_.c_str(), read_only);
 
     using boost::interprocess::mapped_region;
 
@@ -147,9 +147,9 @@ void CTask::Do_Count(std::string path) {
         exit(-1);
     }
     // Create extracter factory
-    itf::CExtracterFactory *ef = new itf::CExtracterFactory();
+    itf::CExtracterFactory ef;
     // Factory instantiates an object of the specific type of extracter
-    itf::IExtracter *iextracter = ef->SpawnExtracter(itf::Density);
+    itf::IExtracter *iextracter = ef.SpawnExtracter(itf::Density);
     iextracter->SetExtracterParameters(ep);
 
     std::string pers_path;
@@ -159,7 +159,7 @@ void CTask::Do_Count(std::string path) {
         SQLite::Database db("./db/ITF.db");
 
         SQLite::Statement query(db, "SELECT pers_path, roi_path FROM Tasks WHERE task_name=?");
-        query.bind(1, path);
+        query.bind(1, task_name_);
 
         bool has_records = false;
         // Init a task object with appropriate parameters.
@@ -199,17 +199,17 @@ void CTask::Do_Count(std::string path) {
 
         // Generate a heat map
         cv::Mat heat = util.GenerateHeatMap(density_map, pmap, 2000);
-        cv::imshow(path, heat);
+        cv::imshow(task_name_ + "_heat", heat);
 
         cv::waitKey(10);
     }
 
-    std::cout << path << ": Video is Over" << std::endl;
+    std::cout << task_name_ << ": Video is Over" << std::endl;
 
-    delete ef;
+    delete iextracter;
 }
 
-void CTask::Do_Segment(std::string path) {
+void CTask::Do_Segment() {
      itf::SegmenterParameter sp;
 
     if (!itf::Util::ReadProtoFromTextFile("./model/fcnn_segmenter.prototxt", &sp)) {
@@ -217,9 +217,9 @@ void CTask::Do_Segment(std::string path) {
         exit(-1);
     }
     // Create segmenter factory
-    itf::CSegmenterFactory *sf = new itf::CSegmenterFactory();
+    itf::CSegmenterFactory sf;
     // Factory instantiate an object of the specific type of segmenter
-    itf::ISegmenter *isegmenter = sf->SpawnSegmenter(itf::FCNN);
+    itf::ISegmenter *isegmenter = sf.SpawnSegmenter(itf::FCNN);
 
     isegmenter->SetParameters(sp);
 
@@ -227,7 +227,7 @@ void CTask::Do_Segment(std::string path) {
     using boost::interprocess::open_only;
     using boost::interprocess::read_only;
 
-    shared_memory_object shm(open_only, path.c_str(), read_only);
+    shared_memory_object shm(open_only, task_name_.c_str(), read_only);
 
     using boost::interprocess::mapped_region;
     mapped_region region_frame(shm, read_only);
@@ -241,12 +241,12 @@ void CTask::Do_Segment(std::string path) {
         cv::Mat img_bgmodel;
         isegmenter->process(frame, foreground, img_bgmodel);
         foreground = foreground > 0.5;
-        cv::imshow(path, foreground);
+        cv::imshow(task_name_ + "_seg", foreground);
 
         cv::waitKey(10);
     }
 
-    std::cout << path << ": Video is Over" << std::endl;
+    std::cout << task_name_ << ": Video is Over" << std::endl;
 
-    delete sf;
+    delete isegmenter;
 }
