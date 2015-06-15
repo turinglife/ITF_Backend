@@ -65,7 +65,7 @@ bool action_open() {
             pid_t pid = fork();
             if (pid == 0) {
                 std::string path = "./build/daemon/" + daemon + ".bin";
-                std::string arg0 = daemon + "_" + task_name;
+                std::string arg0 = daemon + ".bin_" + task_name;
                 std::string arg1 =  task_name;
                 char* parmList[] = {const_cast<char*>(arg0.c_str()), const_cast<char*>(arg1.c_str()), 0};
                 execv(path.c_str(), parmList);
