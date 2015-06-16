@@ -137,19 +137,24 @@ bool action_quit() {
 
 bool action_mysql() {
     CDbi db;
-    if (!db.Connect("root", "root", "tcp://127.0.0.1:3306")) {
-        std::cout << "MySQL Connect Failed!" << std::endl;
-        return false;
-    }
-        
-    std::cout << "MySQL Connected!" << std::endl;
+    std::string server = "localhost";
+    std::string user = "root";
+    std::string pass = "root";
+    std::string db_name = "mysql";
 
-    if (!db.UseDB("test")) {
-        std::cout << "MySQL Choose Database Failed!" << std::endl;
-        return false;
+    std::cout << "Connect  ...  ";
+    if (!db.Connect(server, user, pass)) {
+        std::cout << "Fail" << std::endl;
+    } else {
+        std::cout << "OK" << std::endl;
     }
 
-    std::cout << "MySQL DB OK!" << std::endl;
+     std::cout << "Select DB  ...  ";
+    if (!db.UseDB(db_name)) {
+        std::cout << "Fail" << std::endl;
+    } else {
+        std::cout << "OK" << std::endl;
+    }
 
     return true;
 }

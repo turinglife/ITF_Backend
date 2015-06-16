@@ -72,7 +72,7 @@ LIBRARIES += opencv_core opencv_highgui opencv_imgproc opencv_video opencv_contr
 			 protobuf \
 			 mlpack \
 			 itf \
-			 mysqlcppconn
+			 mysqlpp
 WARNINGS := -Wall -Wno-sign-compare
 
 
