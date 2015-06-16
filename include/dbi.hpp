@@ -6,16 +6,9 @@
 #ifndef ITF_DBI_H
 #define ITF_DBI_H
 
-#include <cppconn/driver.h>
-#include <cppconn/exception.h>
-#include <cppconn/warning.h>
-#include <cppconn/metadata.h>
-#include <cppconn/prepared_statement.h>
-#include <cppconn/resultset.h>
-#include <cppconn/resultset_metadata.h>
-#include <cppconn/statement.h>
-#include <mysql_driver.h>
-#include <mysql_connection.h>
+#define MYSQLPP_MYSQL_HEADERS_BURIED
+
+#include <mysql++/mysql++.h>
 
 #include <string>
 
@@ -24,11 +17,14 @@
 
 class CDbi {
  public:
-    bool Connect(const std::string& user, const std::string& pass, const std::string& url);
-    bool UseDB(const std::string& database);
-
+    CDbi();
+    ~CDbi();
+    // connect to mysql server
+    bool Connect(const std::string& server, const std::string& user, const std::string& pass);
+    // choose which database to use
+    bool UseDB(const std::string& db_name);
  private:
-    boost::scoped_ptr< sql::Connection > con_;
+    mysqlpp::Connection conn_;
 };
 
 
