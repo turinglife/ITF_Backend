@@ -26,16 +26,21 @@
 
 
 static bool on = true;
-CTask task;
+CTask<float> task;
 
-void show();
+void capture();
 
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
 
     // Initialize a task object acccording to information retrieved from database.
-    if  (!task.LoadTask(task_name, "db/ITF.db")) {
+    if(!task.LoadTask(task_name, "db/ITF.db")) {
         std::cout << "load task fail" << std::endl;
+        return -1;
+    }
+    
+    if(!task.InitCapture()) {
+        std::cout << "init capture fail" << std::endl;
         return -1;
     }
 
@@ -52,14 +57,14 @@ int main(int argc, char* argv[]) {
         std::string action;
         comm.receive(action);
 
-        if (action.compare("show") == 0) {
-            std::cout << "show()" << std::endl;
+        if (action.compare("capture") == 0) {
+            std::cout << "start capture" << std::endl;
 
             on = false;
             if (t1.joinable())
                 t1.join();
             on = true;
-            t1 = std::thread(show);
+            t1 = std::thread(capture);
         }
 
         if (action.compare("close") == 0) {
@@ -92,13 +97,12 @@ int main(int argc, char* argv[]) {
 }
 
 
-void show() {
+void capture() {    
     cv::Mat ini_frame;
     task.Capture(ini_frame);
 
     int img_size = ini_frame.total() * ini_frame.elemSize();
-
-    CBuffer buffer(img_size, task.task_name());
+    CBuffer buffer(img_size, task.getCurrentTaskName());
 
     while (on) {
         cv::Mat frame;
@@ -109,9 +113,9 @@ void show() {
 
         buffer.put(frame);
 
-        cv::imshow(task.task_name() + "_frame", frame);
+        cv::imshow(task.getCurrentTaskName() + "_frame", frame);
         cv::waitKey(10);
     }
 
-    std::cout << task.task_name() << ": Video is Over" << std::endl;
+    std::cout << task.getCurrentTaskName() << ": Video is Over" << std::endl;
 }

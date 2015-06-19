@@ -6,7 +6,6 @@
 
 #include "remote_camera_http.hpp"
 
-#include <string>
 
 
 CRemoteCameraHttp::CRemoteCameraHttp(const std::string &p_host, unsigned int p_port, const std::string &p_path, const std::string& p_username, const std::string& p_password) :

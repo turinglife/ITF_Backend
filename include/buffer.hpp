@@ -19,10 +19,11 @@ class CBuffer {
     
 public:
     CBuffer(const int &unit_size, const std::string &buffer_id);
+    CBuffer(const std::string &buffer_id);
     
     void init(const int &);
-    void put(const cv::Mat &);
-    void fetch();
+    void put(IN const cv::Mat &);
+    void fetch(OUT cv::Mat &);
     bool destroy();
 
 

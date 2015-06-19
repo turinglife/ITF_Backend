@@ -18,17 +18,25 @@
 #include "task.hpp"
 #include "comm.hpp"
 #include "SQLiteCpp/SQLiteCpp.h"
+#include "buffer.hpp"
 
+    
 
-void density(std::string path);
-void segmentation(std::string path);
+CTask<float> task;   
+
+void analyze(); 
+
 
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
-
-    CTask task;
-    if  (!task.LoadTask(task_name, "db/ITF.db")) {
+    
+    if(!task.LoadTask(task_name, "db/ITF.db")) {
         std::cout << "load task fail" << std::endl;
+        return -1;
+    }
+    
+    if(!task.InitAnalyzer()) {
+        std::cout << "init analyzer fail" << std::endl;
         return -1;
     }
 
@@ -44,26 +52,16 @@ int main(int argc, char* argv[]) {
         std::string action;
         comm.receive(action);
 
-        if (action.compare("density") == 0) {
-            std::cout << "density()" << std::endl;
+        if (action.compare("analyze") == 0) {
+            std::cout << "start analyze" << std::endl;
 
             task.on = false;
             if (t1.joinable())
                 t1.join();
             task.on = true;
-            t1 = task.Analyze(CTask::FunType_t::COUNT);
+            t1 = std::thread(analyze);
         }
-
-        if (action.compare("segmentation") == 0) {
-            std::cout << "segmentation()" << std::endl;
-
-            task.on = false;
-            if (t1.joinable())
-                t1.join();
-            task.on = true;
-            t1 = task.Analyze(CTask::FunType_t::SEGMENT);
-        }
-
+        
         if (action.compare("close") == 0) {
             std::cout << "close()" << std::endl;
 
@@ -88,7 +86,40 @@ int main(int argc, char* argv[]) {
         std::cout << "ERROR unlink: " << socket_path << std::endl;
         return -1;
     }
+    
 
     std::cout << "ad is done" << std::endl;
     return 0;
+}
+
+void analyze() {
+    itf::Util util;    
+    
+    CBuffer buffer(task.getCurrentTaskName());
+        
+    cv::Mat frame(task.getCurrentFrameHeight(), task.getCurrentFrameWidth(), CV_8UC3);
+    int imgSize = frame.total() * frame.elemSize();
+    
+    buffer.init(imgSize);
+    
+    while (task.on) {
+
+        buffer.fetch(frame);
+ 
+        vector<float> feature = task.Analyze(frame);
+
+        cv::Mat density_map(task.getCurrentFrameHeight(), task.getCurrentFrameWidth(), CV_32F, feature.data());
+
+        std::cout << cv::sum(density_map)[0] << std::endl;
+
+        // Generate a heat map
+        //cv::Mat pmap(task.getCurrentFrameHeight(), task.getCurrentFrameWidth(), CV_8UC1);
+        //cv::Mat heat = util.GenerateHeatMap(density_map, pmap, 2000);
+        //cv::imshow(task.getCurrentTaskName() + "_heat", heat);
+
+        //cv::waitKey(3);
+    }
+
+    std::cout << task.getCurrentTaskName() << ": Video is Over" << std::endl;
+
 }

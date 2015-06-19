@@ -5,23 +5,25 @@
 
 #include "task.hpp"
 
-#include <boost/interprocess/shared_memory_object.hpp>
-#include <boost/interprocess/mapped_region.hpp>
 
-#include <itf/extracters/extracter_factory.hpp>
-#include <itf/segmenters/segmenter_factory.hpp>
-#include <itf/util/Util.hpp>
+template <typename Dtype>
+CTask<Dtype>::CTask() : camera_(), analyzer_(), alarmer_(), config_() {
 
-#include <string>
-#include <vector>
 
-CTask::CTask() {}
 
-CTask::~CTask() {
-    delete camera_;
 }
 
-bool CTask::LoadTask(const std::string& task_name, const std::string& db_name) {
+template <typename Dtype>
+CTask<Dtype>::~CTask() {
+    
+    // Free camera and analyzer objects
+    
+    delete camera_;
+    delete analyzer_;
+}
+
+template <typename Dtype>
+bool CTask<Dtype>::LoadTask(const std::string& task_name, const std::string& db_name) {
     // Retrieve information from database according to task id.
     try {
         SQLite::Database db(db_name);
@@ -32,15 +34,19 @@ bool CTask::LoadTask(const std::string& task_name, const std::string& db_name) {
         bool has_records = false;
         // Init a task object with appropriate parameters.
         while (query.executeStep()) {
-            task_name_ = task_name;
-            type_ = query.getColumn(1).getInt();
-            width_ = query.getColumn(2).getInt();
-            height_ = query.getColumn(3).getInt();
-            address_ = query.getColumn(4).getText();
-            port_ = query.getColumn(5).getInt();
-            host_ = query.getColumn(6).getText();
-            username_ = query.getColumn(7).getText();
-            password_ = query.getColumn(8).getText();
+            config_.setTaskName(task_name);
+            config_.setTaskType(query.getColumn(1).getInt());
+            config_.setCameraType(query.getColumn(2).getInt());
+            config_.setFrameWidth(query.getColumn(3).getInt());
+            config_.setFrameHeight(query.getColumn(4).getInt());
+            config_.setIPAddress(query.getColumn(5).getText());
+            config_.setPort(query.getColumn(6).getInt());
+            config_.setHost(query.getColumn(7).getText());
+            config_.setUsername(query.getColumn(8).getText());
+            config_.setPassword(query.getColumn(9).getText());
+            config_.setPmapPath(query.getColumn(10).getText());
+            config_.setROIPath(query.getColumn(11).getText());
+
             has_records = true;
         }
         if (!has_records) {
@@ -52,12 +58,19 @@ bool CTask::LoadTask(const std::string& task_name, const std::string& db_name) {
         return false;
     }
 
+    return true;
+}
+
+
+template <typename Dtype>
+bool CTask<Dtype>::InitCapture()
+{
     // Instantiate a concrete camera.
-    CameraType_t CameraType = static_cast<CameraType_t>(type_);
+    CameraType_t CameraType = static_cast<CameraType_t>(config_.getCameraType());
 
     if (CameraType == REMOTE_CAMERA_HTTP) {
         // RemoteCameraHttp
-        camera_ = new CRemoteCameraHttp(host_, port_, address_, username_, password_);
+        camera_ = new CRemoteCameraHttp(config_.getHost(), config_.getPort(), config_.getIPAddress(), config_.getUsername(), config_.getPassword());
         if (!camera_->Connect()) {
             std::cout << "Camera Connect Fail" << std::endl;
             return false;
@@ -74,8 +87,8 @@ bool CTask::LoadTask(const std::string& task_name, const std::string& db_name) {
         return false;
     } else if (CameraType == FILE_CAMERA) {
         // FileCamera
-        camera_ = new CFileCamera(address_);
-         if (!camera_->Connect()) {
+        camera_ = new CFileCamera(config_.getIPAddress());
+        if (!camera_->Connect()) {
             std::cout << "Camera Connect Fail" << std::endl;
             return false;
         }
@@ -84,13 +97,48 @@ bool CTask::LoadTask(const std::string& task_name, const std::string& db_name) {
     } else {
         // not supporting.
         std::cout << "To Be Continued" << std::endl;
+
         return false;
     }
-
+    
     return true;
 }
 
-int CTask::Capture(cv::Mat& frame) {
+template <typename Dtype>
+bool CTask<Dtype>::InitAnalyzer()
+{
+    // Instantiate a concrete analyzer.
+    FunType_t FunType = static_cast<FunType_t>(config_.getTaskType());
+    
+    if (FunType == COUNT) {
+        // Instantiate Counting analyzer
+        analyzer_ = new CDPAnalyzerDensity<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight());
+        
+        std::cout << getpid() << ": CDPAnalyzerDensity is initialized" << std::endl;
+        
+        analyzer_->Init();
+        
+    } else if (FunType == SEGMENT) {
+        // Segmentation
+        analyzer_ = new CDPAnalyzerSegmentation<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight());
+        
+        std::cout << getpid() << ": CDPAnalyzerSegmentation is initialized" << std::endl;
+
+        analyzer_->Init();
+
+    } else {
+        // not supporting.
+        std::cout << "To Be Continued" << std::endl;
+
+        return false;
+    }
+    
+    return true;
+}
+
+
+template <typename Dtype>
+int CTask<Dtype>::Capture(cv::Mat& frame) {
     // check if camera is initialized already
     if (camera_ == 0) {
         std::cout << "The camera has not been initialized yet." << std::endl;
@@ -101,20 +149,42 @@ int CTask::Capture(cv::Mat& frame) {
     return 1;
 }
 
-void CTask::ShowDetails() {
+template <typename Dtype>
+void CTask<Dtype>::ShowDetails() {
     std::cout << std::endl;
     std::cout << getpid() << ": Task Info ------" << std::endl;
-    std::cout << " Name: " << task_name_ << std::endl;
-    std::cout << " Type: " << type_ << std::endl;
-    std::cout << " Width: " << width_ << std::endl;
-    std::cout << " Height: " << height_ << std::endl;
-    std::cout << " Address: " << address_ << std::endl;
-    std::cout << " Port: " << port_ << std::endl;
-    std::cout << " Host: " << host_ << std::endl;
-    std::cout << " User: " << username_ << std::endl;
-    std::cout << " Password: " << password_ << std::endl;
+    std::cout << " Task Name: " << config_.getTaskName() << std::endl;
+    std::cout << " Task Type: " << config_.getTaskType() << std::endl;
+    std::cout << " Camera Type: " << config_.getCameraType() << std::endl;
+    std::cout << " Width: " << config_.getFrameWidth() << std::endl;
+    std::cout << " Height: " << config_.getFrameHeight() << std::endl;
+    std::cout << " Address: " << config_.getIPAddress() << std::endl;
+    std::cout << " Port: " << config_.getPort() << std::endl;
+    std::cout << " Host: " << config_.getHost() << std::endl;
+    std::cout << " User: " << config_.getUsername() << std::endl;
+    std::cout << " Password: " << config_.getPassword() << std::endl;
     std::cout << std::endl;
 }
+
+template <typename Dtype>
+std::vector<Dtype> CTask<Dtype>::Analyze(cv::Mat& frame)
+{
+    vector<Dtype> feature;
+    
+    // check if camera is initialized already
+    if (analyzer_ == 0) {
+        std::cout << "The camera has not been initialized yet." << std::endl;
+
+        return feature;
+    }
+    
+    feature = analyzer_->Analyze(frame);
+
+    return feature;
+}
+
+
+#if 0
 
 std::thread CTask::Analyze(FunType_t ft) {
     switch (ft) {
@@ -127,6 +197,7 @@ std::thread CTask::Analyze(FunType_t ft) {
             exit(-1);
     }
 }
+
 
 void CTask::Do_Count() {
     using boost::interprocess::shared_memory_object;
@@ -142,7 +213,7 @@ void CTask::Do_Count() {
     /* Setup Extracter */
     itf::ExtracterParameter ep;
     // Read configuration file
-    if (!itf::Util::ReadProtoFromTextFile("./model/density_extracter.prototxt", &ep)) {
+    if (!itf::Util::ReadProtoFromTextFile("/home/turinglife/Desktop/SDK/lib/config/density_extracter.prototxt", &ep)) {
         std::cout << "Cannot read .prototxt file!" << std::endl;
         exit(-1);
     }
@@ -250,3 +321,11 @@ void CTask::Do_Segment() {
 
     delete isegmenter;
 }
+
+
+
+#endif
+
+
+INSTANTIATE_MYCLASS(CTask);
+

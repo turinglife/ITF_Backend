@@ -6,7 +6,6 @@
 #ifndef ITF_CAMERA_H
 #define ITF_CAMERA_H
 
-#include <opencv2/highgui/highgui.hpp>
 
 #include "common.hpp"
 

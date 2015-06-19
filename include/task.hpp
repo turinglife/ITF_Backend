@@ -6,11 +6,7 @@
 #ifndef ITF_TASK_H
 #define ITF_TASK_H
 
-#include <string>
-
 #include "common.hpp"
-
-#include "SQLiteCpp.h"
 
 #include "remote_camera_http.hpp"
 #include "remote_camera_rtsp.hpp"
@@ -18,8 +14,25 @@
 #include "file_camera.hpp"
 #include "camera.hpp"
 
+#include "ndp_analyzer_tracking.hpp"
+#include "dp_analyzer_segmentation.hpp"
+#include "dp_analyzer_density.hpp"
+#include "ndp_analyzer.hpp"
+#include "dp_analyzer.hpp"
+#include "analyzer.hpp"
+
+#include "alarm.hpp"
+
+#include "config.hpp"
+
+#include <itf/extracters/extracter_factory.hpp>
+#include <itf/segmenters/segmenter_factory.hpp>
+#include <itf/util/Util.hpp>
+
+
+template <typename Dtype>
 class CTask {
- public:
+public:
     enum CameraType_t {
         REMOTE_CAMERA_HTTP,
         REMOTE_CAMERA_RTSP,
@@ -33,38 +46,43 @@ class CTask {
 
     CTask();
     ~CTask();
+    
     bool LoadTask(const std::string& task_name, const std::string& db_name);
-    int Capture(cv::Mat& frame);
-    std::thread Analyze(FunType_t ft);
-    void Do_Count();
-    void Do_Segment();
+    bool InitCapture();
+    int Capture(OUT cv::Mat& frame);
+    bool InitAnalyzer();
+    std::vector<Dtype> Analyze(IN cv::Mat& frame);
+    //std::thread Analyze(FunType_t ft);
+    //void Do_Count();
+    //void Do_Segment();
     void ShowDetails();
-
-    inline std::string task_name() const { return task_name_; }
+    inline std::string getCurrentTaskName() { return config_.getTaskName(); }
+    void getCurrentTaskType();
+    void getCurrentCameraType();
+    inline int getCurrentFrameWidth() { return config_.getFrameWidth(); }
+    inline int getCurrentFrameHeight() { return config_.getFrameHeight(); }
 
     bool on = false;
 
- private:
-    CCamera *camera_;
+private:
+    CCamera *camera_;              // object for grabing frames into buffer.
+    CAnalyzer<Dtype> *analyzer_;   // object for analyzing frames from buffer.
+    CAlarm *alarmer_;              // object for generating alarm information.
+    
+    CConfig config_;               // configuration for the task object
 
-    std::string task_name_;
-    int type_ = 0;
-    int width_ = 0;
-    int height_ = 0;
-    std::string address_;
-    unsigned int port_ = 0;
-    std::string host_;
-    std::string username_;
-    std::string password_;
+    //int action_;                 // capture, segmentation, counting
 
-    int action_;  // capture, segmentation, counting
-
-    typedef struct {
-        struct timeval *timestamp;
-        cv::Mat *frame;
-    }Snapshot_t;
-    Snapshot_t snapshot;
+    //typedef struct {
+    //    struct timeval *timestamp;
+    //    cv::Mat *frame;
+    //}Snapshot_t;
+    //Snapshot_t snapshot;
 };
+
+
+
+
 
 
 #endif  // ITF_TASK_H
