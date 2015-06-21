@@ -6,31 +6,23 @@
 #ifndef ITF_COMM_H
 #define ITF_COMM_H
 
+#include <string>
 
 #include "common.hpp"
 
-
 class CComm {
-
-    
-public:
-
-    
-    void establish(const std::string &);
+ public:
+    ~CComm();
+    void establish(const std::string &socket_name);
     void connect();
-    void distroy();
     void send();
     void receive(std::string &);
 
-private:
+ private:
+    std::string socket_path_;
     int sockfd_;
     int newsockfd_;
-
-
 };
 
 
-
-
-
-#endif // ITF_COMM_H
+#endif  // ITF_COMM_H

@@ -20,22 +20,21 @@
 #include "SQLiteCpp/SQLiteCpp.h"
 #include "buffer.hpp"
 
-    
 
-CTask<float> task;   
+CTask<float> task;
 
-void analyze(); 
+void analyze();
 
 
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
-    
-    if(!task.LoadTask(task_name, "db/ITF.db")) {
+
+    if (!task.LoadTask(task_name, "db/ITF.db")) {
         std::cout << "load task fail" << std::endl;
         return -1;
     }
-    
-    if(!task.InitAnalyzer()) {
+
+    if (!task.InitAnalyzer()) {
         std::cout << "init analyzer fail" << std::endl;
         return -1;
     }
@@ -61,7 +60,7 @@ int main(int argc, char* argv[]) {
             task.on = true;
             t1 = std::thread(analyze);
         }
-        
+
         if (action.compare("close") == 0) {
             std::cout << "close()" << std::endl;
 
@@ -80,46 +79,41 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    comm.distroy();
-
-    if (unlink(socket_path.c_str()) == -1) {
-        std::cout << "ERROR unlink: " << socket_path << std::endl;
-        return -1;
-    }
-    
-
     std::cout << "ad is done" << std::endl;
     return 0;
 }
 
 void analyze() {
-    itf::Util util;    
-    
-    CBuffer buffer(task.getCurrentTaskName());
-        
     cv::Mat frame(task.getCurrentFrameHeight(), task.getCurrentFrameWidth(), CV_8UC3);
     int imgSize = frame.total() * frame.elemSize();
     
+    CBuffer buffer(task.getCurrentTaskName());
     buffer.init(imgSize);
     
     while (task.on) {
-
         buffer.fetch(frame);
- 
         vector<float> feature = task.Analyze(frame);
+        cv::Mat output(task.getCurrentFrameHeight(), task.getCurrentFrameWidth(), CV_32F, feature.data());
 
-        cv::Mat density_map(task.getCurrentFrameHeight(), task.getCurrentFrameWidth(), CV_32F, feature.data());
+        /*
+            Note: 
+                For different kinds of analyze, there are different post-processing
 
-        std::cout << cv::sum(density_map)[0] << std::endl;
+                    1. density: needs to call Util::GenerateHeatMap(cv::Mat pMap) and get sum;
+                    2. segment: needs to set threshhold on probaility map;
+                    3. stationary: no post-processing
+                    4. group: some strange post-processing which I cannot figure out.
+        */ 
 
-        // Generate a heat map
-        //cv::Mat pmap(task.getCurrentFrameHeight(), task.getCurrentFrameWidth(), CV_8UC1);
-        //cv::Mat heat = util.GenerateHeatMap(density_map, pmap, 2000);
-        //cv::imshow(task.getCurrentTaskName() + "_heat", heat);
+        // 1. Density:
+        // cv::Mat pMap = ?;
+        // cv::Mat heat = Util::GenerateHeatMap(output, pMap);
+        // cv::imshow("heat", heat);
+        // cv::waitKey(1);
 
-        //cv::waitKey(3);
+        // 2. Segment:
+        // cv::Mat foreground = output > 0.5;
+        // cv::imshow("foreground", foreground);
+        // cv::waitKey(1);
     }
-
-    std::cout << task.getCurrentTaskName() << ": Video is Over" << std::endl;
-
 }

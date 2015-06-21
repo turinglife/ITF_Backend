@@ -6,6 +6,13 @@
 #ifndef ITF_TASK_H
 #define ITF_TASK_H
 
+#include <itf/extracters/extracter_factory.hpp>
+#include <itf/segmenters/segmenter_factory.hpp>
+#include <itf/util/Util.hpp>
+
+#include <string>
+#include <vector>
+
 #include "common.hpp"
 
 #include "remote_camera_http.hpp"
@@ -25,14 +32,10 @@
 
 #include "config.hpp"
 
-#include <itf/extracters/extracter_factory.hpp>
-#include <itf/segmenters/segmenter_factory.hpp>
-#include <itf/util/Util.hpp>
-
 
 template <typename Dtype>
 class CTask {
-public:
+ public:
     enum CameraType_t {
         REMOTE_CAMERA_HTTP,
         REMOTE_CAMERA_RTSP,
@@ -46,15 +49,12 @@ public:
 
     CTask();
     ~CTask();
-    
+
     bool LoadTask(const std::string& task_name, const std::string& db_name);
     bool InitCapture();
     int Capture(OUT cv::Mat& frame);
     bool InitAnalyzer();
     std::vector<Dtype> Analyze(IN cv::Mat& frame);
-    //std::thread Analyze(FunType_t ft);
-    //void Do_Count();
-    //void Do_Segment();
     void ShowDetails();
     inline std::string getCurrentTaskName() { return config_.getTaskName(); }
     void getCurrentTaskType();
@@ -64,25 +64,11 @@ public:
 
     bool on = false;
 
-private:
+ private:
     CCamera *camera_;              // object for grabing frames into buffer.
     CAnalyzer<Dtype> *analyzer_;   // object for analyzing frames from buffer.
     CAlarm *alarmer_;              // object for generating alarm information.
-    
     CConfig config_;               // configuration for the task object
-
-    //int action_;                 // capture, segmentation, counting
-
-    //typedef struct {
-    //    struct timeval *timestamp;
-    //    cv::Mat *frame;
-    //}Snapshot_t;
-    //Snapshot_t snapshot;
 };
-
-
-
-
-
 
 #endif  // ITF_TASK_H

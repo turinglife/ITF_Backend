@@ -5,32 +5,36 @@
 
 #include "comm.hpp"
 
+#include <string>
 
-
+CComm::~CComm() {
+    close(sockfd_);
+    unlink(socket_path_.c_str());
+}
 
 void CComm::establish(const std::string &socket_name) {
-    //std::string socket_path = "cd_" + task_name;
+    socket_path_ = socket_name;
     // Create socket
     sockfd_ = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sockfd_ < 0) {
         perror("ERROR socket");
         return;
     }
-    
+
     struct sockaddr_un serv_addr;
     serv_addr.sun_family = AF_UNIX;
     // strcpy(serv_addr.sun_path, argv[1]);
-    snprintf(serv_addr.sun_path, socket_name.length() + 1, "%s", socket_name.c_str());
-    
+    snprintf(serv_addr.sun_path, socket_path_.length() + 1, "%s", socket_path_.c_str());
+
     // Bind socket
     if (bind(sockfd_, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
         perror("ERROR bind");
         return;
     }
-    
+
     // Start listening
     listen(sockfd_, 5);
-    
+
     return;
 }
 
@@ -50,21 +54,7 @@ void CComm::receive(std::string &action) {
         perror("ERROR read");
         exit(1);
     }
-    
-    //int length = strlen(message);
-    
-    action = message;
 
-    printf("%d: cd receive: (%s)\n", getpid(), message);
+    action = std::string(message);
     close(newsockfd_);
-
 }
-
-void CComm::distroy() {
-    close(sockfd_);
-}
-
-
-
-
-
