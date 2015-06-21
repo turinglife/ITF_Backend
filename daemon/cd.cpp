@@ -28,18 +28,18 @@
 static bool on = true;
 CTask<float> task;
 
-void capture();
+void capture(int fps);
 
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
 
     // Initialize a task object acccording to information retrieved from database.
-    if(!task.LoadTask(task_name, "db/ITF.db")) {
+    if (!task.LoadTask(task_name, "db/ITF.db")) {
         std::cout << "load task fail" << std::endl;
         return -1;
     }
     
-    if(!task.InitCapture()) {
+    if (!task.InitCapture()) {
         std::cout << "init capture fail" << std::endl;
         return -1;
     }
@@ -64,7 +64,8 @@ int main(int argc, char* argv[]) {
             if (t1.joinable())
                 t1.join();
             on = true;
-            t1 = std::thread(capture);
+
+            t1 = std::thread(capture, 25);
         }
 
         if (action.compare("close") == 0) {
@@ -84,20 +85,12 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    comm.distroy();
-
-    if (unlink(socket_name.c_str()) == -1) {
-        std::cout << "ERROR unlink: " << socket_name << std::endl;
-        return -1;
-    }
-
     std::cout << "cd is done" << std::endl;
-
     return 0;
 }
 
 
-void capture() {    
+void capture(int fps) {    
     cv::Mat ini_frame;
     task.Capture(ini_frame);
 
@@ -113,9 +106,10 @@ void capture() {
 
         buffer.put(frame);
 
+        // the following two lines are just simulations to display video and might use usleep() instead.
         cv::imshow(task.getCurrentTaskName() + "_frame", frame);
-        cv::waitKey(10);
+        cv::waitKey(1000 / fps);
+        
+        // usleep(1000 * (1000 / fps));
     }
-
-    std::cout << task.getCurrentTaskName() << ": Video is Over" << std::endl;
 }
