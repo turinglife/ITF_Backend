@@ -32,7 +32,7 @@ bool CDPAnalyzerSegmentation<Dtype>::InitNet() {
     itf::SegmenterParameter sp;
 
     // Read configuration file
-    if (!itf::Util::ReadProtoFromTextFile("/home/itf/Desktop/ITF_Integrated/lib/config/fcnn_segmenter.prototxt", &sp)) {
+    if (!itf::Util::ReadProtoFromTextFile("/home/itf/Desktop/SDK/lib/config/fcnn_segmenter.prototxt", &sp)) {
         std::cout << "Cannot read .prototxt file!" << std::endl;
         return false;
     }

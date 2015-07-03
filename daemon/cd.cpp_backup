@@ -38,7 +38,7 @@ int main(int argc, char* argv[]) {
         std::cout << "load task fail" << std::endl;
         return -1;
     }
-
+    
     if (!task.InitCapture()) {
         std::cout << "init capture fail" << std::endl;
         return -1;
@@ -94,10 +94,8 @@ void capture(int fps) {
     cv::Mat ini_frame;
     task.Capture(ini_frame);
 
-    int img_width = ini_frame.cols;
-    int img_height = ini_frame.rows;
     int img_size = ini_frame.total() * ini_frame.elemSize();
-    CBuffer buffer(img_width, img_height, img_size, 50, 30, task.getCurrentTaskName());
+    CBuffer buffer(img_size, task.getCurrentTaskName());
 
     while (on) {
         cv::Mat frame;
@@ -106,14 +104,12 @@ void capture(int fps) {
             break;
         }
 
-        //buffer.put_src(frame);
-        if (!buffer.put_src(frame))
-            continue;
+        buffer.put(frame);
 
         // the following two lines are just simulations to display video and might use usleep() instead.
         cv::imshow(task.getCurrentTaskName() + "_frame", frame);
         cv::waitKey(1000 / fps);
-
+        
         // usleep(1000 * (1000 / fps));
     }
 }
