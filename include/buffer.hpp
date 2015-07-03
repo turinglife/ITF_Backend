@@ -50,16 +50,16 @@ private:
     boost::interprocess::mapped_region region_dst_map_;
     boost::interprocess::mapped_region region_dst_val_;
 
-    void *p_header_;   // Starting address for storing header information of buffer.
-    void *p_last_r_w_;
-    void *p_src_;    // Starting address for storing source frame.
-    void *p_dst_map_;  // Starting address for storing output map;
-    void *p_dst_val_; // Starting address for storing output value;
+    unsigned char *p_header_;   // Starting address for storing header information of buffer.
+    unsigned char *p_last_r_w_; // Starting address for storing buffer index information for control buffer;
+    unsigned char *p_src_;    // Starting address for storing source frame.
+    unsigned char *p_dst_map_;  // Starting address for storing output map;
+    unsigned char *p_dst_val_; // Starting address for storing output value;
 
-    int *p_last_r_src_;
-    int *p_last_w_src_;
-    int *p_last_r_dst_;
-    int *p_last_w_dst_;
+    int *p_last_r_src_; // Address for storing last read index of source image buffer;
+    int *p_last_w_src_; // Adrress for storing last write index of source image buffer;
+    int *p_last_r_dst_; // Address for storing last read index of destination buffer;
+    int *p_last_w_dst_; // Address for storing last write index of destination buffer;
 };
 
 
