@@ -108,7 +108,6 @@ CBuffer::CBuffer(const std::string &buffer_id) {
 }
 
 void CBuffer::init(const int &unit_size) {
-
     //head_.frame_size = unit_size;
 
 }
@@ -121,13 +120,13 @@ bool CBuffer::put_src(IN const cv::Mat &frame) {
         return false;
     }
 
-    *p_last_w_src_ = curr_w_src;
-
     //std::cout << "**************put_src*****************" << std::endl;
     //std::cout<< "last_r_src: " << *p_last_r_src_ << " , last_w_src: " << *p_last_w_src_ << std::endl;
     //std::cout<< "last_r_dst: " << *p_last_r_dst_ << " , last_w_dst: " << *p_last_w_dst_ << std::endl;
 
     memcpy(p_src_ + curr_w_src * head_.frame_size, frame.data, head_.frame_size);
+
+    *p_last_w_src_ = curr_w_src;
 
     return true;
 
@@ -141,8 +140,6 @@ bool CBuffer::put_dst(IN const cv::Mat &frame, IN const int &predicted_value) {
         return false;
     }
 
-    *p_last_w_dst_ = curr_w_dst;
-
     //std::cout << "**************put_dst*****************" << std::endl;
     //std::cout<< "last_r_dst: " << *p_last_r_dst_ << " , last_w_dst: " << *p_last_w_dst_ << std::endl;
 
@@ -150,8 +147,24 @@ bool CBuffer::put_dst(IN const cv::Mat &frame, IN const int &predicted_value) {
 
     memcpy(p_dst_val_ + curr_w_dst * sizeof(int), &predicted_value, sizeof(int));
 
+    *p_last_w_dst_ = curr_w_dst;
+
     return true;
 
+}
+
+bool CBuffer::fetch_frame(OUT cv::Mat &frame) {
+    // check whether the input buffer is empty or not;
+
+    if (*p_last_r_src_ == *p_last_w_src_) {
+        return false;
+    }
+
+    int curr_r_src = (*p_last_r_src_ + 1) % head_.src_buffer_num;
+
+    memcpy(frame.data, p_src_ + curr_r_src * head_.frame_size, head_.frame_size);
+
+    return true;
 }
 
 bool CBuffer::fetch_src(OUT cv::Mat &frame) {
@@ -168,6 +181,8 @@ bool CBuffer::fetch_src(OUT cv::Mat &frame) {
 
     memcpy(frame.data, p_src_ + curr_r_src * head_.frame_size, head_.frame_size);
 
+    *p_last_r_src_ = curr_r_src;
+
     return true;
 
 }
@@ -181,8 +196,6 @@ bool CBuffer::fetch_dst(OUT cv::Mat &frame, OUT int &predicted_value) {
 
     int curr_r_dst = (*p_last_r_dst_ + 1) % head_.dst_buffer_num;
 
-    *p_last_r_dst_ = curr_r_dst;
-
     //std::cout << "__________fetch_dst______________" << std::endl;
     //std::cout<< "last_r_dst: " << *p_last_r_dst_ << " , last_w_dst: " << *p_last_w_dst_ << std::endl;
 
@@ -190,18 +203,20 @@ bool CBuffer::fetch_dst(OUT cv::Mat &frame, OUT int &predicted_value) {
 
     memcpy(&predicted_value, p_dst_val_ + curr_r_dst * sizeof(int), sizeof(int));
 
+    *p_last_r_dst_ = curr_r_dst;
+
     return true;
 
 }
 
-void CBuffer::unlock_buffer() {
-    // src buffer index add 1 after Front_End read src img;
-    *p_last_r_src_ = (*p_last_r_src_ + 1) % head_.src_buffer_num;
-
-    //std::cout << "__________unlock_buffer_______________" << std::endl;
-    //std::cout<< "last_r_src: " << *p_last_r_src_ << " , last_w_src: " << *p_last_w_src_ << std::endl;
-    //std::cout<< "last_r_dst: " << *p_last_r_dst_ << " , last_w_dst: " << *p_last_w_dst_ << std::endl;
-}
+//void CBuffer::unlock_buffer() {
+//    // src buffer index add 1 after Front_End read src img;
+//    *p_last_r_src_ = (*p_last_r_src_ + 1) % head_.src_buffer_num;
+//
+//    //std::cout << "__________unlock_buffer_______________" << std::endl;
+//    //std::cout<< "last_r_src: " << *p_last_r_src_ << " , last_w_src: " << *p_last_w_src_ << std::endl;
+//    //std::cout<< "last_r_dst: " << *p_last_r_dst_ << " , last_w_dst: " << *p_last_w_dst_ << std::endl;
+//}
 
 bool CBuffer::destroy() {
 

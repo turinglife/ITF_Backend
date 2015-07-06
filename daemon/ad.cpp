@@ -97,8 +97,8 @@ void analyze() {
     while (task.on) {
         //buffer.fetch_src(frame);
         if (!buffer.fetch_src(frame))
+        //if (!buffer.fetch_frame(frame))
             continue;
-        buffer.unlock_buffer();
         vector<float> feature = task.Analyze(frame);
         cv::Mat output(task.getCurrentFrameHeight(), task.getCurrentFrameWidth(), CV_32F, feature.data());
 

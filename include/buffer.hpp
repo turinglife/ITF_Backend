@@ -24,9 +24,10 @@ public:
     void init(const int &);
     bool put_src(IN const cv::Mat &);
     bool put_dst(IN const cv::Mat &, IN const int &);
-    bool fetch_src(OUT cv::Mat &);
-    bool fetch_dst(OUT cv::Mat &, OUT int &);
-    void unlock_buffer();
+    bool fetch_frame(OUT cv::Mat &);   // This function fetch the frame without discarding it;
+    bool fetch_src(OUT cv::Mat &);     // This function fetch the frame and discard it;
+    bool fetch_dst(OUT cv::Mat &, OUT int &); // This function fetch the destination;
+    //void unlock_buffer();
     bool destroy();
 
 
@@ -39,7 +40,7 @@ private:
         int dst_buffer_num;
         int header_size;
     }HeaderInfo_t;
-    HeaderInfo_t head_;
+    HeaderInfo_t head_;  //headerinfo keep the static info of buffer and frame;
 
     std::string buffer_id_; // Buffer unique id for communicating with other processes.
 
