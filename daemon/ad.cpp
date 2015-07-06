@@ -86,24 +86,31 @@ int main(int argc, char* argv[]) {
 void analyze() {
     cv::Mat frame(task.getCurrentFrameHeight(), task.getCurrentFrameWidth(), CV_8UC3);
     int imgSize = frame.total() * frame.elemSize();
-    
+
+    std::cout << "analyze" << std::endl;
+
     CBuffer buffer(task.getCurrentTaskName());
+    std::cout << "init buffer " << endl;
     buffer.init(imgSize);
-    
+    std::cout << "init buffer done" << endl;
+
     while (task.on) {
-        buffer.fetch(frame);
+        //buffer.fetch_src(frame);
+        if (!buffer.fetch_src(frame))
+        //if (!buffer.fetch_frame(frame))
+            continue;
         vector<float> feature = task.Analyze(frame);
         cv::Mat output(task.getCurrentFrameHeight(), task.getCurrentFrameWidth(), CV_32F, feature.data());
 
         /*
-            Note: 
+            Note:
                 For different kinds of analyze, there are different post-processing
 
                     1. density: needs to call Util::GenerateHeatMap(cv::Mat pMap) and get sum;
                     2. segment: needs to set threshhold on probaility map;
                     3. stationary: no post-processing
                     4. group: some strange post-processing which I cannot figure out.
-        */ 
+        */
 
         // 1. Density:
         // cv::Mat pMap = ?;
@@ -112,8 +119,8 @@ void analyze() {
         // cv::waitKey(1);
 
         // 2. Segment:
-        // cv::Mat foreground = output > 0.5;
-        // cv::imshow("foreground", foreground);
-        // cv::waitKey(1);
+        cv::Mat foreground = output > 0.5;
+        cv::imshow("foreground", foreground);
+        cv::waitKey(1);
     }
 }
