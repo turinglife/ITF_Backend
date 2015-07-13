@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
 
     // Initialize a task object acccording to information retrieved from database.
-    if (!task.LoadTask(task_name, "db/ITF.db")) {
+    if (!task.LoadTask(task_name, "ITF")) {
         std::cout << "load task fail" << std::endl;
         return -1;
     }
@@ -106,7 +106,6 @@ void capture(int fps) {
             break;
         }
 
-        //buffer.put_src(frame);
         if (!buffer.put_src(frame))
             continue;
 

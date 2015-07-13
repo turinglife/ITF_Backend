@@ -15,6 +15,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <vector>
 
 #include "dbi.hpp"
 
@@ -136,13 +137,15 @@ bool action_quit() {
 }
 
 bool action_mysql() {
-    CDbi db;
-    std::string server = "localhost";
-    std::string user = "root";
-    std::string pass = "root";
-    std::string db_name = "mysql";
+    /* Prepare DB Infomation*/
+    const std::string server = "localhost";
+    const std::string user = "itf";
+    const std::string pass = "itf";
+    const std::string db_name = "ITF";
 
-    std::cout << "Connect  ...  ";
+    CDbi db;
+
+    std::cout << "\nConnect  ...  ";
     if (!db.Connect(server, user, pass)) {
         std::cout << "Fail" << std::endl;
     } else {
@@ -155,7 +158,47 @@ bool action_mysql() {
     } else {
         std::cout << "OK" << std::endl;
     }
+    {
+        bool ok = db.RunSQL("INSERT INTO Tasks VALUES ('task_six', 'DENSITY', 'HTTP', 720, 576, 'mjpg/video.mjpg', 'ITFcs1.0/tasks/task_one/', 'PMap/', 'ROI/', 'LM/', 'GT/', 'Alarm/', 'pers.csv', 'roi.csv', 'lm.csv', 'ON', 'ON', 'OFF', 'mmlab');");
+        if (!ok) {
+            std::cerr << "INSERT DB ... Fail" << std::endl;
+        } else {
+            std::cout << "INSERT DB ... OK" << std::endl;
+        }
+    }
+    { 
+        bool ok = db.RunSQL("DELETE FROM Tasks WHERE task_name='task_six';");
+        if (!ok) {
+            std::cerr << "DELETE DB ... Fail" << std::endl;
+        } else {
+            std::cout << "DELETE DB ... OK" << std::endl;
+        }
+    }
+    {
+        bool ok = db.RunSQL("UPDATE Tasks SET width="+std::to_string(rand() % 100)+" WHERE task_name='task_six';");
+        if (!ok) {
+            std::cerr << "UPDATE DB ... Fail" << std::endl;
+        } else {
+            std::cout << "UPDATE DB ... OK" << std::endl;
+        }
+    }
+    std::cout << "SELECT DB ... \n";
+    std::vector<std::map<std::string, std::string> > res = db.Query("SELECT * FROM Tasks;");
+
+    std::cout.setf(std::ios::left);
+    for (size_t i = 0; i < res.size(); ++i) {
+        std::cout << std::setw(18) << res[i]["task_name"] << std::setw(18) << res[i]["task_type"]
+         << std::setw(5) << res[i]["camera_type"] << std::setw(5) << res[i]["width"]
+         << std::setw(5) << res[i]["height"] << std::setw(22) << res[i]["address"]
+         << std::setw(40) << res[i]["task_path"] << std::setw(8) << res[i]["pers_dir"]
+         << std::setw(8) << res[i]["lm_dir"] << std::setw(8) << res[i]["gt_dir"] << std::setw(8) << res[i]["roi_dir"]
+         << std::setw(8) << res[i]["alarm_dir"] << std::setw(11) << res[i]["pers_file"]
+         << std::setw(11) << res[i]["roi_file"] << std::setw(11) << res[i]["lm_file"]
+         << std::setw(5) << res[i]["alarm_switch"] << std::setw(5) << res[i]["report_switch"]
+         << std::setw(5) << res[i]["lm_switch"] << std::setw(11) << res[i]["group_name"];
+
+        std::cout << std::endl;
+    }
 
     return true;
 }
-

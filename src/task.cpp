@@ -6,7 +6,10 @@
 #include "task.hpp"
 
 #include <string>
+#include <map>
 #include <vector>
+
+#include "dbi.hpp"
 
 template <typename Dtype>
 CTask<Dtype>::CTask() : camera_(), analyzer_(), alarmer_(), config_() { }
@@ -20,41 +23,56 @@ CTask<Dtype>::~CTask() {
 
 template <typename Dtype>
 bool CTask<Dtype>::LoadTask(const std::string& task_name, const std::string& db_name) {
-    // Retrieve information from database according to task id.
-    try {
-        SQLite::Database db(db_name);
+     /* Prepare DB Infomation*/
+    const std::string server = "localhost";
+    const std::string user = "itf";
+    const std::string pass = "itf";
 
-        SQLite::Statement query(db, "SELECT * FROM Tasks WHERE task_name=?");
-        query.bind(1, task_name);
+    CDbi db;
 
-        bool has_records = false;
-        // Init a task object with appropriate parameters.
-        while (query.executeStep()) {
-            config_.setTaskName(task_name);
-            config_.setTaskType(query.getColumn(1).getInt());
-            config_.setCameraType(query.getColumn(2).getInt());
-            config_.setFrameWidth(query.getColumn(3).getInt());
-            config_.setFrameHeight(query.getColumn(4).getInt());
-            config_.setIPAddress(query.getColumn(5).getText());
-            config_.setPort(query.getColumn(6).getInt());
-            config_.setHost(query.getColumn(7).getText());
-            config_.setUsername(query.getColumn(8).getText());
-            config_.setPassword(query.getColumn(9).getText());
-            config_.setPmapPath(query.getColumn(10).getText());
-            config_.setROIPath(query.getColumn(11).getText());
-
-            has_records = true;
-        }
-        if (!has_records) {
-            std::cout << "No Such Task" << std::endl;
-            return false;
-        }
-    } catch (std::exception& e) {
-        std::cout << "exception: " << e.what() << std::endl;
+    if (!db.Connect(server, user, pass)) {
+        std::cout << "Fail" << std::endl;
         return false;
     }
 
-    return true;
+    if (!db.UseDB(db_name)) {
+        std::cout << "Fail" << std::endl;
+        return false;
+    }
+
+    const std::string sql = "select * from (select Tasks.*,TaskDetail.host, TaskDetail.port, TaskDetail.username, TaskDetail.password from Tasks left join TaskDetail on Tasks.task_name=TaskDetail.task_name) as temp where task_name='"+task_name+"';";
+    std::vector<std::map<std::string, std::string> > res = db.Query(sql);
+
+   if (res.size() != 1) {
+        std::cout << "No Such Task" << std::endl;
+       return false;
+   } else {
+        config_.setTaskName(task_name);
+        if (res[0]["task_type"].compare("DENSITY") == 0) {
+            config_.setTaskType(0);
+        } else if (res[0]["task_type"].compare("SEGMENTATION") == 0) {
+            config_.setTaskType(1);
+        }
+        if (res[0]["camera_type"].compare("HTTP") == 0) {
+            config_.setCameraType(0);
+            config_.setPort(std::atoi(res[0]["port"].c_str()));
+            config_.setHost(res[0]["host"]);
+            config_.setUsername(res[0]["username"]);
+            config_.setPassword(res[0]["password"]);
+        } else if (res[0]["campera_type"].compare("RTSP") == 0) {
+            config_.setCameraType(1);
+        } else if (res[0]["campera_type"].compare("LOCAL") == 0) {
+            config_.setCameraType(2);
+        } else if (res[0]["campera_type"].compare("FILE") == 0) {
+            config_.setCameraType(3);
+        }
+        config_.setFrameWidth(std::atoi(res[0]["width"].c_str()));
+        config_.setFrameHeight(std::atoi(res[0]["height"].c_str()));
+        config_.setIPAddress(res[0]["address"]);
+        config_.setPmapPath(res[0]["task_path"] + res[0]["pers_dir"] + res[0]["pers_file"]);
+        config_.setROIPath(res[0]["task_path"] + res[0]["roi_dir"] + res[0]["roi_file"]);
+        return true;
+    }
 }
 
 

@@ -29,7 +29,7 @@ void analyze();
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
 
-    if (!task.LoadTask(task_name, "db/ITF.db")) {
+    if (!task.LoadTask(task_name, "ITF")) {
         std::cout << "load task fail" << std::endl;
         return -1;
     }
@@ -93,13 +93,12 @@ void analyze() {
     std::cout << "init buffer " << endl;
     buffer.init(imgSize);
     std::cout << "init buffer done" << endl;
-
+    itf::Util util;
     while (task.on) {
-        //buffer.fetch_src(frame);
         if (!buffer.fetch_src(frame))
-        //if (!buffer.fetch_frame(frame))
             continue;
         vector<float> feature = task.Analyze(frame);
+
         cv::Mat output(task.getCurrentFrameHeight(), task.getCurrentFrameWidth(), CV_32F, feature.data());
 
         /*
@@ -113,14 +112,14 @@ void analyze() {
         */
 
         // 1. Density:
-        // cv::Mat pMap = ?;
-        // cv::Mat heat = Util::GenerateHeatMap(output, pMap);
-        // cv::imshow("heat", heat);
-        // cv::waitKey(1);
+        cv::Mat pMap = cv::Mat::ones(task.getCurrentFrameHeight(), task.getCurrentFrameWidth(), CV_32F);
+        cv::Mat heat = util.GenerateHeatMap(output, pMap);
+        cv::imshow("heat", heat);
+        cv::waitKey(1);
 
         // 2. Segment:
-        cv::Mat foreground = output > 0.5;
-        cv::imshow("foreground", foreground);
-        cv::waitKey(1);
+        // cv::Mat foreground = output > 0.5;
+        // cv::imshow("foreground", foreground);
+        // cv::waitKey(1);
     }
 }
