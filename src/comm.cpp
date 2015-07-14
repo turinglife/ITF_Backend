@@ -5,7 +5,6 @@
 
 #include "comm.hpp"
 
-#include <string>
 
 CComm::~CComm() {
     close(sockfd_);

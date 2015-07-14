@@ -6,14 +6,11 @@
 #ifndef ITF_TASK_H
 #define ITF_TASK_H
 
+#include "common.hpp"
+
 #include <itf/extracters/extracter_factory.hpp>
 #include <itf/segmenters/segmenter_factory.hpp>
 #include <itf/util/Util.hpp>
-
-#include <string>
-#include <vector>
-
-#include "common.hpp"
 
 #include "remote_camera_http.hpp"
 #include "remote_camera_rtsp.hpp"
@@ -29,7 +26,7 @@
 #include "analyzer.hpp"
 
 #include "alarm.hpp"
-
+#include "dbi.hpp"
 #include "config.hpp"
 
 

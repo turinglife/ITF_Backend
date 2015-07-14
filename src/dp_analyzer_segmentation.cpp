@@ -6,8 +6,6 @@
 
 #include "dp_analyzer_segmentation.hpp"
 
-#include <string>
-#include <vector>
 
 
 template <typename Dtype>

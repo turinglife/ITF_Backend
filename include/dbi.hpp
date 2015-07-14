@@ -6,15 +6,11 @@
 #ifndef ITF_DBI_H
 #define ITF_DBI_H
 
+#include "common.hpp"
+
 #define MYSQLPP_MYSQL_HEADERS_BURIED
 
 #include <mysql++/mysql++.h>
-
-#include <string>
-#include <map>
-#include <vector>
-
-#include "common.hpp"
 
 
 class CDbi {

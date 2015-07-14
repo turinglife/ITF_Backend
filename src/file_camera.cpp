@@ -4,7 +4,6 @@
 
 #include "file_camera.hpp"
 
-#include <string>
 
 CFileCamera::CFileCamera(const std::string& filename) : filename_(filename) { }
 

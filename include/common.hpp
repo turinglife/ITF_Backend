@@ -7,10 +7,11 @@
 #define ITF_COMMON_H
 
 
-
 #include <iostream>
 #include <string>
 #include <thread>
+#include <map>
+#include <vector>
 
 
 #include <stdio.h>

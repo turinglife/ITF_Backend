@@ -5,11 +5,6 @@
 
 #include "task.hpp"
 
-#include <string>
-#include <map>
-#include <vector>
-
-#include "dbi.hpp"
 
 template <typename Dtype>
 CTask<Dtype>::CTask() : camera_(), analyzer_(), alarmer_(), config_() { }

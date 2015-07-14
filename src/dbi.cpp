@@ -4,11 +4,6 @@
 
 #include "dbi.hpp"
 
-#include <iostream>
-#include <string>
-#include <map>
-#include <vector>
-
 CDbi::CDbi() {
     // Create object without connecting to the database server.
     // If true, exceptions are thrown on errors

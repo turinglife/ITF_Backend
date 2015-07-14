@@ -6,7 +6,6 @@
 #ifndef ITF_FC_H
 #define ITF_FC_H
 
-#include "common.hpp"
 #include "camera.hpp"
 
 class CFileCamera : public CCamera {

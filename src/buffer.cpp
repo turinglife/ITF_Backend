@@ -4,6 +4,8 @@
 //
 
 #include "buffer.hpp"
+
+
 CBuffer::CBuffer(const int &src_width, const int &src_height, const int &unit_size, const int &src_num, const int &dst_num, const std::string &buffer_id) {
 
     buffer_id_ = buffer_id;

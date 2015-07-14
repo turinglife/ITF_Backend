@@ -9,7 +9,7 @@
 #define ITF_IMAGE_H
 
 
-#include "common.hpp"
+#include "image.hpp"
 
 
 class CImage {
