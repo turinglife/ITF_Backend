@@ -1,22 +1,37 @@
 
 -- To find the specific error run this: SHOW ENGINE INNODB STATUS\G
 
+-- Use InnoDB Engine, which supports foreign key and transaction
+-- mysql> show table status;
+
+-- Enable client program to communicate with the server using utf8 character set
+SET NAMES 'utf8';
 
 DROP DATABASE IF EXISTS `ITF`;
-CREATE DATABASE `ITF`;
+-- Set the default charset to utf8 for internationalization, use case-insensitive (ci) collation
+CREATE DATABASE IF NOT EXISTS `ITF` /*! DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci */;
 
-
+-- USAGE(Synonym for “no privileges”) can be specified to create a user that has no privileges,
+-- or to specify the REQUIRE or WITH clauses for an account without changing its existing privileges.
 GRANT USAGE ON *.* TO 'itf'@'localhost' IDENTIFIED BY 'itf';
-GRANT ALL PRIVILEGES ON `ITF`.* TO 'itf'@'localhost';
+-- Grant all privileges at specified access level except GRANT OPTION
+-- Database Privileges
+GRANT ALL ON ITF.* TO 'itf'@'localhost';
+
 FLUSH PRIVILEGES;
+
+-- The new user created has no privileges.
+-- You need to grant the appropriate privilege to the user using GRANT command.
+-- CREATE USER 'itf'@'localhost' IDENTIFIED BY 'itf';
+-- GRANT ALL ON *.* TO 'itf'@'localhost';
 
 USE `ITF`;
 
-CREATE TABLE `Groups` (
+CREATE TABLE Groups (
     `group_name`        varchar(128),
 
     PRIMARY KEY (`group_name`)
-);
+) /*! ENGINE=InnoDB */;
 
 CREATE TABLE Tasks (
     `task_name`         varchar(128),
@@ -49,8 +64,8 @@ CREATE TABLE Tasks (
     `group_name`        varchar(128) NOT NULL,
 
     PRIMARY KEY(`task_name`),
-    FOREIGN KEY(`group_name`) REFERENCES Groups(`group_name`) ON DELETE CASCADE
-);
+    FOREIGN KEY(`group_name`) REFERENCES Groups(`group_name`) ON DELETE CASCADE ON UPDATE CASCADE
+) /*! ENGINE=InnoDB */;
 
 CREATE TABLE TaskDetail (
     `task_name`         varchar(128) NOT NULL UNIQUE,
@@ -59,8 +74,8 @@ CREATE TABLE TaskDetail (
     `username`          varchar(128) NOT NULL,
     `password`          varchar(128) NOT NULL,
 
-    FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE
-);
+    FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
+) /*! ENGINE=InnoDB */;
 
 CREATE TABLE AlarmStrategy (
     `task_name`         varchar(128) NOT NULL UNIQUE,
@@ -68,18 +83,18 @@ CREATE TABLE AlarmStrategy (
     `priority_medium`   smallint unsigned NOT NULL,  
     `priority_high`     smallint unsigned NOT NULL,  
 
-    FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE
-);
+    FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
+) /*! ENGINE=InnoDB */;
 
 CREATE TABLE AlarmRecord (
     `task_name`         varchar(128) NOT NULL,
-    `date_time`         datetime NOT NULL,
+    `date_time`     datetime NOT NULL,
     `count`             int unsigned NOT NULL,
     `priority`          enum('low', 'medium', 'high') NOT NULL,
     `snapshot`          varchar(128) NOT NULL,
 
-    FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE
-);
+    FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
+) /*! ENGINE=InnoDB */;
 
 
 -- Insert Values
