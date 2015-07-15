@@ -43,6 +43,14 @@ class CTask {
         COUNT,
         SEGMENT
     };
+    enum TaskStatus_t {     // Task state
+        STOP = 0,
+        START
+    };
+    enum FuncStatus_t {      // The state of specific function affiliated to the current task
+        TERMINAL = 0,
+        RUNNING
+    };
 
     CTask();
     ~CTask();
@@ -58,14 +66,19 @@ class CTask {
     void getCurrentCameraType();
     inline int getCurrentFrameWidth() { return config_.getFrameWidth(); }
     inline int getCurrentFrameHeight() { return config_.getFrameHeight(); }
-
+    inline void setFuncStatus(int funcstatus) { funcstatus_ = funcstatus; }
+    inline int getFuncStatus() { return funcstatus_; }
+    
     bool on = false;
+    
 
  private:
     CCamera *camera_;              // object for grabing frames into buffer.
     CAnalyzer<Dtype> *analyzer_;   // object for analyzing frames from buffer.
     CAlarm *alarmer_;              // object for generating alarm information.
-    CConfig config_;               // configuration for the task object
+    CConfig config_;               // configuration for the task object.
+    
+    int funcstatus_;               // default value is TERMINAL state.
 };
 
 #endif  // ITF_TASK_H
