@@ -1,0 +1,12 @@
+patch_width: 72
+patch_height: 72
+label_width: 18
+label_height: 18
+channel: 3
+patch_para: 1.5
+
+model: "/home/kwang/Desktop/SDK/lib/model/crowd_counting_iter_27000.caffemodel"
+prototxt: "/home/kwang/Desktop/SDK/lib/model/crowd_counting_train_val_1.prototxt"
+extract_feature_blob_name: "fc7"
+cgmodel: "GPU"
+device_id: 0
