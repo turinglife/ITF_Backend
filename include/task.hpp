@@ -66,6 +66,8 @@ class CTask {
     void getCurrentCameraType();
     inline int getCurrentFrameWidth() { return config_.getFrameWidth(); }
     inline int getCurrentFrameHeight() { return config_.getFrameHeight(); }
+    inline int getTaskStatus() { return config_.getTaskStatus(); }
+    inline void setTaskStatus(int taskstatus) { config_.setTaskStatus(taskstatus); }
     inline void setFuncStatus(int funcstatus) { funcstatus_ = funcstatus; }
     inline int getFuncStatus() { return funcstatus_; }
     
