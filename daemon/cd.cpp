@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
 
     // Initialize a task object acccording to information retrieved from database.
-    if (!task.LoadTask(task_name, "ITF")) {
+    if (!task.LoadTask(task_name)) {
         std::cout << "load task fail" << std::endl;
         return -1;
     }
@@ -106,13 +106,13 @@ void capture(int fps) {
             break;
         }
 
-        if (!buffer.put_src(frame))
-            continue;
-
         // the following two lines are just simulations to display video and might use usleep() instead.
         cv::imshow(task.getCurrentTaskName() + "_frame", frame);
         cv::waitKey(1000 / fps);
 
+        if (!buffer.put_src(frame))
+            continue;
+        
         // usleep(1000 * (1000 / fps));
     }
 }

@@ -34,10 +34,14 @@ template <typename Dtype>
 class CTask {
  public:
     enum CameraType_t {
-        REMOTE_CAMERA_HTTP,
-        REMOTE_CAMERA_RTSP,
-        LOCAL_CAMERA,
-        FILE_CAMERA
+        HTTP,
+        RTSP,
+        LOCAL,
+        FILE
+    };
+    enum TaskType_t {
+        DENSITY,
+        SEGMENTATION
     };
     enum FunType_t {
         COUNT,
@@ -48,38 +52,38 @@ class CTask {
         START
     };
     enum FuncStatus_t {      // The state of specific function affiliated to the current task
-        TERMINAL = 0,
+        TERMINATE = 0,
         RUNNING
     };
 
     CTask();
     ~CTask();
 
-    bool LoadTask(const std::string& task_name, const std::string& db_name);
+    bool LoadTask(const std::string& task_name);
     bool InitCapture();
     int Capture(OUT cv::Mat& frame);
     bool InitAnalyzer();
-    std::vector<Dtype> Analyze(IN cv::Mat& frame);
+    std::vector<Dtype> Analyze(const cv::Mat& frame);
     void ShowDetails();
+
+    bool setTaskStatus(TaskStatus_t status);
+    
     inline std::string getCurrentTaskName() { return config_.getTaskName(); }
-    void getCurrentTaskType();
+    inline TaskType_t getCurrentTaskType() { return static_cast<TaskType_t>(config_.getTaskType()); };
     void getCurrentCameraType();
     inline int getCurrentFrameWidth() { return config_.getFrameWidth(); }
     inline int getCurrentFrameHeight() { return config_.getFrameHeight(); }
     inline int getTaskStatus() { return config_.getTaskStatus(); }
-    inline void setTaskStatus(int taskstatus) { config_.setTaskStatus(taskstatus); }
+    
     inline void setFuncStatus(int funcstatus) { funcstatus_ = funcstatus; }
     inline int getFuncStatus() { return funcstatus_; }
-    
-    bool on = false;
-    
 
  private:
     CCamera *camera_;              // object for grabing frames into buffer.
     CAnalyzer<Dtype> *analyzer_;   // object for analyzing frames from buffer.
     CAlarm *alarmer_;              // object for generating alarm information.
     CConfig config_;               // configuration for the task object.
-    
+
     int funcstatus_;               // default value is TERMINAL state.
 };
 
