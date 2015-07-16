@@ -14,7 +14,7 @@ class CConfig {
  public:
     inline void setTaskName(const std::string &task_name) { task_name_ = task_name; }
     inline void setTaskType(const int &task_type) { task_type_ = task_type; }
-    inline void setTaskStatus(const std::string &task_status) { task_status_ = task_status; }
+    inline void setTaskStatus(const int &task_status) { task_status_ = task_status; }
     inline void setCameraType(const int &camera_type) { camera_type_ = camera_type; }
     inline void setFrameWidth(const int &width) { width_ = width; }
     inline void setFrameHeight(const int &height) { height_ = height; }
