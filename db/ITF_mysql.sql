@@ -37,7 +37,9 @@ CREATE TABLE Tasks (
     `task_name`         varchar(128),
     
     `task_type`         enum('DENSITY', 'SEGMENTATION' , 'TRACK') NOT NULL,
+    `task_status`       enum('START', 'STOP') DEFAULT 'STOP',
     `camera_type`       enum('HTTP', 'RTSP' , 'LOCAL', 'FILE') NOT NULL,
+    `camera_status`       enum('START', 'STOP') DEFAULT 'STOP',
 
     -- The unsigned range is 0 to 65535. 
     `width`             smallint unsigned NOT NULL,  
@@ -100,10 +102,10 @@ CREATE TABLE AlarmRecord (
 -- Insert Values
 INSERT INTO Groups VALUES ('mmlab');
 INSERT INTO Groups VALUES ('cuhk');
-INSERT INTO Tasks VALUES ('task_one', 'DENSITY', 'HTTP', 704, 576, 'mjpg/video.mjpg', 'data/', 'PMap/', 'ROI/', 'LM/', 'GT/', 'Alarm/', '010182_pers.csv', '010182_roi.csv', 'lm.csv', 'ON', 'ON', 'OFF', 'mmlab');
-INSERT INTO Tasks VALUES ('task_two', 'DENSITY', 'HTTP', 704, 576, 'mjpg/video.mjpg', '$(HOME)/ITFcs1.0/tasks/task_two/', 'PMap/', 'ROI/', 'LM/', 'GT/', 'Alarm/', 'pers.csv', 'roi.csv', 'lm.csv', 'OFF', 'OFF', 'ON', 'cuhk');
-INSERT INTO Tasks VALUES ('task_three', 'SEGMENTATION', 'HTTP', 704, 576, 'mjpg/video.mjpg', 'data/', 'PMap/', 'ROI/', 'LM/', 'GT/', 'Alarm/', 'pers.csv', 'roi.csv', 'lm.csv', 'OFF', 'OFF', 'ON', 'cuhk');
-INSERT INTO Tasks VALUES ('task_four', 'SEGMENTATION', 'FILE', 720, 576, '/path/to/200608.mp4', '$(HOME)/ITFcs1.0/tasks/task_four/', 'PMap/', 'ROI/', 'LM/', 'GT/', 'Alarm/', 'pers.csv', 'roi.csv', 'lm.csv', 'OFF', 'OFF', 'OFF', 'mmlab');
+INSERT INTO Tasks VALUES ('task_one', 'DENSITY', 'STOP', 'HTTP', 'STOP', 704, 576, 'mjpg/video.mjpg', 'data/', 'PMap/', 'ROI/', 'LM/', 'GT/', 'Alarm/', '010182_pers.csv', '010182_roi.csv', 'lm.csv', 'ON', 'ON', 'OFF', 'mmlab');
+INSERT INTO Tasks VALUES ('task_two', 'DENSITY', 'STOP', 'HTTP', 'STOP', 704, 576, 'mjpg/video.mjpg', '$(HOME)/ITFcs1.0/tasks/task_two/', 'PMap/', 'ROI/', 'LM/', 'GT/', 'Alarm/', 'pers.csv', 'roi.csv', 'lm.csv', 'OFF', 'OFF', 'ON', 'cuhk');
+INSERT INTO Tasks VALUES ('task_three', 'SEGMENTATION', 'STOP', 'HTTP', 'STOP', 704, 576, 'mjpg/video.mjpg', 'data/', 'PMap/', 'ROI/', 'LM/', 'GT/', 'Alarm/', 'pers.csv', 'roi.csv', 'lm.csv', 'OFF', 'OFF', 'ON', 'cuhk');
+INSERT INTO Tasks VALUES ('task_four', 'SEGMENTATION', 'STOP', 'FILE', 'STOP', 720, 576, '/path/to/200608.mp4', '$(HOME)/ITFcs1.0/tasks/task_four/', 'PMap/', 'ROI/', 'LM/', 'GT/', 'Alarm/', 'pers.csv', 'roi.csv', 'lm.csv', 'OFF', 'OFF', 'OFF', 'mmlab');
 INSERT INTO TaskDetail VALUES ('task_one', '137.189.35.204', 10182, 'root', 'xgwangpj');
 INSERT INTO TaskDetail VALUES ('task_two', '137.189.35.204', 10183, 'root', 'xgwangpj');
 INSERT INTO TaskDetail VALUES ('task_three', '137.189.35.204', 10184, 'root', 'xgwangpj');
