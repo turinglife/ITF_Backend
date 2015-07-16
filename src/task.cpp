@@ -7,7 +7,7 @@
 
 
 template <typename Dtype>
-CTask<Dtype>::CTask() : camera_(), analyzer_(), alarmer_(), config_() { }
+CTask<Dtype>::CTask() { }
 
 template <typename Dtype>
 CTask<Dtype>::~CTask() {
@@ -17,21 +17,22 @@ CTask<Dtype>::~CTask() {
 }
 
 template <typename Dtype>
-bool CTask<Dtype>::LoadTask(const std::string& task_name, const std::string& db_name) {
+bool CTask<Dtype>::LoadTask(const std::string& task_name) {
      /* Prepare DB Infomation*/
     const std::string server = "localhost";
     const std::string user = "itf";
     const std::string pass = "itf";
+    const std::string db_name = "ITF";
 
     CDbi db;
 
     if (!db.Connect(server, user, pass)) {
-        std::cout << "Fail" << std::endl;
+        std::cout << "Fail to connect mysql" << std::endl;
         return false;
     }
 
     if (!db.UseDB(db_name)) {
-        std::cout << "Fail" << std::endl;
+        std::cout << "Fail to use database" << std::endl;
         return false;
     }
 
@@ -70,13 +71,12 @@ bool CTask<Dtype>::LoadTask(const std::string& task_name, const std::string& db_
     }
 }
 
-
 template <typename Dtype>
 bool CTask<Dtype>::InitCapture() {
     // Instantiate a concrete camera.
     CameraType_t CameraType = static_cast<CameraType_t>(config_.getCameraType());
 
-    if (CameraType == REMOTE_CAMERA_HTTP) {
+    if (CameraType == HTTP) {
         // RemoteCameraHttp
         camera_ = new CRemoteCameraHttp(config_.getHost(), config_.getPort(), config_.getIPAddress(), config_.getUsername(), config_.getPassword());
         if (!camera_->Connect()) {
@@ -85,15 +85,15 @@ bool CTask<Dtype>::InitCapture() {
         }
         std::cout << getpid() << ": REMOTE_CAMERA_HTTP is initialized" << std::endl;
 
-    } else if (CameraType == REMOTE_CAMERA_RTSP) {
+    } else if (CameraType == RTSP) {
         // RemoteCameraRtsp
         std::cout << "To Be Continued" << std::endl;
         return false;
-    } else if (CameraType == LOCAL_CAMERA) {
+    } else if (CameraType == LOCAL) {
         // LocalCamera
         std::cout << "To Be Continued" << std::endl;
         return false;
-    } else if (CameraType == FILE_CAMERA) {
+    } else if (CameraType == FILE) {
         // FileCamera
         camera_ = new CFileCamera(config_.getIPAddress());
         if (!camera_->Connect()) {
@@ -171,18 +171,57 @@ void CTask<Dtype>::ShowDetails() {
 }
 
 template <typename Dtype>
-std::vector<Dtype> CTask<Dtype>::Analyze(cv::Mat& frame) {
-    vector<Dtype> feature;
+std::vector<Dtype> CTask<Dtype>::Analyze(const cv::Mat& frame) {
     // check if camera is initialized already
     if (analyzer_ == 0) {
-        std::cout << "The camera has not been initialized yet." << std::endl;
+        std::cerr << "The camera has not been initialized yet." << std::endl;
+        std::vector<Dtype> empty_vec;
+        return empty_vec;  // return empty vector if analyzer_ is not initialized
+    } else {
+        return analyzer_->Analyze(frame);
+    }
+}
 
-        return feature;
+template <typename Dtype>
+bool CTask<Dtype>::setTaskStatus(TaskStatus_t status) {
+    /* Prepare DB Infomation*/
+    const std::string server = "localhost";
+    const std::string user = "itf";
+    const std::string pass = "itf";
+    const std::string db_name = "ITF";
+
+    CDbi db;
+
+    std::cout << "\nConnect  ...  ";
+    if (!db.Connect(server, user, pass)) {
+        std::cout << "Fail" << std::endl;
+        return false;
+    } else {
+        std::cout << "OK" << std::endl;
     }
 
-    feature = analyzer_->Analyze(frame);
+     std::cout << "Select DB  ...  ";
+    if (!db.UseDB(db_name)) {
+        std::cout << "Fail" << std::endl;
+        return false;
+    } else {
+        std::cout << "OK" << std::endl;
+    }
 
-    return feature;
+    std::string str_status;
+    if (status == TaskStatus_t::START)
+        str_status = "START";
+    else
+        str_status = "STOP";
+
+    bool ok = db.RunSQL("UPDATE Tasks SET task_status='"+str_status+"' WHERE task_name='"+getCurrentTaskName()+"';");
+    if (!ok) {
+        std::cerr << "UPDATE DB ... Fail" << std::endl;
+        return false;
+    } else {
+        std::cout << "UPDATE DB ... OK" << std::endl;
+    }
+    return true;
 }
 
 INSTANTIATE_MYCLASS(CTask);
