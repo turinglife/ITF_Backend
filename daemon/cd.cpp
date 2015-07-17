@@ -57,14 +57,14 @@ int main(int argc, char* argv[]) {
         std::string action;
         comm.receive(action);
 
-        if (action.compare("capture") == 0) {
+        if (action.compare("start") == 0) {
             on = false;
             if (t_work.joinable())
                 t_work.join();
             on = true;
 
             t_work = std::thread(capture, 25);
-        } else if (action.compare("quit") == 0) {
+        } else if (action.compare("stop") == 0) {
             on = false;
             if (t_work.joinable())
                 t_work.join();
