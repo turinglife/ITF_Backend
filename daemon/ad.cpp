@@ -68,10 +68,10 @@ int main(int argc, char* argv[]) {
                     t_work.join();
                 break;
         } else {
-            std::cout << "No such command in ad!" << std::endl;
+            std::cerr << "No such command in ad!" << std::endl;
         }
     }
-
+    task.~CTask();
     std::cout << "ad is done" << std::endl;
     return 0;
 }
@@ -87,18 +87,19 @@ void work() {
     buffer.init(imgSize);
 
     while (task.getFuncStatus()) {
-        if (!buffer.fetch_src(frame))
+        if (!buffer.fetch_src(frame)) {
+            std::cerr << "ad: No Available Frame" << std::endl;
+            sleep(1);  // reduce useless while loop
             continue;
+        }
 
         vector<float> feature = task.Analyze(frame);
         cv::Mat output(rows, cols, CV_32F, feature.data());
 
-        if (task.getCurrentTaskType() == task.TaskType_t::DENSITY)
-        {
-            output *= 200.0f;
+        if (task.getCurrentTaskType() == task.TaskType_t::DENSITY) {
+            output *= 256.0f;
             // get sum here
-        } else if (task.getCurrentTaskType() == task.TaskType_t::SEGMENTATION)
-        {
+        } else if (task.getCurrentTaskType() == task.TaskType_t::SEGMENTATION) {
             /* code */
         }
         cv::imshow("ad_result", output);
