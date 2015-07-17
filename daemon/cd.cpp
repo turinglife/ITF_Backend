@@ -50,7 +50,7 @@ int main(int argc, char* argv[]) {
     CComm comm;
     comm.establish(socket_name);
 
-    std::thread t1;
+    std::thread t_work;
 
     std::cout << getpid() << ": cd is ready" << std::endl;
     while (true) {
@@ -58,46 +58,33 @@ int main(int argc, char* argv[]) {
         comm.receive(action);
 
         if (action.compare("capture") == 0) {
-            std::cout << "start capture" << std::endl;
-
             on = false;
-            if (t1.joinable())
-                t1.join();
+            if (t_work.joinable())
+                t_work.join();
             on = true;
 
-            t1 = std::thread(capture, 25);
-        }
-
-        if (action.compare("close") == 0) {
-            std::cout << "close()" << std::endl;
-
+            t_work = std::thread(capture, 25);
+        } else if (action.compare("quit") == 0) {
             on = false;
-        }
-
-        if (action.compare("quit") == 0) {
-            std::cout << "quit()" << std::endl;
-
-            on = false;
-            if (t1.joinable())
-                t1.join();
-
+            if (t_work.joinable())
+                t_work.join();
             break;
+        } else {
+            std::cerr << "No such command in cd!" << std::endl;
         }
     }
-
+    task.~CTask();
     std::cout << "cd is done" << std::endl;
     return 0;
 }
 
-
 void capture(int fps) {
-    cv::Mat ini_frame;
-    task.Capture(ini_frame);
-
-    int img_width = ini_frame.cols;
-    int img_height = ini_frame.rows;
-    int img_size = ini_frame.total() * ini_frame.elemSize();
-    CBuffer buffer(img_width, img_height, img_size, 50, 30, task.getCurrentTaskName());
+    int rows = task.getCurrentFrameHeight();
+    int cols = task.getCurrentFrameWidth();
+    cv::Mat frame(rows, cols, CV_8UC3);
+    int imgSize = frame.total() * frame.elemSize();
+    
+    CBuffer buffer(cols, rows, imgSize, 50, 30, task.getCurrentTaskName());
 
     while (on) {
         cv::Mat frame;
@@ -107,12 +94,11 @@ void capture(int fps) {
         }
 
         // the following two lines are just simulations to display video and might use usleep() instead.
+        // usleep(1000 * (1000 / fps));
         cv::imshow(task.getCurrentTaskName() + "_frame", frame);
         cv::waitKey(1000 / fps);
 
         if (!buffer.put_src(frame))
             continue;
-        
-        // usleep(1000 * (1000 / fps));
     }
 }
