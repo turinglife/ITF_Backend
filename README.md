@@ -1,4 +1,4 @@
-###Mult-Task Test on TITAN (Testing by Shenzhen Sensetime)
+###Multi-Task Test on TITAN (Testing by Shenzhen Sensetime)
 Dataset: 200608
 
 Note: The network is initialised for each task separately
