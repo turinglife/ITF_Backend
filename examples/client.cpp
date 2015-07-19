@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "dbi.hpp"
+#include "comm.hpp"
 
 bool action_open();
 bool action_socket();
@@ -35,21 +36,17 @@ int main(int argc, char *argv[]) {
 
     bool on = true;
     while (on) {
-        // suspend for one second
-        sleep(1);
-
-        std::cout << "Action: ";
+        std::cout << "\nAction: ";
         std::string action;
         std::cin >> action;
-
         on = stringToFuncMap[action]();
+        // suspend for one second
+        sleep(1);
     }
     return 0;
 }
 
 bool action_open() {
-    std::cout << "--- action_open() ---" << std::endl;
-
     std::cout << "Task Name: ";
     std::string task_name;
     std::cin >> task_name;
@@ -88,8 +85,6 @@ bool action_open() {
 }
 
 bool action_socket() {
-    std::cout << "--- action_socket() ---" << std::endl;
-
     std::cout << "Task_name: ";
     std::string task_name;
     std::cin >> task_name;
@@ -102,37 +97,19 @@ bool action_socket() {
     std::string operation;
     std::cin >> operation;
 
-    int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (sockfd < 0) {
-        perror("ERROR socket");
-        return false;
-    }
-
     std::string socket_path = daemon + "_" + task_name;
-
-    struct sockaddr_un td_addr;
-    td_addr.sun_family = AF_UNIX;
-    // strcpy(td_addr.sun_path, task_name.c_str());
-    snprintf(td_addr.sun_path, socket_path.length() + 1, "%s", socket_path.c_str());
-
-    if (connect(sockfd, (struct sockaddr *) &td_addr, sizeof(td_addr)) < 0) {
-        perror("ERROR connect");
-        return true;
+    
+    std::string received_msg;
+    if (!Client::SendTo(operation, socket_path, received_msg)) {
+        std::cerr << "Faile to send " << operation << " to " << daemon <<"-" << task_name << std::endl;    
     }
-
-    if (write(sockfd, operation.c_str(), operation.length() + 1) < 0) {
-        perror("ERROR write");
-        return false;
-    }
-
-    close(sockfd);
+    std::cout << "receive: " << received_msg << std::endl;
 
     return true;
 }
 
 bool action_quit() {
-    std::cout << "--- action_quit() ---" << std::endl;
-
+    std::cout << "Bye" << std::endl;
     return false;
 }
 

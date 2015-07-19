@@ -17,24 +17,25 @@
 
 #include "task.hpp"
 #include "comm.hpp"
-#include "SQLiteCpp/SQLiteCpp.h"
 #include "buffer.hpp"
 
 
-CTask<float> task;
+static CTask<float> task;
 
 void work();
 
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
 
-    CComm comm;
+    Server comm;
     std::string socket_path = "ad_" + task_name;
-    comm.establish(socket_path);
-
-    std::thread t_work;
+    if (!comm.Establish(socket_path)) {
+        std::cerr << "Fail to establish connection" << std::endl;
+        return -1;
+    }
 
     if (!task.LoadTask(task_name)) {
+        unlink(socket_path.c_str());
         std::cerr << "load task fail" << std::endl;
         std::cerr << "ad exit" << std::endl;
         return -1;
@@ -46,32 +47,41 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
-    std::cout << getpid() << ": ad is ready" << std::endl;
-    
+    std::thread t_work;
+
+    std::cout << "ad is ready" << std::endl;
+
     while (true) {
         std::string action;
-        comm.receive(action);
+        comm.Receive(action);
 
-        if (action.compare("start") == 0) {                                                // START
+        if (action.compare("start") == 0) {  // START
                 task.setFuncStatus(CTask<float>::TERMINATE);
                 if (t_work.joinable())
                     t_work.join();
-                
+
                 task.setFuncStatus(CTask<float>::RUNNING);
                 task.setTaskStatus(CTask<float>::START);
                 // Start analyze thread
                 t_work = std::thread(work);
-        } else if (action.compare("stop") == 0) {                                          // STOP
+                comm.Send("OK");
+        } else if (action.compare("stop") == 0) {  // STOP
                 task.setFuncStatus(CTask<float>::TERMINATE);
                 task.setTaskStatus(CTask<float>::STOP);
                 if (t_work.joinable())
                     t_work.join();
+                comm.Send("OK");
                 break;
         } else {
             std::cerr << "No such command in ad!" << std::endl;
+            comm.Send("NO");
         }
     }
     task.~CTask();
+
+    // only unlink after this process ends
+    unlink(socket_path.c_str());
+
     std::cout << "ad is done" << std::endl;
     return 0;
 }
@@ -79,7 +89,6 @@ int main(int argc, char* argv[]) {
 void work() {
     int rows = task.getCurrentFrameHeight();
     int cols = task.getCurrentFrameWidth();
-
     cv::Mat frame(rows, cols, CV_8UC3);
     int imgSize = frame.total() * frame.elemSize();
 
@@ -88,7 +97,7 @@ void work() {
 
     while (task.getFuncStatus()) {
         if (!buffer.fetch_src(frame)) {
-            std::cerr << "ad: No Available Frame" << std::endl;
+            std::cerr << "ad: No Available Frame for " << task.getCurrentTaskName() << std::endl;
             sleep(1);  // reduce useless while loop
             continue;
         }

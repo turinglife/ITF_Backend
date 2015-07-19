@@ -5,55 +5,90 @@
 
 #include "comm.hpp"
 
-
-CComm::~CComm() {
-    close(sockfd_);
-    unlink(socket_path_.c_str());
-}
-
-void CComm::establish(const std::string &socket_name) {
-    socket_path_ = socket_name;
-    // Create socket
-    sockfd_ = socket(AF_UNIX, SOCK_STREAM, 0);
-    if (sockfd_ < 0) {
+bool Server::Establish(const std::string& socket_path) {
+    // Create server socket
+    server_fd_ = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (server_fd_ < 0) {
         perror("ERROR socket");
-        return;
+        return false;
     }
 
-    struct sockaddr_un serv_addr;
-    serv_addr.sun_family = AF_UNIX;
-    // strcpy(serv_addr.sun_path, argv[1]);
-    snprintf(serv_addr.sun_path, socket_path_.length() + 1, "%s", socket_path_.c_str());
+    struct sockaddr_un server_addr;
+    server_addr.sun_family = AF_UNIX;
+    snprintf(server_addr.sun_path, socket_path.length() + 1, "%s", socket_path.c_str());
 
     // Bind socket
-    if (bind(sockfd_, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+    if (bind(server_fd_, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
         perror("ERROR bind");
-        return;
+        return false;
     }
 
     // Start listening
-    listen(sockfd_, 5);
+    listen(server_fd_, 5);
 
-    return;
+    return true;
 }
 
-void CComm::receive(std::string &action) {
-    struct sockaddr_un cli_addr;
-    socklen_t clilen = sizeof(cli_addr);
+bool Server::Receive(std::string& received_msg) {
+    struct sockaddr_un client_addr;
+    socklen_t clilen = sizeof(client_addr);
 
-    newsockfd_ = accept(sockfd_, (struct sockaddr *) &cli_addr, &clilen);
-    if (newsockfd_ < 0) {
+    client_fd_ = accept(server_fd_, (struct sockaddr *) &client_addr, &clilen);
+    if (client_fd_ < 0) {
         perror("ERROR accept");
-        return;
+        return false;
     }
 
     char message[256] = {0};
 
-    if (read(newsockfd_, message, 255) < 0) {
+    if (read(client_fd_, message, 255) < 0) {
         perror("ERROR read");
-        exit(1);
+        return false;
+    } else {
+        received_msg = std::string(message);
+        return true;
     }
+}
 
-    action = std::string(message);
-    close(newsockfd_);
+bool Server::Send(const std::string& message) {
+        if (send(client_fd_, message.c_str(), message.length() + 1, MSG_NOSIGNAL) < 0) {
+            perror("ERROR send");
+            return false;
+        } else {
+            close(client_fd_);
+            return true;
+        }
+}
+
+bool Client::SendTo(const std::string& message, const std::string& socket_path, std::string& received) {
+        // create a new client
+        int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+        if (sockfd < 0) {
+            perror("ERROR socket");
+            return false;
+        }
+
+        struct sockaddr_un server_addr;
+        server_addr.sun_family = AF_UNIX;
+        snprintf(server_addr.sun_path, socket_path.length() + 1, "%s", socket_path.c_str());
+
+        if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
+            perror("ERROR connect");
+            return false;
+        }
+
+        if (send(sockfd, message.c_str(), message.length() + 1, MSG_NOSIGNAL) < 0) {
+            perror("ERROR send");
+            return false;
+        }
+
+        char tmp_msg[256] = {0};
+        if (read(sockfd, tmp_msg, 255) <= 0) {
+            perror("ERROR read");
+        } else {
+            received = std::string(tmp_msg);
+        }
+
+        close(sockfd);
+        return true;
 }
