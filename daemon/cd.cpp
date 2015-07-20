@@ -20,42 +20,48 @@
 #include <thread>
 #include "comm.hpp"
 
-#include "SQLiteCpp/SQLiteCpp.h"
 #include "task.hpp"
 #include "buffer.hpp"
 
 
 static bool on = true;
-CTask<float> task;
+static CTask<float> task;
 
-void capture(int fps);
+void tCapture(int fps);
 
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
 
-    // Initialize a task object acccording to information retrieved from database.
+    Server comm;
+    std::string socket_path = "cd_" + task_name;
+    if (!comm.Establish(socket_path)) {
+        std::cerr << "Fail to establish connection" << std::endl;
+        std::cerr << "cd exit" << std::endl;
+        return -1;
+    }
+
+    // Initialize a task object
     if (!task.LoadTask(task_name)) {
-        std::cout << "load task fail" << std::endl;
+        unlink(socket_path.c_str());
+        std::cerr << "load task fail" << std::endl;
+        std::cerr << "cd exit" << std::endl;
         return -1;
     }
 
     if (!task.InitCapture()) {
-        std::cout << "init capture fail" << std::endl;
+        std::cerr << "init capture fail" << std::endl;
+        std::cerr << "cd exit" << std::endl;
         return -1;
     }
 
-    // Establish a new communication connection with other processes.
-    std::string socket_name = "cd_" + task_name;
-
-    CComm comm;
-    comm.establish(socket_name);
-
+    int fps = 30;  // we may consider to move fps to CTask;
     std::thread t_work;
 
-    std::cout << getpid() << ": cd is ready" << std::endl;
+    std::cout << "cd is ready" << std::endl;
+
     while (true) {
         std::string action;
-        comm.receive(action);
+        comm.Receive(action);
 
         if (action.compare("start") == 0) {
             on = false;
@@ -63,27 +69,35 @@ int main(int argc, char* argv[]) {
                 t_work.join();
             on = true;
 
-            t_work = std::thread(capture, 25);
+            t_work = std::thread(tCapture, fps);
+
+            comm.Send("OK");
         } else if (action.compare("stop") == 0) {
             on = false;
             if (t_work.joinable())
                 t_work.join();
+            comm.Send("OK");
             break;
         } else {
             std::cerr << "No such command in cd!" << std::endl;
+            comm.Send("NO");
         }
     }
     task.~CTask();
+
+    // only unlink after this process ends
+    unlink(socket_path.c_str());
+
     std::cout << "cd is done" << std::endl;
     return 0;
 }
 
-void capture(int fps) {
+void tCapture(int fps) {
     int rows = task.getCurrentFrameHeight();
     int cols = task.getCurrentFrameWidth();
     cv::Mat frame(rows, cols, CV_8UC3);
     int imgSize = frame.total() * frame.elemSize();
-    
+
     CBuffer buffer(cols, rows, imgSize, 50, 30, task.getCurrentTaskName());
 
     while (on) {
@@ -93,10 +107,9 @@ void capture(int fps) {
             break;
         }
 
-        // the following two lines are just simulations to display video and might use usleep() instead.
-        // usleep(1000 * (1000 / fps));
         cv::imshow(task.getCurrentTaskName() + "_frame", frame);
         cv::waitKey(1000 / fps);
+        // usleep(1000 * (1000 / fps));
 
         if (!buffer.put_src(frame))
             continue;
