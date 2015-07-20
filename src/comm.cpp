@@ -5,7 +5,7 @@
 
 #include "comm.hpp"
 
-bool Server::Establish(const std::string& socket_path) {
+bool CComm::Establish(const std::string& socket_path) {
     // Create server socket
     server_fd_ = socket(AF_UNIX, SOCK_STREAM, 0);
     if (server_fd_ < 0) {
@@ -29,7 +29,7 @@ bool Server::Establish(const std::string& socket_path) {
     return true;
 }
 
-bool Server::Receive(std::string& received_msg) {
+bool CComm::Receive(std::string& received_msg) {
     struct sockaddr_un client_addr;
     socklen_t clilen = sizeof(client_addr);
 
@@ -50,45 +50,45 @@ bool Server::Receive(std::string& received_msg) {
     }
 }
 
-bool Server::Send(const std::string& message) {
-        if (send(client_fd_, message.c_str(), message.length() + 1, MSG_NOSIGNAL) < 0) {
-            perror("ERROR send");
-            return false;
-        } else {
-            close(client_fd_);
-            return true;
-        }
+bool CComm::Reply(const std::string& message) {
+    if (send(client_fd_, message.c_str(), message.length() + 1, MSG_NOSIGNAL) < 0) {
+        perror("ERROR send");
+        return false;
+    } else {
+        close(client_fd_);
+        return true;
+    }
 }
 
-bool Client::SendTo(const std::string& message, const std::string& socket_path, std::string& received) {
-        // create a new client
-        int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
-        if (sockfd < 0) {
-            perror("ERROR socket");
-            return false;
-        }
+bool CComm::Send(const std::string& message, const std::string& socket_path, std::string& received) {
+    // create a new client
+    int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
+    if (sockfd < 0) {
+        perror("ERROR socket");
+        return false;
+    }
 
-        struct sockaddr_un server_addr;
-        server_addr.sun_family = AF_UNIX;
-        snprintf(server_addr.sun_path, socket_path.length() + 1, "%s", socket_path.c_str());
+    struct sockaddr_un server_addr;
+    server_addr.sun_family = AF_UNIX;
+    snprintf(server_addr.sun_path, socket_path.length() + 1, "%s", socket_path.c_str());
 
-        if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
-            perror("ERROR connect");
-            return false;
-        }
+    if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
+        perror("ERROR connect");
+        return false;
+    }
 
-        if (send(sockfd, message.c_str(), message.length() + 1, MSG_NOSIGNAL) < 0) {
-            perror("ERROR send");
-            return false;
-        }
+    if (send(sockfd, message.c_str(), message.length() + 1, MSG_NOSIGNAL) < 0) {
+        perror("ERROR send");
+        return false;
+    }
 
-        char tmp_msg[256] = {0};
-        if (read(sockfd, tmp_msg, 255) <= 0) {
-            perror("ERROR read");
-        } else {
-            received = std::string(tmp_msg);
-        }
+    char tmp_msg[256] = {0};
+    if (read(sockfd, tmp_msg, 255) <= 0) {
+        perror("ERROR read");
+    } else {
+        received = std::string(tmp_msg);
+    }
 
-        close(sockfd);
-        return true;
+    close(sockfd);
+    return true;
 }

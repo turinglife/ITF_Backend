@@ -32,9 +32,10 @@ void tCapture(int fps);
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
 
-    Server comm;
+    //Server comm;
+    CComm server;
     std::string socket_path = "cd_" + task_name;
-    if (!comm.Establish(socket_path)) {
+    if (!server.Establish(socket_path)) {
         std::cerr << "Fail to establish connection" << std::endl;
         std::cerr << "cd exit" << std::endl;
         return -1;
@@ -61,7 +62,7 @@ int main(int argc, char* argv[]) {
 
     while (true) {
         std::string action;
-        comm.Receive(action);
+        server.Receive(action);
 
         if (action.compare("start") == 0) {
             on = false;
@@ -71,19 +72,20 @@ int main(int argc, char* argv[]) {
 
             t_work = std::thread(tCapture, fps);
 
-            comm.Send("OK");
+            server.Reply("OK");
         } else if (action.compare("stop") == 0) {
             on = false;
             if (t_work.joinable())
                 t_work.join();
-            comm.Send("OK");
+            server.Reply("OK");
             break;
         } else {
             std::cerr << "No such command in cd!" << std::endl;
-            comm.Send("NO");
+            server.Reply("NO");
         }
     }
-    task.~CTask();
+    
+    //task.~CTask();
 
     // only unlink after this process ends
     unlink(socket_path.c_str());
@@ -102,16 +104,22 @@ void tCapture(int fps) {
 
     while (on) {
         cv::Mat frame;
+        
+        // Capture the frames from videos or cameras.
         task.Capture(frame);
         if (frame.empty()) {
             break;
         }
 
-        cv::imshow(task.getCurrentTaskName() + "_frame", frame);
-        cv::waitKey(1000 / fps);
-        // usleep(1000 * (1000 / fps));
-
+        // Put the captured frames to the buffer.
         if (!buffer.put_src(frame))
             continue;
+        
+        // Show frames when getting frames from buffer successfully.
+        if (buffer.fetch_frame(frame)) {
+            cv::imshow(task.getCurrentTaskName() + "_frame", frame);
+            cv::waitKey(1000 / fps);
+        }
+        
     }
 }

@@ -11,28 +11,28 @@
 #include <sys/un.h>
 #include <unistd.h>
 
-#include <string>
+#include "common.hpp"
 
-class Server {
- public:
+
+class CComm {
+public:
     bool Establish(const std::string& socket_path);
-
-    // Server::Receive() will block the process until one client tries to connect it and send a message
+    bool Connect();
+    
+    // Receive will block the process until one client tries to connect it and send a message
     bool Receive(std::string& received_msg);
-
-    // Server::Send() will send a messag back to the client, 
-    // and it must be called if the client process uses Clent::SendTo() to send messages
-    bool Send(const std::string& message);
-
- private:
-    int server_fd_ = 0;
-    int client_fd_ = 0;
-};
-
-class Client {
- public:
-    // Client::SendTo() will block the process until it receives from the server or the server closes socket
-    static bool SendTo(const std::string& message, const std::string& socket_path, std::string& received);
+    
+    // Reply will send a messag back to the client, 
+    // and it must be called if the client process uses Clent::Send() to send messages
+    bool Reply(const std::string& message);
+    
+    // Send will block the process until it receives from the server or the server closes socket
+    bool Send(const std::string& message, const std::string& socket_path, std::string& received);
+    
+private:
+    int server_fd_;
+    int client_fd_;
+    
 };
 
 

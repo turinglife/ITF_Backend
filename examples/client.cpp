@@ -100,7 +100,9 @@ bool action_socket() {
     std::string socket_path = daemon + "_" + task_name;
     
     std::string received_msg;
-    if (!Client::SendTo(operation, socket_path, received_msg)) {
+    CComm client;
+    
+    if (!client.Send(operation, socket_path, received_msg)) {
         std::cerr << "Faile to send " << operation << " to " << daemon <<"-" << task_name << std::endl;    
     }
     std::cout << "receive: " << received_msg << std::endl;

@@ -27,9 +27,10 @@ void work();
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
 
-    Server comm;
+    //Server comm;
+    CComm server;
     std::string socket_path = "ad_" + task_name;
-    if (!comm.Establish(socket_path)) {
+    if (!server.Establish(socket_path)) {
         std::cerr << "Fail to establish connection" << std::endl;
         return -1;
     }
@@ -53,7 +54,7 @@ int main(int argc, char* argv[]) {
 
     while (true) {
         std::string action;
-        comm.Receive(action);
+        server.Receive(action);
 
         if (action.compare("start") == 0) {  // START
                 task.setFuncStatus(CTask<float>::TERMINATE);
@@ -64,21 +65,21 @@ int main(int argc, char* argv[]) {
                 task.setTaskStatus(CTask<float>::START);
                 // Start analyze thread
                 t_work = std::thread(work);
-                comm.Send("OK");
+                server.Reply("OK");
         } else if (action.compare("stop") == 0) {  // STOP
                 task.setFuncStatus(CTask<float>::TERMINATE);
                 task.setTaskStatus(CTask<float>::STOP);
                 if (t_work.joinable())
                     t_work.join();
-                comm.Send("OK");
+                server.Reply("OK");
                 break;
         } else {
             std::cerr << "No such command in ad!" << std::endl;
-            comm.Send("NO");
+            server.Reply("NO");
         }
     }
-    task.~CTask();
-
+    
+    
     // only unlink after this process ends
     unlink(socket_path.c_str());
 
