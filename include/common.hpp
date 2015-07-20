@@ -26,8 +26,7 @@
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 
-#include "SQLiteCpp.h"
-
+#include <glog/logging.h>
 
 #define IN        // Input parameters
 #define OUT       // Output parameters

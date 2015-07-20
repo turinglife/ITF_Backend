@@ -30,7 +30,13 @@ static CTask<float> task;
 void tCapture(int fps);
 
 int main(int argc, char* argv[]) {
+    // Initialize Google's logging library.
+     ::google::InitGoogleLogging(argv[0]);
+     // Print output to stderr (while still logging).
+    FLAGS_alsologtostderr = 1;
+
     std::string task_name(argv[1]);
+    CHECK(!task_name.empty()) << "task_name cannot be empty";
 
     Server comm;
     std::string socket_path = "cd_" + task_name;
@@ -59,7 +65,7 @@ int main(int argc, char* argv[]) {
     int fps = 30;  // we may consider to move fps to CTask;
     std::thread t_work;
 
-    std::cout << "cd is ready" << std::endl;
+    LOG(INFO) << "cd is ready";
 
     while (true) {
         std::string action;
