@@ -23,9 +23,9 @@ class CDPAnalyzerDensity: public CDPAnalyzer<Dtype> {
     std::vector<Dtype> Analyze(IN cv::Mat frame);
 
  protected:
-    bool InitNet();
-
     itf::IExtracter *iextracter_;
+    std::string pmap_path_;
+    std::string roi_path_;
 };
 
 

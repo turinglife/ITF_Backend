@@ -17,18 +17,11 @@
 template <typename Dtype>
 class CAnalyzer {
  public:
-    CAnalyzer(const std::string &pmap_path, const std::string &roi_path, const int &framewidth, const int &frameheight);
-    virtual ~CAnalyzer();
+    // Make destructor virtual if  the class has virtual methods
+    virtual ~CAnalyzer() {};
+
     virtual std::vector<Dtype> Analyze(IN cv::Mat frame) = 0;
     virtual bool Init() = 0;
-
- protected:
-    std::string buffer_id_;  // Buffer unique id for communicating with other processes.
-    int framewidth_ = 0;
-    int frameheight_ = 0;
-    std::string pers_path_;
-    std::string roi_path_;
 };
-
 
 #endif  // ITF_ANALYZER_H

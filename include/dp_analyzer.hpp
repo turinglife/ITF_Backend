@@ -19,29 +19,13 @@
 //
 template <typename Dtype>
 class CDPAnalyzer : public CAnalyzer<Dtype> {
-public:
+ public:
+    CDPAnalyzer();
+    CDPAnalyzer(int framewidth, int frameheight);
 
-    CDPAnalyzer(const std::string &pmap_path, const std::string &roi_path, const int &framewidth, const int &frameheight) : CAnalyzer<Dtype>(pmap_path, roi_path, framewidth, frameheight) {}
-    virtual ~CDPAnalyzer();
-    
-    //virtual std::vector<Dtype> Analyze(IN cv::Mat& frame) = 0;
-    
-    //virtual int Init() = 0;
-    //virtual int Analyze() = 0;
-
-protected:
-    
-    //bool InitNet();
-    
-    //std::string protocol_;
-    //std::string host_;
-    //unsigned int port_ = 0;
-    //std::string path_;
-    //std::string username_;
-    //std::string password_;     
-    
-
-
+ protected:
+    int framewidth_ = 0;
+    int frameheight_ = 0;
 };
 
 

@@ -16,15 +16,13 @@
 template <typename Dtype>
 class CDPAnalyzerSegmentation : public CDPAnalyzer<Dtype> {
  public:
-    CDPAnalyzerSegmentation(const std::string &pmap_path, const std::string &roi_path, const int &framewidth, const int &frameheight);
+    CDPAnalyzerSegmentation();
     ~CDPAnalyzerSegmentation();
     
     bool Init();                                      
     std::vector<Dtype> Analyze(IN cv::Mat frame);
 
- protected:
-    bool InitNet();
-
+ private:
     itf::ISegmenter *isegmenter_;
 };
 

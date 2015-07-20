@@ -73,72 +73,50 @@ bool CTask<Dtype>::LoadTask(const std::string& task_name) {
 
 template <typename Dtype>
 bool CTask<Dtype>::InitCapture() {
+    // camera_ cannot be initialzed twice or deleted if it is alreaday initialized
+    if (camera_ != 0) {
+        std::cerr << "Camera is already initialized" << std::endl;
+        return false;
+    }
     // Instantiate a concrete camera.
     CameraType_t CameraType = static_cast<CameraType_t>(config_.getCameraType());
 
     if (CameraType == HTTP) {
         // RemoteCameraHttp
         camera_ = new CRemoteCameraHttp(config_.getHost(), config_.getPort(), config_.getIPAddress(), config_.getUsername(), config_.getPassword());
-        if (!camera_->Connect()) {
-            std::cout << "Camera Connect Fail" << std::endl;
-            return false;
-        }
-        std::cout << getpid() << ": REMOTE_CAMERA_HTTP is initialized" << std::endl;
-
-    } else if (CameraType == RTSP) {
-        // RemoteCameraRtsp
-        std::cout << "To Be Continued" << std::endl;
-        return false;
-    } else if (CameraType == LOCAL) {
-        // LocalCamera
-        std::cout << "To Be Continued" << std::endl;
-        return false;
     } else if (CameraType == FILE) {
         // FileCamera
         camera_ = new CFileCamera(config_.getIPAddress());
-        if (!camera_->Connect()) {
-            std::cout << "Camera Connect Fail" << std::endl;
-            return false;
-        }
-
-        std::cout << getpid() << ": FILE_CAMERA is initialized" << std::endl;
     } else {
         // not supporting.
         std::cout << "To Be Continued" << std::endl;
-
         return false;
     }
-    return true;
+    return camera_->Connect();
 }
 
 template <typename Dtype>
 bool CTask<Dtype>::InitAnalyzer() {
+    // analyzer_ cannot be initialzed twice or deleted if it is alreaday initialized
+    if (analyzer_ != 0) {
+        std::cerr << "Analyer is alrady initialized" << std::endl;
+        return false;
+    }
     // Instantiate a concrete analyzer.
     FunType_t FunType = static_cast<FunType_t>(config_.getTaskType());
 
     if (FunType == COUNT) {
         // Instantiate Counting analyzer
         analyzer_ = new CDPAnalyzerDensity<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight());
-
-        std::cout << getpid() << ": CDPAnalyzerDensity is initialized" << std::endl;
-
-        analyzer_->Init();
     } else if (FunType == SEGMENT) {
         // Segmentation
-        // Note: All parameters in constructor of CDPAnalyzerSegmentation is no needed
-        analyzer_ = new CDPAnalyzerSegmentation<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight());
-
-        std::cout << getpid() << ": CDPAnalyzerSegmentation is initialized" << std::endl;
-
-        analyzer_->Init();
+        analyzer_ = new CDPAnalyzerSegmentation<Dtype>();
     } else {
         // not supporting.
         std::cout << "To Be Continued" << std::endl;
-
         return false;
     }
-
-    return true;
+    return analyzer_->Init();
 }
 
 template <typename Dtype>

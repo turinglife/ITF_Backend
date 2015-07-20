@@ -45,6 +45,8 @@ int main(int argc, char* argv[]) {
         std::cerr << "init analyzer fail" << std::endl;
         std::cerr << "ad exit" << std::endl;
         return -1;
+    } else {
+        std::cout << "Analyzer is initialized" << std::endl;
     }
 
     std::thread t_work;

@@ -3,29 +3,20 @@
 // Copyright (C) 2015-2018 MMLab, EE, The Chinese University of HongKong
 //
 
-
 #include "dp_analyzer_density.hpp"
 
 
-
 template <typename Dtype>
-CDPAnalyzerDensity<Dtype>::CDPAnalyzerDensity(const std::string &pmap_path, const std::string &roi_path, const int &framewidth, const int &frameheight) :
-                    CDPAnalyzer<Dtype>(pmap_path, roi_path, framewidth, frameheight) { }
+CDPAnalyzerDensity<Dtype>::CDPAnalyzerDensity(const std::string &pmap_path, const std::string &roi_path, const int &framewidth, const int &frameheight) : CDPAnalyzer<Dtype>(framewidth, frameheight) {
+    pmap_path_ = pmap_path;
+    roi_path_ = roi_path;
+}
 
 template <typename Dtype>
 CDPAnalyzerDensity<Dtype>::~CDPAnalyzerDensity() { delete iextracter_; }
 
 template <typename Dtype>
 bool CDPAnalyzerDensity<Dtype>::Init() {
-    if (!InitNet()) {
-        std::cout << "Density Analyzer init failed! " << std::endl;
-        return false;
-    }
-    return true;
-}
-
-template <typename Dtype>
-bool CDPAnalyzerDensity<Dtype>::InitNet() {
     cv::Mat pmap;
     // Setup Extracter
     itf::ExtracterParameter ep;
@@ -41,8 +32,8 @@ bool CDPAnalyzerDensity<Dtype>::InitNet() {
     iextracter_->SetExtracterParameters(ep);
 
     iextracter_->SetImagesDim(this->frameheight_, this->framewidth_);
-    iextracter_->LoadPerspectiveMap(this->pers_path_, &pmap);
-    iextracter_->LoadROI(this->roi_path_);
+    iextracter_->LoadPerspectiveMap(pmap_path_, &pmap);
+    iextracter_->LoadROI(roi_path_);
 
     return true;
 }
@@ -56,7 +47,6 @@ std::vector<Dtype> CDPAnalyzerDensity<Dtype>::Analyze(IN cv::Mat frame) {
 
     return feature;
 }
-
 
 
 INSTANTIATE_MYCLASS(CDPAnalyzerDensity);

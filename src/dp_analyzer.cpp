@@ -7,13 +7,14 @@
 #include "dp_analyzer.hpp"
 
 
+template <typename Dtype>
+CDPAnalyzer<Dtype>::CDPAnalyzer() { }
 
 template <typename Dtype>
-CDPAnalyzer<Dtype>::~CDPAnalyzer()
-{
-
+CDPAnalyzer<Dtype>::CDPAnalyzer(int framewidth, int frameheight) {
+    framewidth_ = framewidth;
+    frameheight_ = frameheight;
 }
-
 
 
 INSTANTIATE_MYCLASS(CDPAnalyzer);

@@ -52,6 +52,8 @@ int main(int argc, char* argv[]) {
         std::cerr << "init capture fail" << std::endl;
         std::cerr << "cd exit" << std::endl;
         return -1;
+    } else {
+        std::cout << "Camera is initialized" << std::endl;
     }
 
     int fps = 30;  // we may consider to move fps to CTask;
