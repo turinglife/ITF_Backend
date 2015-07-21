@@ -25,6 +25,7 @@
 #include "dp_analyzer.hpp"
 #include "analyzer.hpp"
 
+#include "buffer.hpp"
 #include "alarm.hpp"
 #include "dbi.hpp"
 #include "config.hpp"
@@ -51,40 +52,44 @@ class CTask {
         STOP = 0,
         START
     };
-    enum FuncStatus_t {      // The state of specific function affiliated to the current task
+    enum Status_t {      // The state of specific function affiliated to the current task
         TERMINATE = 0,
         RUNNING
     };
 
-    CTask();
-    ~CTask();
-
     bool LoadTask(const std::string& task_name);
+    
     bool InitCapture();
-    int Capture(OUT cv::Mat& frame);
     bool InitAnalyzer();
-    std::vector<Dtype> Analyze(const cv::Mat& frame);
+    
+    int Capture(int fps);
+    int Analyze();
+    
     void ShowDetails();
 
     bool setTaskStatus(TaskStatus_t status);
-    
-    inline std::string getCurrentTaskName() { return config_.getTaskName(); }
-    inline TaskType_t getCurrentTaskType() { return static_cast<TaskType_t>(config_.getTaskType()); };
+
     void getCurrentCameraType();
+
+    inline std::string getCurrentTaskName() { return config_.getTaskName(); }
     inline int getCurrentFrameWidth() { return config_.getFrameWidth(); }
     inline int getCurrentFrameHeight() { return config_.getFrameHeight(); }
+    inline TaskType_t getCurrentTaskType() { return static_cast<TaskType_t>(config_.getTaskType()); };
     inline int getTaskStatus() { return config_.getTaskStatus(); }
     
     inline void setFuncStatus(int funcstatus) { funcstatus_ = funcstatus; }
     inline int getFuncStatus() { return funcstatus_; }
+    inline void setCameraStatus(int camerastatus) { camerastatus_ = camerastatus; }
+    inline int getCameraStatus() { return camerastatus_; }
 
  private:
-    CCamera *camera_;              // object for grabing frames into buffer.
-    CAnalyzer<Dtype> *analyzer_;   // object for analyzing frames from buffer.
+    std::unique_ptr<CCamera> camera_;  // object for grabing frames into buffer.
+    std::unique_ptr<CAnalyzer<Dtype> > analyzer_;  // object for analyzing frames from buffer.
     CAlarm *alarmer_;              // object for generating alarm information.
     CConfig config_;               // configuration for the task object.
 
     int funcstatus_;               // default value is TERMINAL state.
+    int camerastatus_;
 };
 
 #endif  // ITF_TASK_H

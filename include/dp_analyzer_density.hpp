@@ -17,13 +17,13 @@ template <typename Dtype>
 class CDPAnalyzerDensity: public CDPAnalyzer<Dtype> {
  public:
     CDPAnalyzerDensity(const std::string &pmap_path, const std::string &roi_path, const int &framewidth, const int &frameheight);
-    ~CDPAnalyzerDensity();
     
     bool Init();    
     std::vector<Dtype> Analyze(IN cv::Mat frame);
 
  protected:
-    itf::IExtracter *iextracter_;
+    // itf::IExtracter *iextracter_;
+    std::unique_ptr<itf::IExtracter> iextracter_;
     std::string pmap_path_;
     std::string roi_path_;
 };

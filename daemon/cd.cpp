@@ -21,13 +21,7 @@
 #include "comm.hpp"
 
 #include "task.hpp"
-#include "buffer.hpp"
 
-
-static bool on = true;
-static CTask<float> task;
-
-void tCapture(int fps);
 
 int main(int argc, char* argv[]) {
     // Initialize Google's logging library.
@@ -46,6 +40,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    CTask<float> task;
     // Initialize a task object
     if (!task.LoadTask(task_name)) {
         unlink(socket_path.c_str());
@@ -72,16 +67,15 @@ int main(int argc, char* argv[]) {
         comm.Receive(action);
 
         if (action.compare("start") == 0) {
-            on = false;
+            task.setCameraStatus(CTask<float>::TERMINATE);
             if (t_work.joinable())
                 t_work.join();
-            on = true;
-
-            t_work = std::thread(tCapture, fps);
+            task.setCameraStatus(CTask<float>::RUNNING);
+            t_work = std::thread(&CTask<float>::Capture, &task, fps);
 
             comm.Send("OK");
         } else if (action.compare("stop") == 0) {
-            on = false;
+            task.setCameraStatus(CTask<float>::TERMINATE);
             if (t_work.joinable())
                 t_work.join();
             comm.Send("OK");
@@ -91,35 +85,10 @@ int main(int argc, char* argv[]) {
             comm.Send("NO");
         }
     }
-    task.~CTask();
 
     // only unlink after this process ends
     unlink(socket_path.c_str());
 
     std::cout << "cd is done" << std::endl;
     return 0;
-}
-
-void tCapture(int fps) {
-    int rows = task.getCurrentFrameHeight();
-    int cols = task.getCurrentFrameWidth();
-    cv::Mat frame(rows, cols, CV_8UC3);
-    int imgSize = frame.total() * frame.elemSize();
-
-    CBuffer buffer(cols, rows, imgSize, 50, 30, task.getCurrentTaskName());
-
-    while (on) {
-        cv::Mat frame;
-        task.Capture(frame);
-        if (frame.empty()) {
-            break;
-        }
-
-        cv::imshow(task.getCurrentTaskName() + "_frame", frame);
-        cv::waitKey(1000 / fps);
-        // usleep(1000 * (1000 / fps));
-
-        if (!buffer.put_src(frame))
-            continue;
-    }
 }

@@ -13,9 +13,6 @@ CDPAnalyzerDensity<Dtype>::CDPAnalyzerDensity(const std::string &pmap_path, cons
 }
 
 template <typename Dtype>
-CDPAnalyzerDensity<Dtype>::~CDPAnalyzerDensity() { delete iextracter_; }
-
-template <typename Dtype>
 bool CDPAnalyzerDensity<Dtype>::Init() {
     cv::Mat pmap;
     // Setup Extracter
@@ -28,7 +25,7 @@ bool CDPAnalyzerDensity<Dtype>::Init() {
 
     // Factory instantiates an object of the specific type of extracter
     itf::CExtracterFactory ef;
-    iextracter_ = ef.SpawnExtracter(itf::Density);
+    iextracter_.reset(ef.SpawnExtracter(itf::Density));
     iextracter_->SetExtracterParameters(ep);
 
     iextracter_->SetImagesDim(this->frameheight_, this->framewidth_);
