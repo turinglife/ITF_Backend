@@ -9,7 +9,7 @@
 #include "camera.hpp"
 
 class CFileCamera : public CCamera {
-public:
+ public:
     CFileCamera(const std::string& filename);
     ~CFileCamera();
 
@@ -17,9 +17,8 @@ public:
     int Disconnect();
     int Capture(cv::Mat& output);
 
-private:
+ private:
     std::string filename_;
-
 };
 
-#endif // ITF_FC_H
+#endif  // ITF_FC_H

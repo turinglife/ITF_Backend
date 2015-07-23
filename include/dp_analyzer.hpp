@@ -6,13 +6,10 @@
 #ifndef ITF_CDPANALYZER_H
 #define ITF_CDPANALYZER_H
 
-
-#include "common.hpp"
-#include "analyzer.hpp"
-
-#include <itf/extracters/extracter_factory.hpp>
-#include <itf/segmenters/segmenter_factory.hpp>
 #include <itf/util/Util.hpp>
+
+#include "analyzer.hpp"
+#include "common.hpp"
 
 //
 // Class representing 'Deep Learning-based' analyzer.
@@ -29,4 +26,4 @@ class CDPAnalyzer : public CAnalyzer<Dtype> {
 };
 
 
-#endif // ITF_CDPANALYZER_H
+#endif  // ITF_CDPANALYZER_H

@@ -7,6 +7,8 @@
 #define ITF_CDPANALYZERDENSITY_H
 
 
+#include <itf/extracters/extracter_factory.hpp>
+
 #include "common.hpp"
 #include "dp_analyzer.hpp"
 
@@ -16,17 +18,17 @@
 template <typename Dtype>
 class CDPAnalyzerDensity: public CDPAnalyzer<Dtype> {
  public:
-    CDPAnalyzerDensity(const std::string &pmap_path, const std::string &roi_path, const int &framewidth, const int &frameheight);
-    
-    bool Init();    
+    CDPAnalyzerDensity(const std::string &pmap_path, const std::string &roi_path,
+        const int &framewidth, const int &frameheight);
+
+    bool Init();
     std::vector<Dtype> Analyze(IN cv::Mat frame);
 
  protected:
-    // itf::IExtracter *iextracter_;
     std::unique_ptr<itf::IExtracter> iextracter_;
     std::string pmap_path_;
     std::string roi_path_;
 };
 
 
-#endif // ITF_CDPANALYZERDENSITY_H
+#endif  // ITF_CDPANALYZERDENSITY_H

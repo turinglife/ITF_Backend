@@ -5,13 +5,6 @@
 
 #include "dp_analyzer_segmentation.hpp"
 
-
-template <typename Dtype>
-CDPAnalyzerSegmentation<Dtype>::CDPAnalyzerSegmentation() { }
-
-template <typename Dtype>
-CDPAnalyzerSegmentation<Dtype>::~CDPAnalyzerSegmentation() { delete isegmenter_; }
-
 template <typename Dtype>
 bool CDPAnalyzerSegmentation<Dtype>::Init() {
     // Setup Extracter
@@ -24,7 +17,7 @@ bool CDPAnalyzerSegmentation<Dtype>::Init() {
     }
 
     itf::CSegmenterFactory sf;
-    isegmenter_ = sf.SpawnSegmenter(itf::FCNN);
+    isegmenter_.reset(sf.SpawnSegmenter(itf::FCNN));
 
     isegmenter_->SetParameters(sp);
 
