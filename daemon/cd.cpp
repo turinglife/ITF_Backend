@@ -21,16 +21,16 @@
 #include "comm.hpp"
 
 #include "task.hpp"
-#include "buffer.hpp"
 
-
-static bool on = true;
-static CTask<float> task;
-
-void tCapture(int fps);
 
 int main(int argc, char* argv[]) {
+    // Initialize Google's logging library.
+     ::google::InitGoogleLogging(argv[0]);
+     // Print output to stderr (while still logging).
+    FLAGS_alsologtostderr = 1;
+
     std::string task_name(argv[1]);
+    CHECK(!task_name.empty()) << "task_name cannot be empty";
 
     //Server comm;
     CComm server;
@@ -41,6 +41,7 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 
+    CTask<float> task;
     // Initialize a task object
     if (!task.LoadTask(task_name)) {
         unlink(socket_path.c_str());
@@ -53,28 +54,29 @@ int main(int argc, char* argv[]) {
         std::cerr << "init capture fail" << std::endl;
         std::cerr << "cd exit" << std::endl;
         return -1;
+    } else {
+        std::cout << "Camera is initialized" << std::endl;
     }
 
     int fps = 30;  // we may consider to move fps to CTask;
     std::thread t_work;
 
-    std::cout << "cd is ready" << std::endl;
+    LOG(INFO) << "cd is ready";
 
     while (true) {
         std::string action;
         server.Receive(action);
 
         if (action.compare("start") == 0) {
-            on = false;
+            task.setCameraStatus(CTask<float>::TERMINATE);
             if (t_work.joinable())
                 t_work.join();
-            on = true;
-
-            t_work = std::thread(tCapture, fps);
+            task.setCameraStatus(CTask<float>::RUNNING);
+            t_work = std::thread(&CTask<float>::Capture, &task, fps);
 
             server.Reply("OK");
         } else if (action.compare("stop") == 0) {
-            on = false;
+            task.setCameraStatus(CTask<float>::TERMINATE);
             if (t_work.joinable())
                 t_work.join();
             server.Reply("OK");
@@ -84,8 +86,11 @@ int main(int argc, char* argv[]) {
             server.Reply("NO");
         }
     }
+<<<<<<< HEAD
     
     //task.~CTask();
+=======
+>>>>>>> d17d2db9e3cb9c0f114db78d45db1b00ee5adab6
 
     // only unlink after this process ends
     unlink(socket_path.c_str());
@@ -93,6 +98,7 @@ int main(int argc, char* argv[]) {
     std::cout << "cd is done" << std::endl;
     return 0;
 }
+<<<<<<< HEAD
 
 void tCapture(int fps) {
     int rows = task.getCurrentFrameHeight();
@@ -123,3 +129,5 @@ void tCapture(int fps) {
         
     }
 }
+=======
+>>>>>>> d17d2db9e3cb9c0f114db78d45db1b00ee5adab6

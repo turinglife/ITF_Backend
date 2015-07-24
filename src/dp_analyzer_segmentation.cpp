@@ -3,29 +3,10 @@
 // Copyright (C) 2015-2018 MMLab, EE, The Chinese University of HongKong
 //
 
-
 #include "dp_analyzer_segmentation.hpp"
-
-
-
-template <typename Dtype>
-CDPAnalyzerSegmentation<Dtype>::CDPAnalyzerSegmentation(const std::string &pmap_path, const std::string &roi_path, const int &framewidth, const int &frameheight) :
-                                CDPAnalyzer<Dtype>(pmap_path, roi_path, framewidth, frameheight) { }
-
-template <typename Dtype>
-CDPAnalyzerSegmentation<Dtype>::~CDPAnalyzerSegmentation() { delete isegmenter_; }
 
 template <typename Dtype>
 bool CDPAnalyzerSegmentation<Dtype>::Init() {
-    if (!InitNet()) {
-        std::cout << "Segmenter Analyzer init failed! " << std::endl;
-        return false;
-    }
-    return true;
-}
-
-template <typename Dtype>
-bool CDPAnalyzerSegmentation<Dtype>::InitNet() {
     // Setup Extracter
     itf::SegmenterParameter sp;
 
@@ -36,7 +17,7 @@ bool CDPAnalyzerSegmentation<Dtype>::InitNet() {
     }
 
     itf::CSegmenterFactory sf;
-    isegmenter_ = sf.SpawnSegmenter(itf::FCNN);
+    isegmenter_.reset(sf.SpawnSegmenter(itf::FCNN));
 
     isegmenter_->SetParameters(sp);
 

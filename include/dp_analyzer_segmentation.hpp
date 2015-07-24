@@ -7,6 +7,8 @@
 #define ITF_CDPANALYZERSEGMENTATION_H
 
 
+#include <itf/segmenters/segmenter_factory.hpp>
+
 #include "common.hpp"
 #include "dp_analyzer.hpp"
 
@@ -16,17 +18,12 @@
 template <typename Dtype>
 class CDPAnalyzerSegmentation : public CDPAnalyzer<Dtype> {
  public:
-    CDPAnalyzerSegmentation(const std::string &pmap_path, const std::string &roi_path, const int &framewidth, const int &frameheight);
-    ~CDPAnalyzerSegmentation();
-    
-    bool Init();                                      
+    bool Init();
     std::vector<Dtype> Analyze(IN cv::Mat frame);
 
- protected:
-    bool InitNet();
-
-    itf::ISegmenter *isegmenter_;
+ private:
+    std::unique_ptr<itf::ISegmenter> isegmenter_;
 };
 
 
-#endif // ITF_CDPANALYZERSEGMENTATION_H
+#endif  // ITF_CDPANALYZERSEGMENTATION_H
