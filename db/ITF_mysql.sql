@@ -29,7 +29,6 @@ USE `ITF`;
 
 CREATE TABLE Groups (
     `group_name`        varchar(128),
-
     PRIMARY KEY (`group_name`)
 ) /*! ENGINE=InnoDB */;
 
@@ -38,62 +37,79 @@ CREATE TABLE Tasks (
     
     `task_type`         enum('DENSITY', 'SEGMENTATION' , 'TRACK') NOT NULL,
     `task_status`       enum('START', 'STOP') DEFAULT 'STOP',
+
     `camera_type`       enum('HTTP', 'RTSP' , 'LOCAL', 'FILE') NOT NULL,
     `camera_status`       enum('START', 'STOP') DEFAULT 'STOP',
 
+    `task_path`         varchar(128) NOT NULL,
+    `alarm_switch`      enum('ON', 'OFF') DEFAULT 'OFF',
+    `report_switch`     enum('ON', 'OFF') DEFAULT 'OFF',
+
+    `group_name`        varchar(128) NOT NULL,
+
+    PRIMARY KEY (`task_name`),
+    FOREIGN KEY(`group_name`) REFERENCES Groups(`group_name`) ON DELETE CASCADE ON UPDATE CASCADE
+) /*! ENGINE=InnoDB */;
+
+CREATE TABLE Cameras (
+    `camera_name`   varchar(128),
     -- The unsigned range is 0 to 65535. 
     `width`             smallint unsigned NOT NULL,  
     `height`            smallint unsigned NOT NULL,
 
-    `address`           varchar(128) NOT NULL,
+    `address`               varchar(128) NOT NULL,
+    `host`                      varchar(128),
+    `port`                      smallint unsigned,
+    `username`          varchar(128),
+    `password`          varchar(128),
 
-    `task_path`         varchar(128) NOT NULL,
-
-    `pers_dir`          varchar(32) NOT NULL,
-    `roi_dir`           varchar(32) NOT NULL,
-    `lm_dir`            varchar(32) NOT NULL,
-    `gt_dir`            varchar(32) NOT NULL,
-    `alarm_dir`         varchar(32) NOT NULL,
-
-    `pers_file`         varchar(128) NOT NULL,
-    `roi_file`          varchar(128) NOT NULL,
-    `lm_file`           varchar(128) NOT NULL,
-
-    `alarm_switch`      enum('ON', 'OFF') DEFAULT 'OFF',
-    `report_switch`     enum('ON', 'OFF') DEFAULT 'OFF',
-    `lm_switch`         enum('ON', 'OFF') DEFAULT 'OFF',
-
-    `group_name`        varchar(128) NOT NULL,
-
-    PRIMARY KEY(`task_name`),
-    FOREIGN KEY(`group_name`) REFERENCES Groups(`group_name`) ON DELETE CASCADE ON UPDATE CASCADE
+    PRIMARY KEY (`camera_name`)
 ) /*! ENGINE=InnoDB */;
 
-CREATE TABLE TaskDetail (
+CREATE TABLE Task_Camera (
+    `task_name`         varchar(128) NOT NULL,
+    `camera_name`   varchar(128) NOT NULL,
+
+    FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE,
+    FOREIGN KEY(`camera_name`) REFERENCES Cameras(`camera_name`) ON DELETE CASCADE ON UPDATE CASCADE
+) /*! ENGINE=InnoDB */;
+
+CREATE TABLE Files (
+    `file_url`               varchar(128) NOT NULL,
+    -- The unsigned range is 0 to 65535. 
+    `width`             smallint unsigned NOT NULL,  
+    `height`            smallint unsigned NOT NULL,
+
     `task_name`         varchar(128) NOT NULL UNIQUE,
-    `host`              varchar(128) NOT NULL,
-    `port`              smallint unsigned NOT NULL,  
-    `username`          varchar(128) NOT NULL,
-    `password`          varchar(128) NOT NULL,
 
     FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*! ENGINE=InnoDB */;
 
-CREATE TABLE AlarmStrategy (
+CREATE TABLE DensityDetail (
+    `pers_file`         varchar(64) NOT NULL,
+    `roi_file`          varchar(64) NOT NULL,
+    `lm_file`           varchar(64) NOT NULL,
+
     `task_name`         varchar(128) NOT NULL UNIQUE,
+
+    FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
+) /*! ENGINE=InnoDB */;
+
+CREATE TABLE DensityAlarmStrategy (
     `priority_low`      smallint unsigned NOT NULL,  
     `priority_medium`   smallint unsigned NOT NULL,  
     `priority_high`     smallint unsigned NOT NULL,  
+    `task_name`         varchar(128) NOT NULL UNIQUE,
 
     FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*! ENGINE=InnoDB */;
 
-CREATE TABLE AlarmRecord (
-    `task_name`         varchar(128) NOT NULL,
+CREATE TABLE DensityAlarmRecord (
     `date_time`     datetime NOT NULL,
     `count`             int unsigned NOT NULL,
     `priority`          enum('low', 'medium', 'high') NOT NULL,
     `snapshot`          varchar(128) NOT NULL,
+    `task_name`         varchar(128) NOT NULL,
 
     FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*! ENGINE=InnoDB */;
@@ -102,26 +118,39 @@ CREATE TABLE AlarmRecord (
 -- Insert Values
 INSERT INTO Groups VALUES ('mmlab');
 INSERT INTO Groups VALUES ('cuhk');
-INSERT INTO Tasks VALUES ('task_one', 'DENSITY', 'STOP', 'HTTP', 'STOP', 704, 576, 'mjpg/video.mjpg', 'data/', 'PMap/', 'ROI/', 'LM/', 'GT/', 'Alarm/', '010182_pers.csv', '010182_roi.csv', 'lm.csv', 'ON', 'ON', 'OFF', 'mmlab');
-INSERT INTO Tasks VALUES ('task_two', 'DENSITY', 'STOP', 'HTTP', 'STOP', 704, 576, 'mjpg/video.mjpg', '$(HOME)/ITFcs1.0/tasks/task_two/', 'PMap/', 'ROI/', 'LM/', 'GT/', 'Alarm/', 'pers.csv', 'roi.csv', 'lm.csv', 'OFF', 'OFF', 'ON', 'cuhk');
-INSERT INTO Tasks VALUES ('task_three', 'SEGMENTATION', 'STOP', 'HTTP', 'STOP', 704, 576, 'mjpg/video.mjpg', 'data/', 'PMap/', 'ROI/', 'LM/', 'GT/', 'Alarm/', 'pers.csv', 'roi.csv', 'lm.csv', 'OFF', 'OFF', 'ON', 'cuhk');
-INSERT INTO Tasks VALUES ('task_four', 'SEGMENTATION', 'STOP', 'FILE', 'STOP', 720, 576, '/path/to/200608.mp4', '$(HOME)/ITFcs1.0/tasks/task_four/', 'PMap/', 'ROI/', 'LM/', 'GT/', 'Alarm/', 'pers.csv', 'roi.csv', 'lm.csv', 'OFF', 'OFF', 'OFF', 'mmlab');
-INSERT INTO TaskDetail VALUES ('task_one', '137.189.35.204', 10182, 'root', 'xgwangpj');
-INSERT INTO TaskDetail VALUES ('task_two', '137.189.35.204', 10183, 'root', 'xgwangpj');
-INSERT INTO TaskDetail VALUES ('task_three', '137.189.35.204', 10184, 'root', 'xgwangpj');
-INSERT INTO AlarmStrategy VALUES ('task_one', 40, 80, 150);
-INSERT INTO AlarmStrategy VALUES ('task_two', 76, 99, 222);
-INSERT INTO AlarmRecord VALUES ('task_one', '2012-02-14 18:30:21', 67, 'low', 'c8h3vwn23r');
-INSERT INTO AlarmRecord VALUES ('task_one', '2012-02-14 19:20:32', 234, 'high', '5jesvw02kc');
-INSERT INTO AlarmRecord VALUES ('task_one', '2012-02-15 07:10:18', 127, 'medium', 'ri5l2ovner');
-INSERT INTO AlarmRecord VALUES ('task_one', '2012-02-15 11:40:02', 66, 'low', 'keovjq2ms3');
-INSERT INTO AlarmRecord VALUES ('task_one', now(), 88, 'low', 'oc9v2kd9vj');
+
+INSERT INTO Tasks VALUES ('task_one', 'DENSITY', 'STOP', 'HTTP', 'STOP', 'data/', 'ON', 'ON', 'mmlab');
+INSERT INTO Tasks VALUES ('task_two', 'DENSITY', 'STOP', 'HTTP', 'STOP', '$(HOME)/ITFcs1.0/tasks/task_two/', 'ON', 'ON', 'cuhk');
+INSERT INTO Tasks VALUES ('task_three', 'SEGMENTATION', 'STOP', 'HTTP', 'STOP', 'data/', 'ON', 'ON', 'cuhk');
+INSERT INTO Tasks VALUES ('task_four', 'SEGMENTATION', 'STOP', 'FILE', 'STOP', '$(HOME)/ITFcs1.0/tasks/task_four/', 'ON', 'ON', 'mmlab');
+
+INSERT INTO Cameras VALUES ('cam_10182', 704, 576, 'mjpg/video.mjpg', '137.189.35.204', 10182, 'root', 'xgwangpj');
+INSERT INTO Cameras VALUES ('cam_10183', 704, 576, 'mjpg/video.mjpg', '137.189.35.204', 10183, 'root', 'xgwangpj');
+INSERT INTO Cameras VALUES ('cam_10184', 704, 576, 'mjpg/video.mjpg', '137.189.35.204', 10184, 'root', 'xgwangpj');
+
+INSERT INTO Task_Camera VALUES ('task_one', 'cam_10182');
+INSERT INTO Task_Camera VALUES ('task_two', 'cam_10183');
+INSERT INTO Task_Camera VALUES ('task_three', 'cam_10184');
+
+INSERT INTO Files VALUES ('/path/to/200608.avi', 720, 576, 'task_four');
+
+INSERT INTO DensityDetail VALUES ('010182_pers.csv', '010182_roi.csv', '010182_lm.csv', 'task_one');
+INSERT INTO DensityDetail VALUES ('010183_pers.csv', '010183_roi.csv', '010183_lm.csv', 'task_two');
+
+INSERT INTO DensityAlarmStrategy VALUES (40, 80, 150, 'task_one');
+INSERT INTO DensityAlarmStrategy VALUES (76, 99, 222, 'task_two');
+
+INSERT INTO DensityAlarmRecord VALUES ('2012-02-14 18:30:21', 67, 'low', 'c8h3vwn23r', 'task_one');
+INSERT INTO DensityAlarmRecord VALUES (now(), 88, 'low', 'oc9v2kd9vj', 'task_one');
 
 
--- Show
+-- -- Show
 -- SHOW TABLES;
--- SELECT * FROM Groups;
--- SELECT * FROM Tasks;
--- SELECT * FROM TaskDetail;
--- SELECT * FROM AlarmStrategy;
--- SELECT * from AlarmRecord;
+SELECT * FROM Groups;
+SELECT * FROM Tasks;
+SELECT * FROM Cameras;
+SELECT * FROM Task_Camera;
+SELECT * FROM Files;
+SELECT * FROM DensityDetail;
+SELECT * FROM DensityAlarmStrategy;
+SELECT * from DensityAlarmRecord;
