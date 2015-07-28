@@ -61,14 +61,13 @@ int main(int argc, char* argv[]) {
 
                 task.setFuncStatus(CTask<float>::RUNNING);
                 task.setTaskStatus(CTask<float>::START);
+                
                 // Start analyze thread
-<<<<<<< HEAD
-                t_work = std::thread(work);
                 server.Reply("OK");
-=======
                 t_work = std::thread(&CTask<float>::Analyze, &task);
-                comm.Send("OK");
->>>>>>> d17d2db9e3cb9c0f114db78d45db1b00ee5adab6
+                
+
+            
         } else if (action.compare("stop") == 0) {  // STOP
                 task.setFuncStatus(CTask<float>::TERMINATE);
                 task.setTaskStatus(CTask<float>::STOP);
@@ -81,12 +80,8 @@ int main(int argc, char* argv[]) {
             server.Reply("NO");
         }
     }
-<<<<<<< HEAD
     
-    
-=======
 
->>>>>>> d17d2db9e3cb9c0f114db78d45db1b00ee5adab6
     // only unlink after this process ends
     unlink(socket_path.c_str());
 

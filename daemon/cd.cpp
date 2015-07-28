@@ -86,11 +86,8 @@ int main(int argc, char* argv[]) {
             server.Reply("NO");
         }
     }
-<<<<<<< HEAD
     
     //task.~CTask();
-=======
->>>>>>> d17d2db9e3cb9c0f114db78d45db1b00ee5adab6
 
     // only unlink after this process ends
     unlink(socket_path.c_str());
@@ -98,8 +95,8 @@ int main(int argc, char* argv[]) {
     std::cout << "cd is done" << std::endl;
     return 0;
 }
-<<<<<<< HEAD
 
+#if 0
 void tCapture(int fps) {
     int rows = task.getCurrentFrameHeight();
     int cols = task.getCurrentFrameWidth();
@@ -129,5 +126,4 @@ void tCapture(int fps) {
         
     }
 }
-=======
->>>>>>> d17d2db9e3cb9c0f114db78d45db1b00ee5adab6
+#endif

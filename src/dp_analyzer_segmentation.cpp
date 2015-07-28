@@ -11,15 +11,15 @@ bool CDPAnalyzerSegmentation<Dtype>::Init() {
     itf::SegmenterParameter sp;
 
     // Read configuration file
-    if (!itf::Util::ReadProtoFromTextFile("./config/fcnn_segmenter.prototxt", &sp)) {
-        std::cout << "Cannot read .prototxt file!" << std::endl;
-        return false;
-    }
+    //if (!itf::Util::ReadProtoFromTextFile("./config/fcnn_segmenter.prototxt", &sp)) {
+    //    std::cout << "Cannot read .prototxt file!" << std::endl;
+    //    return false;
+    //}
 
     itf::CSegmenterFactory sf;
-    isegmenter_.reset(sf.SpawnSegmenter(itf::FCNN));
+    isegmenter_.reset(sf.SpawnSegmenter(itf::CSegmenterFactory::FCNN));
 
-    isegmenter_->SetParameters(sp);
+    isegmenter_->SetParameters("./config/fcnn_segmenter.prototxt");
 
     return true;
 }
