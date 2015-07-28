@@ -25,40 +25,53 @@ bool CTask<Dtype>::LoadTask(const std::string& task_name) {
         std::cout << "Fail to use database" << std::endl;
         return false;
     }
-
-    const std::string sql = "select * from (select Tasks.*,TaskDetail.host, TaskDetail.port, TaskDetail.username, TaskDetail.password from Tasks left join TaskDetail on Tasks.task_name=TaskDetail.task_name) as temp where task_name='"+task_name+"';";
-    std::vector<std::map<std::string, std::string> > res = db.Query(sql);
+    std::vector<std::map<std::string, std::string> > res = db.Query("select task_type, camera_type, task_path from Tasks where task_name='"+task_name+"';");
 
    if (res.size() != 1) {
         std::cout << "No Such Task" << std::endl;
        return false;
-   } else {
-        config_.setTaskName(task_name);
-        if (res[0]["task_type"].compare("DENSITY") == 0) {
-            config_.setTaskType(0);
-        } else if (res[0]["task_type"].compare("SEGMENTATION") == 0) {
-            config_.setTaskType(1);
-        }
-        if (res[0]["camera_type"].compare("HTTP") == 0) {
-            config_.setCameraType(0);
-            config_.setPort(std::atoi(res[0]["port"].c_str()));
-            config_.setHost(res[0]["host"]);
-            config_.setUsername(res[0]["username"]);
-            config_.setPassword(res[0]["password"]);
-        } else if (res[0]["campera_type"].compare("RTSP") == 0) {
-            config_.setCameraType(1);
-        } else if (res[0]["campera_type"].compare("LOCAL") == 0) {
-            config_.setCameraType(2);
-        } else if (res[0]["campera_type"].compare("FILE") == 0) {
-            config_.setCameraType(3);
-        }
-        config_.setFrameWidth(std::atoi(res[0]["width"].c_str()));
-        config_.setFrameHeight(std::atoi(res[0]["height"].c_str()));
-        config_.setIPAddress(res[0]["address"]);
-        config_.setPmapPath(res[0]["task_path"] + res[0]["pers_dir"] + res[0]["pers_file"]);
-        config_.setROIPath(res[0]["task_path"] + res[0]["roi_dir"] + res[0]["roi_file"]);
-        return true;
+   }
+
+    config_.setTaskName(task_name);
+    if (res[0]["task_type"].compare("DENSITY") == 0) {
+        config_.setTaskType(0);
+        std::vector<std::map<std::string, std::string> > density_detail = db.Query("select * from DensityDetail where task_name='" +task_name+ "';");
+        config_.setPmapPath(res[0]["task_path"] + "PMap/" + density_detail[0]["pers_file"]);
+        config_.setROIPath(res[0]["task_path"] + "ROI/" + density_detail[0]["roi_file"]);
+    } else if (res[0]["task_type"].compare("SEGMENTATION") == 0) {
+        config_.setTaskType(1);
+    } else {
+        std::cerr << "No such task type" << std::endl;
+        return false;
     }
+
+
+    if (res[0]["camera_type"].compare("HTTP") == 0) {
+        config_.setCameraType(0);
+        std::vector<std::map<std::string, std::string> > camera = db.Query("select * from Cameras where camera_name=(select camera_name from Task_Camera where task_name='" +task_name+ "');");
+        config_.setPort(std::atoi(camera[0]["port"].c_str()));
+        config_.setHost(camera[0]["host"]);
+        config_.setIPAddress(camera[0]["address"]);
+        config_.setUsername(camera[0]["username"]);
+        config_.setPassword(camera[0]["password"]);
+        config_.setFrameWidth(std::atoi(camera[0]["width"].c_str()));
+        config_.setFrameHeight(std::atoi(camera[0]["height"].c_str()));
+    } else if (res[0]["campera_type"].compare("RTSP") == 0) {
+        config_.setCameraType(1);
+    } else if (res[0]["campera_type"].compare("LOCAL") == 0) {
+        config_.setCameraType(2);
+    } else if (res[0]["campera_type"].compare("FILE") == 0) {
+        config_.setCameraType(3);
+        std::vector<std::map<std::string, std::string> > file = db.Query("select * from Cameras where camera_name=(select camera_name from Task_Camera where task_name='" +task_name+ "');");
+        config_.setFrameWidth(std::atoi(file[0]["width"].c_str()));
+        config_.setFrameHeight(std::atoi(file[0]["height"].c_str()));
+        config_.setIPAddress(file[0]["file_url"]);
+    } else {
+        std::cerr << "No such camera type" << std::endl;
+        return false;
+    }
+    
+    return true;
 }
 
 template <typename Dtype>
