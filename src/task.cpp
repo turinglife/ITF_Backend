@@ -168,6 +168,11 @@ int CTask<Dtype>::Analyze() {
     CBuffer buffer(config_.getTaskName());
     buffer.init(imgSize);
 
+    itf::Util util;
+    // Get the perspective map and square it to generate a better heat map
+    cv::Mat pmap = util.ReadPMAPtoMAT(config_.getPmapPath());
+    pmap = pmap.mul(pmap);
+
     while (getFuncStatus()) {
         if (!buffer.fetch_src(frame)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
@@ -179,7 +184,7 @@ int CTask<Dtype>::Analyze() {
         cv::Mat output(rows, cols, CV_32F, feature.data());
 
         if (getCurrentTaskType() == TaskType_t::DENSITY) {
-            output *= 256.0f;
+            output = util.GenerateHeatMap(output, pmap);
             // get sum here
         } else if (getCurrentTaskType() == TaskType_t::SEGMENTATION) {
             /* code */

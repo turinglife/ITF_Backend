@@ -71,7 +71,8 @@ bool action_open() {
                 std::string arg1 =  task_name;
                 char* parmList[] = {const_cast<char*>(arg0.c_str()), const_cast<char*>(arg1.c_str()), 0};
                 execv(path.c_str(), parmList);
-                std::cout << "ERROR when execv" << std::endl;
+                std::cerr << "ERROR when execv" << std::endl;
+                exit(0);
             } else {
                 exit(0);
             }

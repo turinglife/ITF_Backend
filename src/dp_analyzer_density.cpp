@@ -14,7 +14,6 @@ CDPAnalyzerDensity<Dtype>::CDPAnalyzerDensity(const std::string &pmap_path, cons
 
 template <typename Dtype>
 bool CDPAnalyzerDensity<Dtype>::Init() {
-    // cv::Mat pmap;
     // Setup Extracter
     itf::ExtracterParameter ep;
     // Read configuration file
@@ -37,10 +36,8 @@ bool CDPAnalyzerDensity<Dtype>::Init() {
 
 template <typename Dtype>
 std::vector<Dtype> CDPAnalyzerDensity<Dtype>::Analyze(IN cv::Mat frame) {
-    iextracter_->LoadImages(frame);
-
     // Extract density feature from a frame loaded above
-    std::vector<float> feature = iextracter_->ExtractFeatures();
+    std::vector<float> feature = iextracter_->ExtractFeatures(frame);
 
     return feature;
 }
