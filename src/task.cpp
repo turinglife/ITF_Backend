@@ -33,7 +33,7 @@ bool CTask<Dtype>::LoadTask(const std::string& task_name) {
     }
 
     config_.setTaskName(task_name);
-    if (res[0]["task_type"].compare("DENSITY") == 0) {
+    if (res[0]["task_type"].compare("COUNTING") == 0) {
         config_.setTaskType(0);
         std::vector<std::map<std::string, std::string> > density_detail = db.Query("select * from DensityDetail where task_name='" +task_name+ "';");
         config_.setPmapPath(res[0]["task_path"] + "PMap/" + density_detail[0]["pers_file"]);
@@ -105,12 +105,10 @@ bool CTask<Dtype>::InitAnalyzer() {
         return false;
     }
     // Instantiate a concrete analyzer.
-    FunType_t FunType = static_cast<FunType_t>(config_.getTaskType());
-
-    if (FunType == COUNT) {
+    if (config_.getTaskType() == TaskType_t::COUNTING) {
         // Instantiate Counting analyzer
         analyzer_.reset(new CDPAnalyzerDensity<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight()));
-    } else if (FunType == SEGMENT) {
+    } else if (config_.getTaskType() == TaskType_t::SEGMENTATION) {
         // Segmentation
         analyzer_.reset(new CDPAnalyzerSegmentation<Dtype>());
     } else {
@@ -177,7 +175,7 @@ int CTask<Dtype>::Analyze() {
         vector<float> feature = analyzer_->Analyze(frame);
         cv::Mat output(rows, cols, CV_32F, feature.data());
 
-        if (getCurrentTaskType() == TaskType_t::DENSITY) {
+        if (getCurrentTaskType() == TaskType_t::COUNTING) {
             output = util.GenerateHeatMap(output, pmap);
             int predicted_value = static_cast<int>(cv::sum(output)[0]);
             buffer.put_dst(output, predicted_value);
@@ -217,10 +215,10 @@ bool CTask<Dtype>::setTaskStatus(TaskStatus_t status) {
     }
 
     std::string str_status;
-    if (status == TaskStatus_t::START)
-        str_status = "START";
+    if (status == TaskStatus_t::ON)
+        str_status = "ON";
     else
-        str_status = "STOP";
+        str_status = "OFF";
 
     bool ok = db.RunSQL("UPDATE Tasks SET task_status='"+str_status+"' WHERE task_name='"+getCurrentTaskName()+"';");
     if (!ok) {

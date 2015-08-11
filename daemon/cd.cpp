@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
 
     //Server comm;
     CComm server;
-    std::string socket_path = "cd_" + task_name;
+    std::string socket_path = "CD_" + task_name;
     if (!server.Establish(socket_path)) {
         std::cerr << "Fail to establish connection" << std::endl;
         std::cerr << "cd exit" << std::endl;
@@ -67,7 +67,7 @@ int main(int argc, char* argv[]) {
         std::string action;
         server.Receive(action);
 
-        if (action.compare("start") == 0) {
+        if (action.compare("START") == 0) {
             task.setCameraStatus(CTask<float>::TERMINATE);
             if (t_work.joinable())
                 t_work.join();
@@ -75,7 +75,7 @@ int main(int argc, char* argv[]) {
             t_work = std::thread(&CTask<float>::Capture, &task, fps);
 
             server.Reply("OK");
-        } else if (action.compare("stop") == 0) {
+        } else if (action.compare("STOP") == 0) {
             task.setCameraStatus(CTask<float>::TERMINATE);
             if (t_work.joinable())
                 t_work.join();

@@ -54,6 +54,7 @@ bool action_open() {
     std::cout << "Daemon Type: ";
     std::string daemon;
     std::cin >> daemon;
+    std::transform(daemon.begin(), daemon.end(), daemon.begin(), ::tolower);
 
     int status = 0;
 

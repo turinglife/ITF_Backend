@@ -24,7 +24,7 @@ int main(int argc, char* argv[]) {
 
     //Server comm;
     CComm server;
-    std::string socket_path = "ad_" + task_name;
+    std::string socket_path = "AD_" + task_name;
     if (!server.Establish(socket_path)) {
         std::cerr << "Fail to establish connection" << std::endl;
         return -1;
@@ -54,21 +54,21 @@ int main(int argc, char* argv[]) {
         std::string action;
         server.Receive(action);
 
-        if (action.compare("start") == 0) {  // START
+        if (action.compare("START") == 0) {  // START
                 task.setFuncStatus(CTask<float>::TERMINATE);
                 if (t_work.joinable())
                     t_work.join();
 
                 task.setFuncStatus(CTask<float>::RUNNING);
-                task.setTaskStatus(CTask<float>::START);
+                task.setTaskStatus(CTask<float>::ON);
                 
                 // Start analyze thread
                 server.Reply("OK");
                 t_work = std::thread(&CTask<float>::Analyze, &task);
 
-        } else if (action.compare("stop") == 0) {  // STOP
+        } else if (action.compare("STOP") == 0) {  // STOP
                 task.setFuncStatus(CTask<float>::TERMINATE);
-                task.setTaskStatus(CTask<float>::STOP);
+                task.setTaskStatus(CTask<float>::OFF);
                 if (t_work.joinable())
                     t_work.join();
                 server.Reply("OK");
