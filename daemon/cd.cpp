@@ -86,8 +86,6 @@ int main(int argc, char* argv[]) {
             server.Reply("NO");
         }
     }
-    
-    //task.~CTask();
 
     // only unlink after this process ends
     unlink(socket_path.c_str());

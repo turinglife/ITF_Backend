@@ -65,9 +65,7 @@ int main(int argc, char* argv[]) {
                 // Start analyze thread
                 server.Reply("OK");
                 t_work = std::thread(&CTask<float>::Analyze, &task);
-                
 
-            
         } else if (action.compare("stop") == 0) {  // STOP
                 task.setFuncStatus(CTask<float>::TERMINATE);
                 task.setTaskStatus(CTask<float>::STOP);
@@ -80,7 +78,6 @@ int main(int argc, char* argv[]) {
             server.Reply("NO");
         }
     }
-    
 
     // only unlink after this process ends
     unlink(socket_path.c_str());

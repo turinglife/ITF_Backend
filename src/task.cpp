@@ -27,10 +27,10 @@ bool CTask<Dtype>::LoadTask(const std::string& task_name) {
     }
     std::vector<std::map<std::string, std::string> > res = db.Query("select task_type, camera_type, task_path from Tasks where task_name='"+task_name+"';");
 
-   if (res.size() != 1) {
+    if (res.size() != 1) {
         std::cout << "No Such Task" << std::endl;
        return false;
-   }
+    }
 
     config_.setTaskName(task_name);
     if (res[0]["task_type"].compare("DENSITY") == 0) {
@@ -44,7 +44,6 @@ bool CTask<Dtype>::LoadTask(const std::string& task_name) {
         std::cerr << "No such task type" << std::endl;
         return false;
     }
-
 
     if (res[0]["camera_type"].compare("HTTP") == 0) {
         config_.setCameraType(0);
@@ -70,7 +69,7 @@ bool CTask<Dtype>::LoadTask(const std::string& task_name) {
         std::cerr << "No such camera type" << std::endl;
         return false;
     }
-    
+
     return true;
 }
 
@@ -176,7 +175,7 @@ int CTask<Dtype>::Analyze() {
     while (getFuncStatus()) {
         if (!buffer.fetch_src(frame)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
-            sleep(1);  // reduce useless while loop
+            sleep(3);  // reduce useless while loop
             continue;
         }
 

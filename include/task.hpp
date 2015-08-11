@@ -55,13 +55,13 @@ class CTask {
     };
 
     bool LoadTask(const std::string& task_name);
-    
+
     bool InitCapture();
     bool InitAnalyzer();
-    
+
     int Capture(int fps);
     int Analyze();
-    
+
     void ShowDetails();
 
     bool setTaskStatus(TaskStatus_t status);
@@ -71,9 +71,9 @@ class CTask {
     inline std::string getCurrentTaskName() { return config_.getTaskName(); }
     inline int getCurrentFrameWidth() { return config_.getFrameWidth(); }
     inline int getCurrentFrameHeight() { return config_.getFrameHeight(); }
-    inline TaskType_t getCurrentTaskType() { return static_cast<TaskType_t>(config_.getTaskType()); };
+    inline TaskType_t getCurrentTaskType() { return static_cast<TaskType_t>(config_.getTaskType()); }
     inline int getTaskStatus() { return config_.getTaskStatus(); }
-    
+
     inline void setFuncStatus(int funcstatus) { funcstatus_ = funcstatus; }
     inline int getFuncStatus() { return funcstatus_; }
     inline void setCameraStatus(int camerastatus) { camerastatus_ = camerastatus; }
