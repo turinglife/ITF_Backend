@@ -13,26 +13,26 @@
 
 class CBuffer {
  public:
-    CBuffer(const int &src_width, const int &src_height, const int &unit_size, const int &src_num, const int &dst_num, const std::string &buffer_id);
+    CBuffer(int src_width, int src_height, int unit_size, int src_num, int dst_num, const std::string &buffer_id);
     explicit CBuffer(const std::string &buffer_id);
+    ~CBuffer();
 
-    void init(const int &);
-    bool put_src(IN const cv::Mat &);
-    bool put_dst(IN const cv::Mat &, IN const int &);
-    bool fetch_frame(OUT cv::Mat &);  // This function fetch the frame without discarding it;
-    bool fetch_src(OUT cv::Mat &);  // This function fetch the frame and discard it;
-    bool fetch_dst(OUT cv::Mat &, OUT int &);  // This function fetch the destination;
+    bool put_src(IN const cv::Mat &frame);
+    bool put_dst(IN const cv::Mat &frame, int predicted_value);
+    bool fetch_frame(OUT cv::Mat &frame);  // This function fetch the frame without discarding it;
+    bool fetch_src(OUT cv::Mat &frame);  // This function fetch the frame and discard it;
+    bool fetch_dst(OUT cv::Mat &frame, OUT int &predicted_value);  // This function fetch the destination;
     bool destroy();
 
  private:
-    typedef struct {
+    struct HeaderInfo_t{
         int frame_width;
         int frame_height;
         int frame_size;
         int src_buffer_num;
         int dst_buffer_num;
         int header_size;
-    }HeaderInfo_t;
+    };
     HeaderInfo_t head_;  //headerinfo keep the static info of buffer and frame;
 
     std::string buffer_id_;  // Buffer unique id for communicating with other processes.

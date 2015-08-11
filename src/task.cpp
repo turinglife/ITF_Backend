@@ -140,13 +140,11 @@ int CTask<Dtype>::Capture(int fps) {
         if (frame.empty()) {
             break;
         }
+        // Write a new frame into buffer
+        buffer.put_src(frame);
 
         cv::imshow(config_.getTaskName() + "_frame", frame);
         cv::waitKey(1000 / fps);
-        // usleep(1000 * (1000 / fps));
-
-        if (!buffer.put_src(frame))
-            continue;
     }
     return 1;
 }
@@ -162,10 +160,8 @@ int CTask<Dtype>::Analyze() {
     int rows = config_.getFrameHeight();
     int cols = config_.getFrameWidth();
     cv::Mat frame(rows, cols, CV_8UC3);
-    int imgSize = frame.total() * frame.elemSize();
 
     CBuffer buffer(config_.getTaskName());
-    buffer.init(imgSize);
 
     itf::Util util;
     // Get the perspective map and square it to generate a better heat map
@@ -178,17 +174,17 @@ int CTask<Dtype>::Analyze() {
             sleep(3);  // reduce useless while loop
             continue;
         }
-
         vector<float> feature = analyzer_->Analyze(frame);
         cv::Mat output(rows, cols, CV_32F, feature.data());
 
         if (getCurrentTaskType() == TaskType_t::DENSITY) {
             output = util.GenerateHeatMap(output, pmap);
-            // get sum here
+            int predicted_value = static_cast<int>(cv::sum(output)[0]);
+            buffer.put_dst(output, predicted_value);
         } else if (getCurrentTaskType() == TaskType_t::SEGMENTATION) {
             /* code */
         }
-        cv::imshow("ad_result", output);
+        cv::imshow(config_.getTaskName() + "_ad_result", output);
         cv::waitKey(1);
     }
     return  1;
