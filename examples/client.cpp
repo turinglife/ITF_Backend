@@ -100,7 +100,7 @@ bool action_socket() {
     std::cin >> operation;
 
     std::string socket_path = daemon + "_" + task_name;
-    
+
     std::string received_msg;
     CComm client;
 
@@ -140,7 +140,7 @@ bool action_mysql() {
         std::cout << "OK" << std::endl;
     }
     {
-        bool ok = db.RunSQL("INSERT INTO Tasks VALUES ('task_six', 'DENSITY', 'STOP', 'FILE', 'STOP', 'data/', 'ON', 'OFF', 'mmlab');");
+        bool ok = db.RunSQL("INSERT INTO Tasks VALUES ('task_six', 'COUNTING', 'OFF', 'FILE', 'OFF', 'data/', 'ON', 'OFF', 'mmlab');");
         if (!ok) {
             std::cerr << "INSERT DB ... Fail" << std::endl;
         } else {
@@ -168,13 +168,13 @@ bool action_mysql() {
 
     std::cout.setf(std::ios::left);
     for (size_t i = 0; i < res.size(); ++i) {
-        std::cout << std::setw(15) << res[i]["task_name"] 
+        std::cout << std::setw(15) << res[i]["task_name"]
          << std::setw(15) << res[i]["task_type"]
-         << std::setw(8) << res[i]["task_status"] 
-         << std::setw(8) << res[i]["camera_type"] 
+         << std::setw(8) << res[i]["task_status"]
+         << std::setw(8) << res[i]["camera_type"]
          << std::setw(8) << res[i]["camera_status"]
-         << std::setw(40) << res[i]["task_path"] 
-         << std::setw(5) << res[i]["alarm_switch"] 
+         << std::setw(40) << res[i]["task_path"]
+         << std::setw(5) << res[i]["alarm_switch"]
          << std::setw(5) << res[i]["report_switch"]
          << res[i]["group_name"];
 
