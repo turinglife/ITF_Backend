@@ -35,11 +35,11 @@ CREATE TABLE Groups (
 CREATE TABLE Tasks (
     `task_name`         varchar(128),
     
-    `task_type`         enum('DENSITY', 'SEGMENTATION' , 'TRACK') NOT NULL,
-    `task_status`       enum('START', 'STOP') DEFAULT 'STOP',
+    `task_type`         enum('COUNTING', 'SEGMENTATION' , 'TRACK') NOT NULL,
+    `task_status`       enum('ON', 'OFF') DEFAULT 'OFF',
 
     `camera_type`       enum('HTTP', 'RTSP' , 'LOCAL', 'FILE') NOT NULL,
-    `camera_status`       enum('START', 'STOP') DEFAULT 'STOP',
+    `camera_status`       enum('ON', 'OFF') DEFAULT 'OFF',
 
     `task_path`         varchar(128) NOT NULL,
     `alarm_switch`      enum('ON', 'OFF') DEFAULT 'OFF',
@@ -107,7 +107,7 @@ CREATE TABLE DensityAlarmStrategy (
 CREATE TABLE DensityAlarmRecord (
     `date_time`     datetime NOT NULL,
     `count`             int unsigned NOT NULL,
-    `priority`          enum('low', 'medium', 'high') NOT NULL,
+    `priority`          enum('LOW', 'MEDIUM', 'HIGH') NOT NULL,
     `snapshot`          varchar(128) NOT NULL,
     `task_name`         varchar(128) NOT NULL,
 
@@ -119,10 +119,10 @@ CREATE TABLE DensityAlarmRecord (
 INSERT INTO Groups VALUES ('mmlab');
 INSERT INTO Groups VALUES ('cuhk');
 
-INSERT INTO Tasks VALUES ('task_one', 'DENSITY', 'STOP', 'HTTP', 'STOP', 'data/', 'ON', 'ON', 'mmlab');
-INSERT INTO Tasks VALUES ('task_two', 'DENSITY', 'STOP', 'HTTP', 'STOP', '$(HOME)/ITFcs1.0/tasks/task_two/', 'ON', 'ON', 'cuhk');
-INSERT INTO Tasks VALUES ('task_three', 'SEGMENTATION', 'STOP', 'HTTP', 'STOP', 'data/', 'ON', 'ON', 'cuhk');
-INSERT INTO Tasks VALUES ('task_four', 'SEGMENTATION', 'STOP', 'FILE', 'STOP', '$(HOME)/ITFcs1.0/tasks/task_four/', 'ON', 'ON', 'mmlab');
+INSERT INTO Tasks VALUES ('task_one', 'COUNTING', 'OFF', 'HTTP', 'OFF', 'data/', 'ON', 'ON', 'mmlab');
+INSERT INTO Tasks VALUES ('task_two', 'COUNTING', 'OFF', 'HTTP', 'OFF', '$(HOME)/ITFcs1.0/tasks/task_two/', 'ON', 'ON', 'cuhk');
+INSERT INTO Tasks VALUES ('task_three', 'SEGMENTATION', 'OFF', 'HTTP', 'OFF', 'data/', 'ON', 'ON', 'cuhk');
+INSERT INTO Tasks VALUES ('task_four', 'SEGMENTATION', 'OFF', 'FILE', 'OFF', '$(HOME)/ITFcs1.0/tasks/task_four/', 'ON', 'ON', 'mmlab');
 
 INSERT INTO Cameras VALUES ('cam_10182', 704, 576, 'mjpg/video.mjpg', '137.189.35.204', 10182, 'root', 'xgwangpj');
 INSERT INTO Cameras VALUES ('cam_10183', 704, 576, 'mjpg/video.mjpg', '137.189.35.204', 10183, 'root', 'xgwangpj');
@@ -140,8 +140,8 @@ INSERT INTO DensityDetail VALUES ('010183_pers.csv', '010183_roi.csv', '010183_l
 INSERT INTO DensityAlarmStrategy VALUES (40, 80, 150, 'task_one');
 INSERT INTO DensityAlarmStrategy VALUES (76, 99, 222, 'task_two');
 
-INSERT INTO DensityAlarmRecord VALUES ('2012-02-14 18:30:21', 67, 'low', 'c8h3vwn23r', 'task_one');
-INSERT INTO DensityAlarmRecord VALUES (now(), 88, 'low', 'oc9v2kd9vj', 'task_one');
+INSERT INTO DensityAlarmRecord VALUES ('2012-02-14 18:30:21', 67, 'LOW', 'c8h3vwn23r', 'task_one');
+INSERT INTO DensityAlarmRecord VALUES (now(), 88, 'LOW', 'oc9v2kd9vj', 'task_one');
 
 
 -- -- Show

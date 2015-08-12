@@ -38,16 +38,12 @@ class CTask {
         FILE
     };
     enum TaskType_t {
-        DENSITY,
+        COUNTING,
         SEGMENTATION
     };
-    enum FunType_t {
-        COUNT,
-        SEGMENT
-    };
     enum TaskStatus_t {     // Task state
-        STOP = 0,
-        START
+        OFF = 0,
+        ON
     };
     enum Status_t {      // The state of specific function affiliated to the current task
         TERMINATE = 0,
