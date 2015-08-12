@@ -80,6 +80,17 @@ CBuffer::~CBuffer() {
     boost::interprocess::shared_memory_object::remove(buffer_id_.c_str());
 }
 
+bool CBuffer::frame_size(OUT int &width, OUT int &height) {
+    width = head_.frame_width;
+    height = head_.frame_height;
+
+    if(width<=0 || height <=0) {
+        return false;
+    }
+
+    return true;
+}
+
 bool CBuffer::put_src(IN const cv::Mat &frame) {
     // check whether the input buffer is full or not;
     int curr_w_src = (*p_last_w_src_ + 1) % head_.src_buffer_num;

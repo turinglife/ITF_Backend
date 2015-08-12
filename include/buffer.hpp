@@ -17,6 +17,7 @@ class CBuffer {
     explicit CBuffer(const std::string &buffer_id);
     ~CBuffer();
 
+    bool frame_size(OUT int &width, OUT int &height);
     bool put_src(IN const cv::Mat &frame);
     bool put_dst(IN const cv::Mat &frame, int predicted_value);
     bool fetch_frame(OUT cv::Mat &frame);  // This function fetch the frame without discarding it;
