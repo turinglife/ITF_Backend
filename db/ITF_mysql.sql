@@ -134,8 +134,8 @@ INSERT INTO Task_Camera VALUES ('task_three', 'cam_10184');
 
 INSERT INTO Files VALUES ('/path/to/200608.avi', 720, 576, 'task_four');
 
-INSERT INTO DensityDetail VALUES ('010182_pers.csv', '010182_roi.csv', '010182_lm.csv', 'task_one');
-INSERT INTO DensityDetail VALUES ('010183_pers.csv', '010183_roi.csv', '010183_lm.csv', 'task_two');
+INSERT INTO DensityDetail VALUES ('task_one_pers.csv', 'task_one_roi.csv', 'task_one_lm.csv', 'task_one');
+INSERT INTO DensityDetail VALUES ('task_two_pers.csv', 'task_two_roi.csv', 'task_two_lm.csv', 'task_two');
 
 INSERT INTO DensityAlarmStrategy VALUES (40, 80, 150, 'task_one');
 INSERT INTO DensityAlarmStrategy VALUES (76, 99, 222, 'task_two');
