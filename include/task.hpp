@@ -78,6 +78,7 @@ class CTask {
  private:
     std::unique_ptr<CCamera> camera_;  // object for grabing frames into buffer.
     std::unique_ptr<CAnalyzer<Dtype> > analyzer_;  // object for analyzing frames from buffer.
+    CBuffer buffer_;
     CAlarm *alarmer_;              // object for generating alarm information.
     CConfig config_;               // configuration for the task object.
 
