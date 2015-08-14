@@ -5,7 +5,7 @@
 
 #include "buffer.hpp"
 
-CBuffer::CBuffer(int src_width, int src_height, int unit_size, int src_num, int dst_num, const std::string &buffer_id) {
+bool CBuffer::Init(int src_width, int src_height, int unit_size, int src_num, int dst_num, const std::string &buffer_id) {
     buffer_id_ = buffer_id;
     head_.frame_width = src_width;
     head_.frame_height = src_height;
@@ -45,9 +45,11 @@ CBuffer::CBuffer(int src_width, int src_height, int unit_size, int src_num, int 
     // Output value region
     region_dst_val_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + 4*sizeof(int) + (head_.src_buffer_num +head_.dst_buffer_num) * head_.frame_size, head_.dst_buffer_num * sizeof(int));
     p_dst_val_ = static_cast<unsigned char*>(region_dst_val_.get_address());
+
+    return true;
 }
 
-CBuffer::CBuffer(const std::string &buffer_id) {
+bool CBuffer::Init(const std::string &buffer_id) {
     buffer_id_ = buffer_id;
 
     shm_ = boost::interprocess::shared_memory_object(boost::interprocess::open_only, buffer_id_.c_str(), boost::interprocess::read_write);
@@ -74,6 +76,8 @@ CBuffer::CBuffer(const std::string &buffer_id) {
     // Output value region
     region_dst_val_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + 4 * sizeof(int) + (head_.src_buffer_num + head_.dst_buffer_num) * head_.frame_size, head_.dst_buffer_num * sizeof(int));
     p_dst_val_ = static_cast<unsigned char*>(region_dst_val_.get_address());
+
+    return true;
 }
 
 CBuffer::~CBuffer() {

@@ -13,9 +13,17 @@
 
 class CBuffer {
  public:
-    CBuffer(int src_width, int src_height, int unit_size, int src_num, int dst_num, const std::string &buffer_id);
-    explicit CBuffer(const std::string &buffer_id);
     ~CBuffer();
+
+    /**
+    * @brief This Init() will make  buffer a producer
+    */
+    bool Init(int src_width, int src_height, int unit_size, int src_num, int dst_num, const std::string &buffer_id);
+
+    /**
+    * @brief This Init() will make  buffer a consumer
+    */
+    bool Init(const std::string &buffer_id);
 
     bool frame_size(OUT int &width, OUT int &height);
     bool put_src(IN const cv::Mat &frame);

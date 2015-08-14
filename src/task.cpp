@@ -94,6 +94,11 @@ bool CTask<Dtype>::InitCapture() {
         std::cout << "To Be Continued" << std::endl;
         return false;
     }
+
+    cv::Mat frame(config_.getFrameHeight(), config_.getFrameWidth(), CV_8UC3);
+    int imgSize = frame.total() * frame.elemSize();
+    buffer_.Init(config_.getFrameWidth(), config_.getFrameHeight(), imgSize, 50, 30, config_.getTaskName());
+
     return camera_->Connect();
 }
 
@@ -127,11 +132,6 @@ int CTask<Dtype>::Capture(int fps) {
         return 0;
     }    
 
-    cv::Mat frame(config_.getFrameHeight(), config_.getFrameWidth(), CV_8UC3);
-    int imgSize = frame.total() * frame.elemSize();
-
-    CBuffer buffer(config_.getFrameWidth(), config_.getFrameHeight(), imgSize, 50, 30, config_.getTaskName());
-
     while (getCameraStatus()) {
         cv::Mat frame;
         camera_->Capture(frame);
@@ -139,7 +139,7 @@ int CTask<Dtype>::Capture(int fps) {
             break;
         }
         // Write a new frame into buffer
-        buffer.put_src(frame);
+        buffer_.put_src(frame);
 
         cv::imshow(config_.getTaskName() + "_frame", frame);
         cv::waitKey(1000 / fps);
@@ -159,7 +159,8 @@ int CTask<Dtype>::Analyze() {
     int cols = config_.getFrameWidth();
     cv::Mat frame(rows, cols, CV_8UC3);
 
-    CBuffer buffer(config_.getTaskName());
+    CBuffer buffer;
+    buffer.Init(config_.getTaskName());
 
     itf::Util util;
     // Get the perspective map and square it to generate a better heat map
