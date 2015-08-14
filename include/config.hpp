@@ -49,7 +49,6 @@ class CConfig {
 
     int width_ = 0;
     int height_ = 0;
-    int framesize = 0;
 
     std::string address_;
     unsigned int port_ = 0;
