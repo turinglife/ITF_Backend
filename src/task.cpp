@@ -94,7 +94,7 @@ bool CTask<Dtype>::InitCapture() {
         std::cout << "To Be Continued" << std::endl;
         return false;
     }
-
+    // Create shared memory right afer load camera successfully
     cv::Mat frame(config_.getFrameHeight(), config_.getFrameWidth(), CV_8UC3);
     int imgSize = frame.total() * frame.elemSize();
     buffer_.Init(config_.getFrameWidth(), config_.getFrameHeight(), imgSize, 50, 30, config_.getTaskName());
