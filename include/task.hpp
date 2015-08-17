@@ -3,8 +3,8 @@
 // Copyright (C) 2015-2018 MMLab, EE, The Chinese University of HongKong
 //
 
-#ifndef ITF_TASK_H
-#define ITF_TASK_H
+#ifndef ITF_TASK_H_
+#define ITF_TASK_H_
 
 
 #include "common.hpp"
@@ -31,12 +31,6 @@
 template <typename Dtype>
 class CTask {
  public:
-    enum CameraType_t {
-        HTTP,
-        RTSP,
-        LOCAL,
-        FILE
-    };
     enum TaskType_t {
         COUNTING,
         SEGMENTATION
@@ -50,10 +44,8 @@ class CTask {
         RUNNING
     };
 
-    bool LoadTask(const std::string& task_name);
-
-    bool InitCapture();
-    bool InitAnalyzer();
+    bool InitCapture(const std::string& task_name);
+    bool InitAnalyzer(const std::string& task_name);
 
     int Capture(int fps);
     int Analyze();
@@ -76,6 +68,7 @@ class CTask {
     inline int getCameraStatus() { return camerastatus_; }
 
  private:
+    CDbi ConnectDB();
     std::unique_ptr<CCamera> camera_;  // object for grabing frames into buffer.
     std::unique_ptr<CAnalyzer<Dtype> > analyzer_;  // object for analyzing frames from buffer.
     CBuffer buffer_;
@@ -86,4 +79,4 @@ class CTask {
     int camerastatus_;
 };
 
-#endif  // ITF_TASK_H
+#endif  // ITF_TASK_H_

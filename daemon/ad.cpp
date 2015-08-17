@@ -22,7 +22,7 @@
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
 
-    //Server comm;
+    // Server comm;
     CComm server;
     std::string socket_path = "AD_" + task_name;
     if (!server.Establish(socket_path)) {
@@ -31,14 +31,8 @@ int main(int argc, char* argv[]) {
     }
 
     CTask<float> task;
-    if (!task.LoadTask(task_name)) {
-        unlink(socket_path.c_str());
-        std::cerr << "load task fail" << std::endl;
-        std::cerr << "ad exit" << std::endl;
-        return -1;
-    }
     // Init analyzer
-    if (!task.InitAnalyzer()) {
+    if (!task.InitAnalyzer(task_name)) {
         std::cerr << "init analyzer fail" << std::endl;
         std::cerr << "ad exit" << std::endl;
         return -1;
@@ -61,7 +55,7 @@ int main(int argc, char* argv[]) {
 
                 task.setFuncStatus(CTask<float>::RUNNING);
                 task.setTaskStatus(CTask<float>::ON);
-                
+
                 // Start analyze thread
                 server.Reply("OK");
                 t_work = std::thread(&CTask<float>::Analyze, &task);

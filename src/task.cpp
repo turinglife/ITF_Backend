@@ -5,122 +5,118 @@
 
 #include "task.hpp"
 
-
 template <typename Dtype>
-bool CTask<Dtype>::LoadTask(const std::string& task_name) {
-     /* Prepare DB Infomation*/
-    const std::string server = "localhost";
-    const std::string user = "itf";
-    const std::string pass = "itf";
-    const std::string db_name = "ITF";
-
-    CDbi db;
-
-    if (!db.Connect(server, user, pass)) {
-        std::cout << "Fail to connect mysql" << std::endl;
-        return false;
-    }
-
-    if (!db.UseDB(db_name)) {
-        std::cout << "Fail to use database" << std::endl;
-        return false;
-    }
-    std::vector<std::map<std::string, std::string> > res = db.Query("select task_type, camera_type, task_path from Tasks where task_name='"+task_name+"';");
-
-    if (res.size() != 1) {
-        std::cout << "No Such Task" << std::endl;
-       return false;
-    }
-
-    config_.setTaskName(task_name);
-    if (res[0]["task_type"].compare("COUNTING") == 0) {
-        config_.setTaskType(0);
-        std::vector<std::map<std::string, std::string> > density_detail = db.Query("select * from DensityDetail where task_name='" +task_name+ "';");
-        config_.setPmapPath(res[0]["task_path"] + "PMap/" + density_detail[0]["pers_file"]);
-        config_.setROIPath(res[0]["task_path"] + "ROI/" + density_detail[0]["roi_file"]);
-    } else if (res[0]["task_type"].compare("SEGMENTATION") == 0) {
-        config_.setTaskType(1);
-    } else {
-        std::cerr << "No such task type" << std::endl;
-        return false;
-    }
-
-    if (res[0]["camera_type"].compare("HTTP") == 0) {
-        config_.setCameraType(0);
-        std::vector<std::map<std::string, std::string> > camera = db.Query("select * from Cameras where camera_name=(select camera_name from Task_Camera where task_name='" +task_name+ "');");
-        config_.setPort(std::atoi(camera[0]["port"].c_str()));
-        config_.setHost(camera[0]["host"]);
-        config_.setIPAddress(camera[0]["address"]);
-        config_.setUsername(camera[0]["username"]);
-        config_.setPassword(camera[0]["password"]);
-        config_.setFrameWidth(std::atoi(camera[0]["width"].c_str()));
-        config_.setFrameHeight(std::atoi(camera[0]["height"].c_str()));
-    } else if (res[0]["campera_type"].compare("RTSP") == 0) {
-        config_.setCameraType(1);
-    } else if (res[0]["campera_type"].compare("LOCAL") == 0) {
-        config_.setCameraType(2);
-    } else if (res[0]["campera_type"].compare("FILE") == 0) {
-        config_.setCameraType(3);
-        std::vector<std::map<std::string, std::string> > file = db.Query("select * from Cameras where camera_name=(select camera_name from Task_Camera where task_name='" +task_name+ "');");
-        config_.setFrameWidth(std::atoi(file[0]["width"].c_str()));
-        config_.setFrameHeight(std::atoi(file[0]["height"].c_str()));
-        config_.setIPAddress(file[0]["file_url"]);
-    } else {
-        std::cerr << "No such camera type" << std::endl;
-        return false;
-    }
-
-    return true;
-}
-
-template <typename Dtype>
-bool CTask<Dtype>::InitCapture() {
+bool CTask<Dtype>::InitCapture(const std::string& task_name) {
     // camera_ cannot be initialzed twice or deleted if it is alreaday initialized
     if (camera_ != 0) {
         std::cerr << "Camera is already initialized" << std::endl;
         return false;
     }
-    // Instantiate a concrete camera.
-    CameraType_t CameraType = static_cast<CameraType_t>(config_.getCameraType());
 
-    if (CameraType == HTTP) {
+    // Connect database
+    CDbi db = ConnectDB();
+    if (!db.isConnected()) {
+        std::cerr << "Cannot connect to database" << std::endl;
+        return false;
+    }
+
+    config_.setTaskName(task_name);
+
+    // Check camera type
+    std::vector<std::map<std::string, std::string> > res = db.Query("select camera_type from Tasks where task_name='"+task_name+"';");
+    if (res.size() != 1) {
+        std::cout << "No Such Task" << std::endl;
+       return false;
+    }
+
+    // Instantiate a concrete camera.
+    if (res[0]["camera_type"].compare("HTTP") == 0) {
         // RemoteCameraHttp
+        config_.setCameraType(0);
+        std::vector<std::map<std::string, std::string> > camera = db.Query("select * from Cameras where camera_name=(select camera_name from Task_Camera where task_name='"+task_name+"');");
+        config_.setFrameWidth(std::atoi(camera[0]["width"].c_str()));
+        config_.setFrameHeight(std::atoi(camera[0]["height"].c_str()));
+        config_.setHost(camera[0]["host"]);
+        config_.setIPAddress(camera[0]["address"]);
+        config_.setPort(std::atoi(camera[0]["port"].c_str()));
+        config_.setUsername(camera[0]["username"]);
+        config_.setPassword(camera[0]["password"]);
         camera_.reset(new CRemoteCameraHttp(config_.getHost(), config_.getPort(), config_.getIPAddress(), config_.getUsername(), config_.getPassword()));
-    } else if (CameraType == FILE) {
+    } else if (res[0]["camera_type"].compare("FILE") == 0) {
         // FileCamera
+        config_.setCameraType(3);
+        std::vector<std::map<std::string, std::string> > file = db.Query("select * from Files where task_name='"+task_name+"';");
+        config_.setFrameWidth(std::atoi(file[0]["width"].c_str()));
+        config_.setFrameHeight(std::atoi(file[0]["height"].c_str()));
+        config_.setIPAddress(file[0]["file_url"]);
         camera_.reset(new CFileCamera(config_.getIPAddress()));
     } else {
         // not supporting.
-        std::cout << "To Be Continued" << std::endl;
+        std::cerr << "To Be Continued" << std::endl;
         return false;
     }
-    // Create shared memory right afer load camera successfully
+
+    // Create buffer
     cv::Mat frame(config_.getFrameHeight(), config_.getFrameWidth(), CV_8UC3);
     int imgSize = frame.total() * frame.elemSize();
-    buffer_.Init(config_.getFrameWidth(), config_.getFrameHeight(), imgSize, 50, 30, config_.getTaskName());
+    if (!buffer_.Init(config_.getFrameWidth(), config_.getFrameHeight(), imgSize, 50, 30, config_.getTaskName())) {
+        std::cerr << "Cannot create buffer" << std::endl;
+        return false;
+    }
 
     return camera_->Connect();
 }
 
 template <typename Dtype>
-bool CTask<Dtype>::InitAnalyzer() {
+bool CTask<Dtype>::InitAnalyzer(const std::string& task_name) {
     // analyzer_ cannot be initialzed twice or deleted if it is alreaday initialized
     if (analyzer_ != 0) {
         std::cerr << "Analyer is alrady initialized" << std::endl;
         return false;
     }
-    // Instantiate a concrete analyzer.
-    if (config_.getTaskType() == TaskType_t::COUNTING) {
-        // Instantiate Counting analyzer
-        analyzer_.reset(new CDPAnalyzerDensity<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight()));
-    } else if (config_.getTaskType() == TaskType_t::SEGMENTATION) {
-        // Segmentation
-        analyzer_.reset(new CDPAnalyzerSegmentation<Dtype>());
-    } else {
-        // not supporting.
-        std::cout << "To Be Continued" << std::endl;
+
+    // Connect database
+    CDbi db = ConnectDB();
+    if (!db.isConnected()) {
+        std::cerr << "Cannot connect to database" << std::endl;
         return false;
     }
+
+    config_.setTaskName(task_name);
+
+    if (!buffer_.Init(config_.getTaskName())) {
+        std::cerr << "Cannot create buffer" << std::endl;
+        return false;
+    }
+
+    int w = 0;
+    int h = 0;
+    buffer_.frame_size(w, h);
+
+    config_.setFrameWidth(w);
+    config_.setFrameHeight(h);
+
+    // Check task type
+    std::vector<std::map<std::string, std::string> > res = db.Query("select task_type, task_path from Tasks where task_name='"+task_name+"';");
+
+    // Instantiate a concrete analyzer.
+    if (res[0]["task_type"].compare("COUNTING") == 0) {
+        // Instantiate Counting analyzer
+        config_.setTaskType(0);
+        std::vector<std::map<std::string, std::string> > density_detail = db.Query("select * from DensityDetail where task_name='" +task_name+ "';");
+        config_.setPmapPath(res[0]["task_path"] + "PMap/" + density_detail[0]["pers_file"]);
+        config_.setROIPath(res[0]["task_path"] + "ROI/" + density_detail[0]["roi_file"]);
+        analyzer_.reset(new CDPAnalyzerDensity<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight()));
+    } else if (res[0]["task_type"].compare("SEGMENTATION") == 0) {
+        // Segmentation
+        config_.setTaskType(1);
+        analyzer_.reset(new CDPAnalyzerSegmentation<Dtype>);
+    } else {
+        // not supporting.
+        std::cerr << "To Be Continued" << std::endl;
+        return false;
+    }
+
     return analyzer_->Init();
 }
 
@@ -130,7 +126,7 @@ int CTask<Dtype>::Capture(int fps) {
     if (camera_ == 0) {
         std::cout << "The camera has not been initialized yet." << std::endl;
         return 0;
-    }    
+    }
 
     while (getCameraStatus()) {
         cv::Mat frame;
@@ -151,7 +147,7 @@ template <typename Dtype>
 int CTask<Dtype>::Analyze() {
     // check if camera is initialized already
     if (analyzer_ == 0) {
-        std::cerr << "The camera has not been initialized yet." << std::endl;
+        std::cerr << "The analyzer has not been initialized yet." << std::endl;
         return 0;
     }
 
@@ -159,16 +155,12 @@ int CTask<Dtype>::Analyze() {
     int cols = config_.getFrameWidth();
     cv::Mat frame(rows, cols, CV_8UC3);
 
-    CBuffer buffer;
-    buffer.Init(config_.getTaskName());
-
     itf::Util util;
     // Get the perspective map and square it to generate a better heat map
     cv::Mat pmap = util.ReadPMAPtoMAT(config_.getPmapPath());
     pmap = pmap.mul(pmap);
-
     while (getFuncStatus()) {
-        if (!buffer.fetch_src(frame)) {
+        if (!buffer_.fetch_src(frame)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
@@ -179,7 +171,7 @@ int CTask<Dtype>::Analyze() {
         if (getCurrentTaskType() == TaskType_t::COUNTING) {
             output = util.GenerateHeatMap(output, pmap);
             int predicted_value = static_cast<int>(cv::sum(output)[0]);
-            buffer.put_dst(output, predicted_value);
+            buffer_.put_dst(output, predicted_value);
         } else if (getCurrentTaskType() == TaskType_t::SEGMENTATION) {
             /* code */
         }
@@ -191,28 +183,10 @@ int CTask<Dtype>::Analyze() {
 
 template <typename Dtype>
 bool CTask<Dtype>::setTaskStatus(TaskStatus_t status) {
-    /* Prepare DB Infomation*/
-    const std::string server = "localhost";
-    const std::string user = "itf";
-    const std::string pass = "itf";
-    const std::string db_name = "ITF";
-
-    CDbi db;
-
-    std::cout << "\nConnect  ...  ";
-    if (!db.Connect(server, user, pass)) {
-        std::cout << "Fail" << std::endl;
+    CDbi db = ConnectDB();
+    if (!db.isConnected()) {
+        std::cerr << "Cannot connect to database" << std::endl;
         return false;
-    } else {
-        std::cout << "OK" << std::endl;
-    }
-
-     std::cout << "Select DB  ...  ";
-    if (!db.UseDB(db_name)) {
-        std::cout << "Fail" << std::endl;
-        return false;
-    } else {
-        std::cout << "OK" << std::endl;
     }
 
     std::string str_status;
@@ -246,6 +220,20 @@ void CTask<Dtype>::ShowDetails() {
     std::cout << " User: " << config_.getUsername() << std::endl;
     std::cout << " Password: " << config_.getPassword() << std::endl;
     std::cout << std::endl;
+}
+
+template <typename Dtype>
+CDbi CTask<Dtype>::ConnectDB() {
+    // Prepare DB Infomation
+    const std::string server = "localhost";
+    const std::string user = "itf";
+    const std::string pass = "itf";
+    const std::string db_name = "ITF";
+
+    CDbi db;
+    db.Connect(server, user, pass);
+    db.UseDB(db_name);
+    return db;
 }
 
 INSTANTIATE_MYCLASS(CTask);

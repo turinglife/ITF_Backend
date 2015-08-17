@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
     CHECK(!task_name.empty()) << "task_name cannot be empty";
 
-    //Server comm;
+    // Server comm;
     CComm server;
     std::string socket_path = "CD_" + task_name;
     if (!server.Establish(socket_path)) {
@@ -42,15 +42,8 @@ int main(int argc, char* argv[]) {
     }
 
     CTask<float> task;
-    // Initialize a task object
-    if (!task.LoadTask(task_name)) {
-        unlink(socket_path.c_str());
-        std::cerr << "load task fail" << std::endl;
-        std::cerr << "cd exit" << std::endl;
-        return -1;
-    }
-
-    if (!task.InitCapture()) {
+    // Initialize camera
+    if (!task.InitCapture(task_name)) {
         std::cerr << "init capture fail" << std::endl;
         std::cerr << "cd exit" << std::endl;
         return -1;
