@@ -25,9 +25,12 @@ class CDbi {
     std::vector<std::map<std::string, std::string> > Query(const std::string& sql);
     // RunSQL is used to run other sqls except for SELECT
     bool RunSQL(const std::string& sql);
+    // Return true if the object is available
+    bool isConnected() const { return isConnected_; }
 
  private:
     mysqlpp::Connection conn_;
+    bool isConnected_;
 };
 
 
