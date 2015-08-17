@@ -8,10 +8,12 @@ CDbi::CDbi() {
     // Create object without connecting to the database server.
     // If true, exceptions are thrown on errors
     conn_ = mysqlpp::Connection(false);
+    isConnected_ = false;
 }
 
 CDbi::~CDbi() {
     conn_.disconnect();
+    isConnected_ = false;
 }
 
 bool CDbi::Connect(const std::string& server, const std::string& user, const std::string& pass) {
@@ -25,6 +27,7 @@ bool CDbi::Connect(const std::string& server, const std::string& user, const std
 
 bool CDbi::UseDB(const std::string& db_name) {
     if (conn_.select_db(db_name)) {
+        isConnected_ = true;
         return true;
     } else {
         return false;
