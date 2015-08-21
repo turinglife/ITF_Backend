@@ -21,14 +21,7 @@
 
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
-
-    // Server comm;
-    CComm server;
-    std::string socket_path = "AD_" + task_name;
-    if (!server.Establish(socket_path)) {
-        std::cerr << "Fail to establish connection" << std::endl;
-        return -1;
-    }
+    CHECK(!task_name.empty()) << "task_name cannot be empty";
 
     CTask<float> task;
     // Init analyzer
@@ -38,6 +31,14 @@ int main(int argc, char* argv[]) {
         return -1;
     } else {
         std::cout << "Analyzer is initialized" << std::endl;
+    }
+
+    // Server comm;
+    CComm server;
+    std::string socket_path = "AD_" + task_name;
+    if (!server.Establish(socket_path)) {
+        std::cerr << "Fail to establish connection" << std::endl;
+        return -1;
     }
 
     std::thread t_work;

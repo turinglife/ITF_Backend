@@ -32,15 +32,6 @@ int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
     CHECK(!task_name.empty()) << "task_name cannot be empty";
 
-    // Server comm;
-    CComm server;
-    std::string socket_path = "CD_" + task_name;
-    if (!server.Establish(socket_path)) {
-        std::cerr << "Fail to establish connection" << std::endl;
-        std::cerr << "cd exit" << std::endl;
-        return -1;
-    }
-
     CTask<float> task;
     // Initialize camera
     if (!task.InitCapture(task_name)) {
@@ -49,6 +40,15 @@ int main(int argc, char* argv[]) {
         return -1;
     } else {
         std::cout << "Camera is initialized" << std::endl;
+    }
+
+    // Server comm;
+    CComm server;
+    std::string socket_path = "CD_" + task_name;
+    if (!server.Establish(socket_path)) {
+        std::cerr << "Fail to establish connection" << std::endl;
+        std::cerr << "cd exit" << std::endl;
+        return -1;
     }
 
     int fps = 30;  // we may consider to move fps to CTask;
