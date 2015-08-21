@@ -13,8 +13,6 @@
 
 class CBuffer {
  public:
-    ~CBuffer();
-
     /**
     * @brief This Init() will make  buffer a producer
     */
