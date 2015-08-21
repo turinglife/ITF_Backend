@@ -80,10 +80,6 @@ bool CBuffer::Init(const std::string &buffer_id) {
     return true;
 }
 
-CBuffer::~CBuffer() {
-    boost::interprocess::shared_memory_object::remove(buffer_id_.c_str());
-}
-
 bool CBuffer::frame_size(OUT int &width, OUT int &height) {
     width = head_.frame_width;
     height = head_.frame_height;

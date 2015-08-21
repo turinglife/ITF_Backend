@@ -236,4 +236,10 @@ CDbi CTask<Dtype>::ConnectDB() {
     return db;
 }
 
+template <typename Dtype>
+bool CTask<Dtype>::FreeBuffer() { 
+    return buffer_.destroy();
+}
+
+
 INSTANTIATE_MYCLASS(CTask);

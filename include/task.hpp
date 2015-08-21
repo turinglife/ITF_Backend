@@ -67,6 +67,8 @@ class CTask {
     inline void setCameraStatus(int camerastatus) { camerastatus_ = camerastatus; }
     inline int getCameraStatus() { return camerastatus_; }
 
+    bool FreeBuffer();
+
  private:
     CDbi ConnectDB();
     std::unique_ptr<CCamera> camera_;  // object for grabing frames into buffer.
