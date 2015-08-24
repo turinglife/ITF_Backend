@@ -160,7 +160,7 @@ int CTask<Dtype>::Analyze() {
     cv::Mat pmap = util.ReadPMAPtoMAT(config_.getPmapPath());
     pmap = pmap.mul(pmap);
     while (getFuncStatus()) {
-        if (!buffer_.fetch_src(frame)) {
+        if (!buffer_.fetch_frame(frame)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
@@ -173,7 +173,8 @@ int CTask<Dtype>::Analyze() {
             int predicted_value = static_cast<int>(cv::sum(output)[0]);
             buffer_.put_dst(output, predicted_value);
         } else if (getCurrentTaskType() == TaskType_t::SEGMENTATION) {
-            /* code */
+            frame.copyTo(output, output > 0.5);
+            buffer_.put_dst(output, 0);
         }
         cv::imshow(config_.getTaskName() + "_ad_result", output);
         cv::waitKey(1);
