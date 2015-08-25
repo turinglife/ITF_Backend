@@ -167,16 +167,16 @@ int CTask<Dtype>::Analyze() {
         }
         vector<float> feature = analyzer_->Analyze(frame);
         cv::Mat output(rows, cols, CV_32F, feature.data());
-
+        cv::Mat dst;
         if (getCurrentTaskType() == TaskType_t::COUNTING) {
-            output = util.GenerateHeatMap(output, pmap);
+            dst = util.GenerateHeatMap(output, pmap);
             int predicted_value = static_cast<int>(cv::sum(output)[0]);
-            buffer_.put_dst(output, predicted_value);
+            buffer_.put_dst(dst, predicted_value);
         } else if (getCurrentTaskType() == TaskType_t::SEGMENTATION) {
-            frame.copyTo(output, output > 0.5);
-            buffer_.put_dst(output, 0);
+            frame.copyTo(dst, output > 0.5);
+            buffer_.put_dst(dst, 0);
         }
-        cv::imshow(config_.getTaskName() + "_ad_result", output);
+        cv::imshow(config_.getTaskName() + "_ad_result", dst);
         cv::waitKey(1);
     }
     return  1;
