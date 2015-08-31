@@ -157,7 +157,7 @@ int CTask<Dtype>::Analyze() {
 
     itf::Util util;
     // Get the perspective map and square it to generate a better heat map
-    cv::Mat pmap = util.ReadPMAPtoMAT(config_.getPmapPath());
+    cv::Mat pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
     pmap = pmap.mul(pmap);
     while (getFuncStatus()) {
         if (!buffer_.fetch_frame(frame)) {
@@ -238,7 +238,7 @@ CDbi CTask<Dtype>::ConnectDB() {
 }
 
 template <typename Dtype>
-bool CTask<Dtype>::FreeBuffer() { 
+bool CTask<Dtype>::FreeBuffer() {
     return buffer_.destroy();
 }
 
