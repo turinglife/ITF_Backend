@@ -19,7 +19,7 @@ bool CDPAnalyzerSegmentation<Dtype>::Init() {
     itf::CSegmenterFactory sf;
     isegmenter_.reset(sf.SpawnSegmenter(itf::CSegmenterFactory::FCNN));
 
-    isegmenter_->SetParameters("/home/lpzhang/Desktop/ITF_Backend/config/fcnn_segmenter.prototxt");
+    isegmenter_->SetParameters("./config/fcnn_segmenter.prototxt");
 
     return true;
 }

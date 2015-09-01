@@ -17,7 +17,7 @@ bool CDPAnalyzerDensity<Dtype>::Init() {
     // Setup Extracter
     itf::ExtracterParameter ep;
     // Read configuration file
-    if (!itf::Util::ReadProtoFromTextFile("/home/lpzhang/Desktop/ITF_Backend/config/density_extracter.prototxt", &ep)) {
+    if (!itf::Util::ReadProtoFromTextFile("./config/density_extracter.prototxt", &ep)) {
         std::cout << "Cannot read .prototxt file!" << std::endl;
         return false;
     }
