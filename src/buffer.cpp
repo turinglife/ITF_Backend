@@ -55,11 +55,11 @@ bool CBuffer::Init(int src_width, int src_height, int unit_size, int src_num, in
     // Init Timestamp to 0
     int init_value = 0;
     for (int i=0; i<head_.src_buffer_num; ++i) {
-        memcpy(p_timestamp_ + curr_w_src * sizeof(unsigned int), &init_value, sizeof(unsigned int));
+        memcpy(p_timestamp_ + i * sizeof(unsigned int), &init_value, sizeof(unsigned int));
     }
     // Init Output value to 0
     for (int i=0; i<head_.dst_buffer_num; ++i) {
-        memcpy(p_dst_val_ + curr_w_dst * sizeof(int), &init_value, sizeof(int));
+        memcpy(p_dst_val_ + i * sizeof(int), &init_value, sizeof(int));
     }
     return true;
 }

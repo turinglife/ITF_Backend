@@ -135,7 +135,8 @@ int CTask<Dtype>::Capture(int fps) {
             break;
         }
         // Write a new frame into buffer
-        buffer_.put_src(frame);
+        unsigned int timestamp = 0;
+        buffer_.put_src(frame, timestamp);
 
         cv::imshow(config_.getTaskName() + "_frame", frame);
         cv::waitKey(1000 / fps);
@@ -154,13 +155,14 @@ int CTask<Dtype>::Analyze() {
     int rows = config_.getFrameHeight();
     int cols = config_.getFrameWidth();
     cv::Mat frame(rows, cols, CV_8UC3);
+    unsigned int timestamp;
 
     itf::Util util;
     // Get the perspective map and square it to generate a better heat map
     cv::Mat pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
     pmap = pmap.mul(pmap);
     while (getFuncStatus()) {
-        if (!buffer_.fetch_frame(frame)) {
+        if (!buffer_.fetch_frame(frame, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
