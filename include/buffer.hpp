@@ -24,10 +24,10 @@ class CBuffer {
     bool Init(const std::string &buffer_id);
 
     bool frame_size(OUT int &width, OUT int &height);
-    bool put_src(IN const cv::Mat &frame);
+    bool put_src(IN const cv::Mat &frame, IN unsigned int timestamp);
     bool put_dst(IN const cv::Mat &frame, int predicted_value);
-    bool fetch_frame(OUT cv::Mat &frame);  // This function fetch the frame without discarding it;
-    bool fetch_src(OUT cv::Mat &frame);  // This function fetch the frame and discard it;
+    bool fetch_frame(OUT cv::Mat &frame, OUT unsigned int &timestamp);  // This function fetch the frame without discarding it;
+    bool fetch_src(OUT cv::Mat &frame, OUT unsigned int &timestamp);  // This function fetch the frame and discard it;
     bool fetch_dst(OUT cv::Mat &frame, OUT int &predicted_value);  // This function fetch the destination;
     bool destroy();
 
@@ -47,12 +47,14 @@ class CBuffer {
     boost::interprocess::shared_memory_object shm_;
     boost::interprocess::mapped_region region_header_;
     boost::interprocess::mapped_region region_last_r_w_;
+    boost::interprocess::mapped_region region_timestamp_;
     boost::interprocess::mapped_region region_src_;
     boost::interprocess::mapped_region region_dst_map_;
     boost::interprocess::mapped_region region_dst_val_;
 
     unsigned char *p_header_;  // Starting address for storing header information of buffer.
     unsigned char *p_last_r_w_;  // Starting address for storing buffer index information for control buffer;
+    unsigned char *p_timestamp_; // Starting address for storing timestamp
     unsigned char *p_src_;  // Starting address for storing source frame.
     unsigned char *p_dst_map_;  // Starting address for storing output map;
     unsigned char *p_dst_val_;  // Starting address for storing output value;
