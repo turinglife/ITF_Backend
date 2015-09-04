@@ -130,12 +130,11 @@ int CTask<Dtype>::Capture(int fps) {
 
     while (getCameraStatus()) {
         cv::Mat frame;
-        camera_->Capture(frame);
+        unsigned int timestamp = camera_->Capture(frame);
         if (frame.empty()) {
             break;
         }
         // Write a new frame into buffer
-        unsigned int timestamp = 0;
         buffer_.put_src(frame, timestamp);
 
         cv::imshow(config_.getTaskName() + "_frame", frame);

@@ -6,9 +6,7 @@
 #ifndef ITF_RCHTTP_H
 #define ITF_RCHTTP_H
 
-
 #include "common.hpp"
-
 #include "remote_camera.hpp"
 
 //
@@ -16,15 +14,12 @@
 // accessed over a network connection using http
 //
 class CRemoteCameraHttp : public CRemoteCamera {
-public:
+ public:
     CRemoteCameraHttp(const std::string &p_host, unsigned int p_port, const std::string &p_path, const std::string& p_username, const std::string& p_password);
-    ~CRemoteCameraHttp();
     
     int Connect();                                      
     int Disconnect();
-    int Capture(cv::Mat& output);
-    
+    time_t Capture(cv::Mat& output);
 };
-
 
 #endif // ITF_RCHTTP_H
