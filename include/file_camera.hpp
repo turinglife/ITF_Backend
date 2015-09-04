@@ -11,7 +11,6 @@
 class CFileCamera : public CCamera {
  public:
     CFileCamera(const std::string& filename);
-    ~CFileCamera();
 
     int Connect();
     int Disconnect();

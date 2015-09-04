@@ -15,8 +15,7 @@
 //
 class CCamera {
 public:
-    CCamera();
-    virtual ~CCamera();
+    virtual ~CCamera() {}
     
     virtual int Connect() = 0;
     virtual int Disconnect() = 0;
