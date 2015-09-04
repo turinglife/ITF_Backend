@@ -19,7 +19,7 @@ class CRemoteCameraHttp : public CRemoteCamera {
     
     int Connect();                                      
     int Disconnect();
-    int Capture(cv::Mat& output);
+    time_t Capture(cv::Mat& output);
 };
 
 #endif // ITF_RCHTTP_H

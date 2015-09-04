@@ -130,12 +130,11 @@ int CTask<Dtype>::Capture(int fps) {
 
     while (getCameraStatus()) {
         cv::Mat frame;
-        camera_->Capture(frame);
+        unsigned int timestamp = camera_->Capture(frame);
         if (frame.empty()) {
             break;
         }
         // Write a new frame into buffer
-        unsigned int timestamp = 0;
         buffer_.put_src(frame, timestamp);
 
         cv::imshow(config_.getTaskName() + "_frame", frame);
@@ -162,7 +161,7 @@ int CTask<Dtype>::Analyze() {
     cv::Mat pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
     pmap = pmap.mul(pmap);
     while (getFuncStatus()) {
-        if (!buffer_.fetch_frame(frame, timestamp)) {
+        if (!buffer_.fetch_src(frame, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;

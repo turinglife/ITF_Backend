@@ -13,6 +13,7 @@ int CFileCamera::Connect() {
         return 1;
     else
         return 0;
+    rawtime_ = 0;
 }
 
 int CFileCamera::Disconnect() {
@@ -20,7 +21,8 @@ int CFileCamera::Disconnect() {
     return 1;
 }
 
-int CFileCamera::Capture(cv::Mat& output) {
+time_t CFileCamera::Capture(cv::Mat& output) {
     cap_ >> output;
-    return 1;
+    rawtime_ += 1;
+    return rawtime_;
 }

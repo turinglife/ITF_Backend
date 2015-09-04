@@ -14,7 +14,7 @@ class CFileCamera : public CCamera {
 
     int Connect();
     int Disconnect();
-    int Capture(cv::Mat& output);
+    time_t Capture(cv::Mat& output);
 
  private:
     std::string filename_;

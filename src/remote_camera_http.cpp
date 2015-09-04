@@ -23,7 +23,8 @@ int CRemoteCameraHttp::Disconnect() {
     return 1;
 }
 
-int CRemoteCameraHttp::Capture(cv::Mat& output) {
+time_t CRemoteCameraHttp::Capture(cv::Mat& output) {
     cap_ >> output;
-    return 1;
+    time(&rawtime_);
+    return rawtime_;
 }

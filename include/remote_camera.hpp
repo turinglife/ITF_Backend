@@ -21,7 +21,7 @@ public:
     
     virtual int Connect() = 0;
     virtual int Disconnect() = 0;
-    virtual int Capture(cv::Mat& output) = 0;
+    virtual time_t Capture(cv::Mat& output) = 0;
 
 protected:
     std::string protocol_;
@@ -29,8 +29,7 @@ protected:
     unsigned int port_ = 0;
     std::string path_;
     std::string username_;
-    std::string password_;      
-
+    std::string password_;
 };
 
 
