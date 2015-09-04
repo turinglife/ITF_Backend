@@ -161,7 +161,7 @@ int CTask<Dtype>::Analyze() {
     cv::Mat pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
     pmap = pmap.mul(pmap);
     while (getFuncStatus()) {
-        if (!buffer_.fetch_src(frame, timestamp)) {
+        if (!buffer_.fetch_frame(frame, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
