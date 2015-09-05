@@ -8,12 +8,12 @@
 CFileCamera::CFileCamera(const std::string& filename) : filename_(filename) { }
 
 int CFileCamera::Connect() {
+    rawtime_ = 0;
     cap_.open(filename_);
     if (cap_.isOpened())
         return 1;
     else
         return 0;
-    rawtime_ = 0;
 }
 
 int CFileCamera::Disconnect() {

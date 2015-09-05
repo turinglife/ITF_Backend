@@ -133,7 +133,7 @@ INSERT INTO Task_Camera VALUES ('task_one', 'cam_10182');
 INSERT INTO Task_Camera VALUES ('task_two', 'cam_10183');
 INSERT INTO Task_Camera VALUES ('task_three', 'cam_10184');
 
-INSERT INTO Files VALUES ('/path/to/200608.avi', 720, 576, 50, 'task_four');
+INSERT INTO Files VALUES ('./data/200608.mp4', 720, 576, 50, 'task_four');
 
 INSERT INTO DensityDetail VALUES ('task_one_pers.csv', 'task_one_roi.csv', 'task_one_lm.csv', 'task_one');
 INSERT INTO DensityDetail VALUES ('task_two_pers.csv', 'task_two_roi.csv', 'task_two_lm.csv', 'task_two');
