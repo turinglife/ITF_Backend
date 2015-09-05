@@ -80,6 +80,7 @@ CREATE TABLE Files (
     `width`             smallint unsigned NOT NULL,  
     `height`            smallint unsigned NOT NULL,
     `fps`                  tinyint unsigned NOT NULL,
+    `total_frames`  int unsigned NOT NULL,
 
     `task_name`         varchar(128) NOT NULL UNIQUE,
 
@@ -133,7 +134,7 @@ INSERT INTO Task_Camera VALUES ('task_one', 'cam_10182');
 INSERT INTO Task_Camera VALUES ('task_two', 'cam_10183');
 INSERT INTO Task_Camera VALUES ('task_three', 'cam_10184');
 
-INSERT INTO Files VALUES ('./data/200608.mp4', 720, 576, 50, 'task_four');
+INSERT INTO Files VALUES ('./data/200608.mp4', 720, 576, 50, 1000,'task_four');
 
 INSERT INTO DensityDetail VALUES ('task_one_pers.csv', 'task_one_roi.csv', 'task_one_lm.csv', 'task_one');
 INSERT INTO DensityDetail VALUES ('task_two_pers.csv', 'task_two_roi.csv', 'task_two_lm.csv', 'task_two');
