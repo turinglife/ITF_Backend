@@ -116,6 +116,13 @@ CREATE TABLE DensityAlarmRecord (
     FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*! ENGINE=InnoDB */;
 
+CREATE TABLE DensityPredict (
+    `date_time`     datetime NOT NULL,
+    `count`             int unsigned NOT NULL,
+    `task_name`         varchar(128) NOT NULL,
+
+    FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
+) /*! ENGINE=InnoDB */;
 
 -- Insert Values
 INSERT INTO Groups VALUES ('mmlab');
@@ -145,6 +152,9 @@ INSERT INTO DensityAlarmStrategy VALUES (76, 99, 222, 'task_two');
 INSERT INTO DensityAlarmRecord VALUES ('2012-02-14 18:30:21', 67, 'LOW', 'c8h3vwn23r', 'task_one');
 INSERT INTO DensityAlarmRecord VALUES (now(), 88, 'LOW', 'oc9v2kd9vj', 'task_one');
 
+INSERT INTO DensityPredict VALUES (now(), 67, 'task_one');
+INSERT INTO DensityPredict VALUES (now(), 88, 'task_one');
+
 
 -- -- Show
 -- SHOW TABLES;
@@ -156,3 +166,4 @@ SELECT * FROM Files;
 SELECT * FROM DensityDetail;
 SELECT * FROM DensityAlarmStrategy;
 SELECT * from DensityAlarmRecord;
+SELECT * from DensityPredict;
