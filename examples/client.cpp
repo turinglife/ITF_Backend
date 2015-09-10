@@ -12,11 +12,6 @@
 
 #include <sys/wait.h>
 
-#include <iostream>
-#include <string>
-#include <map>
-#include <vector>
-
 #include "dbi.hpp"
 #include "comm.hpp"
 
@@ -46,6 +41,15 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
+/* 
+@ Function Name: action_open
+@ Description: create a specific daemon. 
+               daemon types: ad, cd, md, rd.
+               ad: analyze daemon
+               cd: capture daemon
+               md: alarm daemon
+               rd: regression daemon
+*/
 bool action_open() {
     std::cout << "Task Name: ";
     std::string task_name;
@@ -86,6 +90,15 @@ bool action_open() {
     return true;
 }
 
+/* 
+@ Function Name: action_socket
+@ Description: create a specific socket and send message through this one. 
+               daemon types: ad, cd, md, rd.
+               ad: analyze daemon
+               cd: capture daemon
+               md: alarm daemon
+               rd: regression daemon
+*/
 bool action_socket() {
     std::cout << "Task_name: ";
     std::string task_name;

@@ -19,11 +19,13 @@ bool CBuffer::Init(int src_width, int src_height, int unit_size, int src_num, in
     shm_.truncate(head_.header_size + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + (head_.src_buffer_num + head_.dst_buffer_num) * head_.frame_size + head_.dst_buffer_num * sizeof(int));
     // Header region
     region_header_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, 0, head_.header_size);
+    std::memset(region_header_.get_address(), 0, region_header_.get_size());
     p_header_ = static_cast<unsigned char*>(region_header_.get_address());
     memcpy(p_header_, &head_, head_.header_size);
 
     // read and write index region
     region_last_r_w_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size, 4 * sizeof(int));
+    std::memset(region_last_r_w_.get_address(), 0, region_last_r_w_.get_size());
     p_last_r_w_ = static_cast<unsigned char*>(region_last_r_w_.get_address());
     p_last_r_src_ = (int *)p_last_r_w_;
     p_last_w_src_ = (int *)((char *)p_last_r_src_ + sizeof(int));
@@ -38,18 +40,22 @@ bool CBuffer::Init(int src_width, int src_height, int unit_size, int src_num, in
 
     // Timestamp region
     region_timestamp_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + 4 * sizeof(int), head_.src_buffer_num * sizeof(unsigned int));
+    std::memset(region_timestamp_.get_address(), 0, region_timestamp_.get_size());
     p_timestamp_ = static_cast<unsigned char*>(region_timestamp_.get_address());
 
     // Frame region
     region_src_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int), head_.src_buffer_num * head_.frame_size);
+    std::memset(region_src_.get_address(), 0, region_src_.get_size());
     p_src_ = static_cast<unsigned char*>(region_src_.get_address());
 
     // Output Map region
     region_dst_map_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + head_.src_buffer_num * head_.frame_size, head_.dst_buffer_num * head_.frame_size);
+    std::memset(region_dst_map_.get_address(), 0, region_dst_map_.get_size());
     p_dst_map_ = static_cast<unsigned char*>(region_dst_map_.get_address());
 
     // Output value region
     region_dst_val_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + (head_.src_buffer_num +head_.dst_buffer_num) * head_.frame_size, head_.dst_buffer_num * sizeof(int));
+    std::memset(region_dst_val_.get_address(), 0, region_dst_val_.get_size());
     p_dst_val_ = static_cast<unsigned char*>(region_dst_val_.get_address());
 
     // Init Timestamp to 0
@@ -120,6 +126,7 @@ bool CBuffer::put_src(IN const cv::Mat &frame, IN unsigned int timestamp) {
     memcpy(p_src_ + curr_w_src * head_.frame_size, frame.data, head_.frame_size);
     memcpy(p_timestamp_ + curr_w_src * sizeof(unsigned int), &timestamp, sizeof(unsigned int));
     *p_last_w_src_ = curr_w_src;
+    
     return true;
 }
 
@@ -132,6 +139,7 @@ bool CBuffer::put_dst(IN const cv::Mat &frame, int predicted_value) {
     memcpy(p_dst_map_ + curr_w_dst * head_.frame_size, frame.data, head_.frame_size);
     memcpy(p_dst_val_ + curr_w_dst * sizeof(int), &predicted_value, sizeof(int));
     *p_last_w_dst_ = curr_w_dst;
+    
     return true;
 }
 
@@ -143,6 +151,7 @@ bool CBuffer::fetch_frame(OUT cv::Mat &frame, OUT unsigned int &timestamp) {
     int curr_r_src = (*p_last_r_src_ + 1) % head_.src_buffer_num;
     memcpy(frame.data, p_src_ + curr_r_src * head_.frame_size, head_.frame_size);
     memcpy(&timestamp, p_timestamp_ + curr_r_src * sizeof(unsigned int), sizeof(unsigned int));
+
     return true;
 }
 
@@ -151,10 +160,12 @@ bool CBuffer::fetch_src(OUT cv::Mat &frame, OUT unsigned int &timestamp) {
     if (*p_last_r_src_ == *p_last_w_src_) {
         return false;
     }
+    
     int curr_r_src = (*p_last_r_src_ + 1) % head_.src_buffer_num;
     memcpy(frame.data, p_src_ + curr_r_src * head_.frame_size, head_.frame_size);
     memcpy(&timestamp, p_timestamp_ + curr_r_src * sizeof(unsigned int), sizeof(unsigned int));
     *p_last_r_src_ = curr_r_src;
+    
     return true;
 }
 

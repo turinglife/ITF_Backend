@@ -15,8 +15,8 @@
 #include <boost/interprocess/shared_memory_object.hpp>
 #include <boost/interprocess/mapped_region.hpp>
 
-#include <iostream>
-#include <string>
+//#include <iostream>
+//#include <string>
 #include <thread>
 #include "comm.hpp"
 

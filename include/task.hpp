@@ -9,6 +9,7 @@
 
 #include "common.hpp"
 
+#include "regression_camera.hpp"
 #include "remote_camera_http.hpp"
 #include "remote_camera_rtsp.hpp"
 #include "local_camera.hpp"
@@ -46,9 +47,11 @@ class CTask {
 
     bool InitCapture(const std::string& task_name);
     bool InitAnalyzer(const std::string& task_name);
+    bool InitTrainer(const std::string& task_name);
 
     int Capture(int fps);
     int Analyze();
+    int Train(std::string &);
 
     void ShowDetails();
 

@@ -65,14 +65,14 @@ DAEMON_WARNS := $(addprefix $(BUILD_DIR)/, ${DAEMON_SRCS:.cpp=.o.$(WARNS_EXT)})
 INCLUDE_DIRS += ./include ./include/SQLiteCpp
 
 LIBRARIES += opencv_core opencv_highgui opencv_imgproc opencv_video opencv_contrib \
-			 boost_system \
-			 rt \
-			 sqlite3 \
-			 glog \
-			 protobuf \
-			 mlpack \
-			 itf \
-			 mysqlpp
+             boost_system boost_filesystem boost_thread \
+             rt \
+             sqlite3 \
+             glog \
+             protobuf \
+             mlpack \
+             itf \
+             mysqlpp
 WARNINGS := -Wall -Wno-sign-compare
 
 
@@ -160,7 +160,7 @@ $(DAEMON_BINS): %.bin : %.o | $(DYNAMIC_NAME)
 
 $(EXAMPLES_BINS): %.bin : %.o | $(DYNAMIC_NAME)
 	@ echo CXX/LD -o $@
-	@ $(CXX) $< -o $@ -l$(PROJECT)
+	@ $(CXX) $< -o $@ -l$(PROJECT) $(LDFLAGS)
 
 # clean rubbish
 clean:
