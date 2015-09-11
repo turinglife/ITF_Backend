@@ -87,11 +87,14 @@ int main(int argc, char* argv[]) {
             task.Train(lm_name);
             
             server.Reply("OK");
-                
+            
+            break;
+            
         } else if (action.compare("STOP") == 0) {  // STOP
-            task.setCameraStatus(CTask<float>::TERMINATE);
-            if (t_work.joinable())
-                t_work.join();
+            //task.setCameraStatus(CTask<float>::TERMINATE);
+            //if (t_work.joinable())
+            //    t_work.join();
+            
             server.Reply("OK");
             break;
         } else {
