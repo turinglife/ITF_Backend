@@ -109,7 +109,10 @@ ORIGIN := \$$ORIGIN
 LIBRARY_DIRS += $(LIB_BUILD_DIR)
 
 # Automatic dependency generation
-CXXFLAGS += -MMD -MP -std=c++11 -Wall
+CXXFLAGS += -MMD -MP 
+CXXFLAGS += -Wall
+CXXFLAGS += -std=c++11
+CXXFLAGS += -O2
 
 # Complete build flags
 COMMON_FLAGS += $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))
