@@ -225,7 +225,7 @@ int CTask<Dtype>::Capture(int fps) {
         //cv::imshow(config_.getTaskName() + "_frame", frame);
         //cv::waitKey(1000 / fps);
         
-        cv::imwrite("/home/turinglife/Desktop/1/" + std::to_string(timestamp) + ".jpg", frame);
+        //cv::imwrite("/home/turinglife/Desktop/1/" + std::to_string(timestamp) + ".jpg", frame);
     }
     return 1;
 }
@@ -247,7 +247,7 @@ int CTask<Dtype>::Analyze() {
     // Get the perspective map and square it to generate a better heat map
     cv::Mat pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
     pmap = pmap.mul(pmap);
-    int index = 1;
+    //int index = 1;
     while (getFuncStatus()) {
         if (!buffer_.fetch_frame(frame, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
@@ -270,9 +270,8 @@ int CTask<Dtype>::Analyze() {
         //cv::imshow(config_.getTaskName() + "_ad_result", dst);
         //cv::waitKey(1);
         
-        cv::imwrite("/home/turinglife/Desktop/1/density/"+ std::to_string(index) + ".jpg", frame);
-        
-        index++;
+        //cv::imwrite("/home/turinglife/Desktop/1/density/"+ std::to_string(index) + ".jpg", frame);
+        //index++;
     }
     return  1;
 }

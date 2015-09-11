@@ -100,6 +100,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    task.FreeBuffer();
     // only unlink after this process ends
     unlink(socket_path.c_str());
 
