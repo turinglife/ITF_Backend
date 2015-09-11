@@ -83,10 +83,10 @@ int main(int argc, char* argv[]) {
             //t_work = std::thread(&CTask<float>::Analyze, &task);
             //task.Analyze();
             
-            std::string lm_name = "lm";
+            //std::string lm_name = "lm";
             task.Train(lm_name);
             
-            server.Reply(lm_name);
+            server.Reply("OK");
                 
         } else if (action.compare("STOP") == 0) {  // STOP
             task.setCameraStatus(CTask<float>::TERMINATE);
