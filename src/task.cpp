@@ -257,7 +257,7 @@ int CTask<Dtype>::Analyze() {
     }
 
     while (getFuncStatus()) {
-        if (!buffer_.fetch_src(cur_frame_, timestamp)) {
+        if (!buffer_.fetch_frame(cur_frame_, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
