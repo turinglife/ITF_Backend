@@ -117,6 +117,8 @@ bool CTask<Dtype>::InitAnalyzer(const std::string& task_name) {
         return false;
     }
 
+    predicted_value_ = 0;
+
     return analyzer_->Init();
 }
 
@@ -222,8 +224,8 @@ int CTask<Dtype>::Capture(int fps) {
         // Write a new frame into buffer
         buffer_.put_src(frame, timestamp);
 
-        //cv::imshow(config_.getTaskName() + "_frame", frame);
-        //cv::waitKey(1000 / fps);
+        cv::imshow(config_.getTaskName() + "_frame", frame);
+        cv::waitKey(1000 / fps);
         
         cv::imwrite("/home/turinglife/Desktop/1/" + std::to_string(timestamp) + ".jpg", frame);
     }
@@ -240,40 +242,46 @@ int CTask<Dtype>::Analyze() {
 
     int rows = config_.getFrameHeight();
     int cols = config_.getFrameWidth();
-    cv::Mat frame(rows, cols, CV_8UC3);
+    cur_frame_.create(rows, cols, CV_8UC3);
     unsigned int timestamp;
-
+    
+    // Write predicted number into disk every second
+    const int interval = 1;
     itf::Util util;
-    // Get the perspective map and square it to generate a better heat map
-    cv::Mat pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
-    pmap = pmap.mul(pmap);
-    int index = 1;
+    cv::Mat pmap;
+    if (getCurrentTaskType() == TaskType_t::COUNTING) {
+        // Get the perspective map and square it to generate a better heat map
+        pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
+        pmap = pmap.mul(pmap);
+        tdb_ = std::thread(&CTask::record, this, interval);
+    }
+
     while (getFuncStatus()) {
-        if (!buffer_.fetch_frame(frame, timestamp)) {
+        if (!buffer_.fetch_src(cur_frame_, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
         }
-        
-        vector<float> feature = analyzer_->Analyze(frame);
+        vector<float> feature = analyzer_->Analyze(cur_frame_);
         cv::Mat output(rows, cols, CV_32F, feature.data());
+
+        // Post-processing
         cv::Mat dst;
         if (getCurrentTaskType() == TaskType_t::COUNTING) {
+            predicted_value_ = static_cast<int>(cv::sum(output)[0]);
             dst = util.GenerateHeatMap(output, pmap);
-            int predicted_value = static_cast<int>(cv::sum(output)[0]);
-            buffer_.put_dst(dst, predicted_value);
+            cv::applyColorMap(dst, dst, cv::COLORMAP_JET);
+            buffer_.put_dst(dst, predicted_value_);
         } else if (getCurrentTaskType() == TaskType_t::SEGMENTATION) {
-            frame.copyTo(dst, output > 0.5);
+            cur_frame_.copyTo(dst, output > 0.5);
             buffer_.put_dst(dst, 0);
         }
         
-        //cv::imshow(config_.getTaskName() + "_ad_result", dst);
-        //cv::waitKey(1);
-        
-        cv::imwrite("/home/turinglife/Desktop/1/density/"+ std::to_string(index) + ".jpg", frame);
-        
-        index++;
+        // Uncomment following two lins to debug
+        cv::imshow(config_.getTaskName() + "_ad_result", dst);
+        cv::waitKey(1);
     }
+    if (tdb_.joinable()) tdb_.join();
     return  1;
 }
 
@@ -458,23 +466,6 @@ bool CTask<Dtype>::setTaskStatus(TaskStatus_t status) {
 }
 
 template <typename Dtype>
-void CTask<Dtype>::ShowDetails() {
-    std::cout << std::endl;
-    std::cout << getpid() << ": Task Info ------" << std::endl;
-    std::cout << " Task Name: " << config_.getTaskName() << std::endl;
-    std::cout << " Task Type: " << config_.getTaskType() << std::endl;
-    std::cout << " Camera Type: " << config_.getCameraType() << std::endl;
-    std::cout << " Width: " << config_.getFrameWidth() << std::endl;
-    std::cout << " Height: " << config_.getFrameHeight() << std::endl;
-    std::cout << " Address: " << config_.getIPAddress() << std::endl;
-    std::cout << " Port: " << config_.getPort() << std::endl;
-    std::cout << " Host: " << config_.getHost() << std::endl;
-    std::cout << " User: " << config_.getUsername() << std::endl;
-    std::cout << " Password: " << config_.getPassword() << std::endl;
-    std::cout << std::endl;
-}
-
-template <typename Dtype>
 CDbi CTask<Dtype>::ConnectDB() {
     // Prepare DB Infomation
     const std::string server = "localhost";
@@ -493,5 +484,15 @@ bool CTask<Dtype>::FreeBuffer() {
     return buffer_.destroy();
 }
 
+template <typename Dtype>
+void CTask<Dtype>::record(int interval) {
+    CDbi db = ConnectDB();
+    while (getFuncStatus()) {
+        sleep(interval);
+        db.RunSQL("INSERT INTO DensityPredict VALUES (DEFAULT, "
+            + std::to_string(predicted_value_) + ", '"
+            + config_.getTaskName() + "');");
+    }
+}
 
 INSTANTIATE_MYCLASS(CTask);

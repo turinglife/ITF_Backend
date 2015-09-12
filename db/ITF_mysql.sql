@@ -117,7 +117,7 @@ CREATE TABLE DensityAlarmRecord (
 ) /*! ENGINE=InnoDB */;
 
 CREATE TABLE DensityPredict (
-    `date_time`     datetime NOT NULL,
+    `date_time`     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `count`             int unsigned NOT NULL,
     `task_name`         varchar(128) NOT NULL,
 
