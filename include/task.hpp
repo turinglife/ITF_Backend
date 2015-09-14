@@ -77,18 +77,13 @@ class CTask {
     std::unique_ptr<CAnalyzer<Dtype> > analyzer_;  
     CBuffer buffer_;
     // object for generating alarm information.
-    CAlarm *alarmer_;              
+    CAlarm alarmer_;              
     // configuration for the task object.
     CConfig config_;               
     
     // default value is TERMINAL state.
     int funcstatus_;               
     int camerastatus_;
-    
-    // Keeps track of the number of people in latest prcoessed frame in CTask::Analyze().
-    int predicted_value_;
-    std::thread tdb_;
-    cv::Mat cur_frame_;
     
     /**
      *

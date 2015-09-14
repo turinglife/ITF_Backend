@@ -3,22 +3,8 @@
 // Copyright (C) 2015-2018 MMLab, EE, The Chinese University of HongKong
 //
 
-#ifndef ITF_ALARM_H
-#define ITF_ALARM_H
-
-
-#include "common.hpp"
-
-
-class CAlarm {
-public:
-    void b();
-
-private:
-
+struct CAlarm {
+  int priority_high = 0;
+  int priority_medium = 0;
+  int priority_low = 0;
 };
-
-
-
-
-#endif // ITF_ALARM_H
