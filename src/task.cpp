@@ -266,7 +266,7 @@ int CTask<Dtype>::Analyze() {
     
     //int index = 1;
     while (getFuncStatus()) {
-        if (!buffer_.fetch_src(frame, timestamp)) {
+        if (!buffer_.fetch_frame(frame, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
@@ -534,6 +534,9 @@ void CTask<Dtype>::record(int interval) {
             + random_name
             + "', '"
             + config_.getTaskName() + "');");
+
+          // Uncomment to save
+          // cv::imwrite("/path/to/your/prefered/random_name.jpg", cv::Mat);
         } else if (predicted_value > alarmer_.priority_medium) {
           std::string random_name = std::to_string(rand() % 9999 + 1000);
           db.RunSQL("INSERT INTO DensityAlarmRecord VALUES (DEFAULT, "
