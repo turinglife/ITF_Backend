@@ -116,12 +116,13 @@ CREATE TABLE DensityAlarmRecord (
     FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*! ENGINE=InnoDB */;
 
-CREATE TABLE DensityPredict (
-    `date_time`     datetime NOT NULL,
-    `count`             int unsigned NOT NULL,
-    `task_name`         varchar(128) NOT NULL,
 
-    FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
+ CREATE TABLE DensityPredict (  CREATE TABLE DensityPredict (
+- `date_time` datetime NOT NULL,        + `date_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+`count` int unsigned NOT NULL,  `count` int unsigned NOT NULL,
+`task_name` varchar(128) NOT NULL,      `task_name` varchar(128) NOT NULL,
+        
+FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE      FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*! ENGINE=InnoDB */;
 
 -- Insert Values

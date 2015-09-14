@@ -53,8 +53,6 @@ class CTask {
     int Analyze();
     int Train(std::string &);
 
-    void ShowDetails();
-
     bool setTaskStatus(TaskStatus_t status);
 
     void getCurrentCameraType();
@@ -64,7 +62,6 @@ class CTask {
     inline int getCurrentFrameHeight() { return config_.getFrameHeight(); }
     inline TaskType_t getCurrentTaskType() { return static_cast<TaskType_t>(config_.getTaskType()); }
     inline int getTaskStatus() { return config_.getTaskStatus(); }
-
     inline void setFuncStatus(int funcstatus) { funcstatus_ = funcstatus; }
     inline int getFuncStatus() { return funcstatus_; }
     inline void setCameraStatus(int camerastatus) { camerastatus_ = camerastatus; }
@@ -74,14 +71,33 @@ class CTask {
 
  private:
     CDbi ConnectDB();
-    std::unique_ptr<CCamera> camera_;  // object for grabing frames into buffer.
-    std::unique_ptr<CAnalyzer<Dtype> > analyzer_;  // object for analyzing frames from buffer.
+    // object for grabing frames into buffer.
+    std::unique_ptr<CCamera> camera_;  
+    // object for analyzing frames from buffer.
+    std::unique_ptr<CAnalyzer<Dtype> > analyzer_;  
     CBuffer buffer_;
-    CAlarm *alarmer_;              // object for generating alarm information.
-    CConfig config_;               // configuration for the task object.
-
-    int funcstatus_;               // default value is TERMINAL state.
+    // object for generating alarm information.
+    CAlarm *alarmer_;              
+    // configuration for the task object.
+    CConfig config_;               
+    
+    // default value is TERMINAL state.
+    int funcstatus_;               
     int camerastatus_;
+    
+    // Keeps track of the number of people in latest prcoessed frame in CTask::Analyze().
+    int predicted_value_;
+    std::thread tdb_;
+    cv::Mat cur_frame_;
+    
+    /**
+     *
+     * @brief Write predicted number into MySQL db.
+     * @param interval Specifiy how often (seconds) to write to disk.
+     *
+     */
+    
+    void record(int interval);
 };
 
 #endif  // ITF_TASK_H_
