@@ -344,7 +344,7 @@ int CTask<Dtype>::Train(std::string &filename) {
 
         buffer_.put_src(output, timestamp);
         
-        cv::imwrite("/home/turinglife/Desktop/1/" + std::to_string(current_frame + 1) + ".jpg", output);
+        //cv::imwrite("/home/turinglife/Desktop/1/" + std::to_string(current_frame + 1) + ".jpg", output);
         
         current_frame++;
     }
@@ -441,8 +441,8 @@ int CTask<Dtype>::Train(std::string &filename) {
         //cv::imshow(config_.getTaskName() + "_ad_result", dst);
         //cv::waitKey(1);
         
-        cv::imwrite("/home/turinglife/Desktop/1/density/"+ std::to_string(index) + ".jpg", dst);
-        std::cout<<std::to_string(index)<<", predicted_value = "<<predicted_value<<std::endl;
+        //cv::imwrite("/home/turinglife/Desktop/1/density/"+ std::to_string(index) + ".jpg", dst);
+        //std::cout<<std::to_string(index)<<", predicted_value = "<<predicted_value<<std::endl;
         
         index++;
     }
