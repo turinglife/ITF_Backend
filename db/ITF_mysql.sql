@@ -107,7 +107,7 @@ CREATE TABLE DensityAlarmStrategy (
 ) /*! ENGINE=InnoDB */;
 
 CREATE TABLE DensityAlarmRecord (
-    `date_time`     datetime NOT NULL,
+    `date_time`     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `count`             int unsigned NOT NULL,
     `priority`          enum('LOW', 'MEDIUM', 'HIGH') NOT NULL,
     `snapshot`          varchar(128) NOT NULL,
@@ -116,13 +116,12 @@ CREATE TABLE DensityAlarmRecord (
     FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*! ENGINE=InnoDB */;
 
+CREATE TABLE DensityPredict (
+    `date_time`     TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `count`             int unsigned NOT NULL,
+    `task_name`         varchar(128) NOT NULL,
 
- CREATE TABLE DensityPredict (  CREATE TABLE DensityPredict (
-- `date_time` datetime NOT NULL,        + `date_time` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-`count` int unsigned NOT NULL,  `count` int unsigned NOT NULL,
-`task_name` varchar(128) NOT NULL,      `task_name` varchar(128) NOT NULL,
-        
-FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE      FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
+    FOREIGN KEY(`task_name`) REFERENCES Tasks(`task_name`) ON DELETE CASCADE ON UPDATE CASCADE
 ) /*! ENGINE=InnoDB */;
 
 -- Insert Values
@@ -147,7 +146,7 @@ INSERT INTO Files VALUES ('./data/200608.mp4', 720, 576, 50, 1000,'task_four');
 INSERT INTO DensityDetail VALUES ('task_one_pers.csv', 'task_one_roi.csv', 'task_one_lm.csv', 'task_one');
 INSERT INTO DensityDetail VALUES ('task_two_pers.csv', 'task_two_roi.csv', 'task_two_lm.csv', 'task_two');
 
-INSERT INTO DensityAlarmStrategy VALUES (40, 80, 150, 'task_one');
+INSERT INTO DensityAlarmStrategy VALUES (7, 10, 20, 'task_one');
 INSERT INTO DensityAlarmStrategy VALUES (76, 99, 222, 'task_two');
 
 INSERT INTO DensityAlarmRecord VALUES ('2012-02-14 18:30:21', 67, 'LOW', 'c8h3vwn23r', 'task_one');
