@@ -15,6 +15,7 @@ class CConfig {
     inline void setTaskName(const std::string &task_name) { task_name_ = task_name; }
     inline void setTaskType(const int &task_type) { task_type_ = task_type; }
     inline void setTaskStatus(const int &task_status) { task_status_ = task_status; }
+    inline void setTaskPath(const std::string &task_path) { task_path_ = task_path; }
     inline void setCameraType(const int &camera_type) { camera_type_ = camera_type; }
     inline void setFrameWidth(const int &width) { width_ = width; }
     inline void setFrameHeight(const int &height) { height_ = height; }
@@ -29,6 +30,7 @@ class CConfig {
     inline std::string getTaskName() { return task_name_; }
     inline int getTaskType() { return task_type_; }
     inline int getTaskStatus() { return task_status_; }
+    inline std::string getTaskPath() { return task_path_; }
     inline int getCameraType() { return camera_type_; }
     inline int getFrameWidth() { return width_; }
     inline int getFrameHeight() { return height_; }
@@ -44,6 +46,7 @@ class CConfig {
     std::string task_name_;
     int task_type_ = 0;
     int task_status_ = 0;
+    std::string task_path_;
 
     int camera_type_ = 0;
 

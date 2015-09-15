@@ -106,6 +106,7 @@ bool CTask<Dtype>::InitAnalyzer(const std::string& task_name) {
         std::vector<std::map<std::string, std::string> > density_detail = db.Query("select * from DensityDetail where task_name='" +task_name+ "';");
         config_.setPmapPath(res[0]["task_path"] + "PMap/" + density_detail[0]["pers_file"]);
         config_.setROIPath(res[0]["task_path"] + "ROI/" + density_detail[0]["roi_file"]);
+        config_.setTaskPath(res[0]["task_path"]);
         analyzer_.reset(new CDPAnalyzerDensity<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight()));
         
         std::vector<std::map<std::string, std::string> > alarm_detail = db.Query("select * from DensityAlarmStrategy where task_name='" +task_name+ "';");
@@ -266,7 +267,7 @@ int CTask<Dtype>::Analyze() {
     
     //int index = 1;
     while (getFuncStatus()) {
-        if (!buffer_.fetch_src(frame_, timestamp)) {
+        if (!buffer_.fetch_frame(frame_, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
@@ -534,8 +535,8 @@ void CTask<Dtype>::record(int interval) {
             + config_.getTaskName() + "');");
 
           // Uncomment to save
-          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_src.jpg", frame_);
-          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_dst.jpg", dst_);
+          cv::imwrite(config_.getTaskPath() + "Alarm/" + random_name +"_src.jpg", frame_);
+          cv::imwrite(config_.getTaskPath() + "Alarm/" + random_name +"_dst.jpg", dst_);
         } else if (predicted_value > alarmer_.priority_medium) {
           std::string random_name = std::to_string(rand() % 9999 + 1000);
           db.RunSQL("INSERT INTO DensityAlarmRecord VALUES (DEFAULT, "
@@ -543,8 +544,8 @@ void CTask<Dtype>::record(int interval) {
             + random_name
             + "', '"
             + config_.getTaskName() + "');");
-          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_src.jpg", frame_);
-          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_dst.jpg", dst_);
+          cv::imwrite(config_.getTaskPath() + "Alarm/" + random_name +"_src.jpg", frame_);
+          cv::imwrite(config_.getTaskPath() + "Alarm/" + random_name +"_dst.jpg", dst_);
         } else if (predicted_value > alarmer_.priority_low) {
           std::string random_name = std::to_string(rand() % 9999 + 1000);
           db.RunSQL("INSERT INTO DensityAlarmRecord VALUES (DEFAULT, "
@@ -552,8 +553,8 @@ void CTask<Dtype>::record(int interval) {
             + random_name
             + "', '"
             + config_.getTaskName() + "');");
-          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_src.jpg", frame_);
-          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_dst.jpg", dst_);
+          cv::imwrite(config_.getTaskPath() + "Alarm/" + random_name +"_src.jpg", frame_);
+          cv::imwrite(config_.getTaskPath() + "Alarm/" + random_name +"_dst.jpg", dst_);
         }
     }
 }
