@@ -130,7 +130,9 @@ bool CTask<Dtype>::InitAnalyzer(const std::string& task_name) {
 
 template <typename Dtype>
 bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
-
+    
+    int width = 0, height = 0;
+    
     // camera_ cannot be initialzed twice or deleted if it is alreaday initialized
     if (camera_ != 0) {
         std::cerr << "Trainer is already initialized" << std::endl;
@@ -154,23 +156,30 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
     config_.setPmapPath(tasks[0]["task_path"] + "PMap/" + density_detail[0]["pers_file"]);
     config_.setROIPath(tasks[0]["task_path"] + "ROI/" + density_detail[0]["roi_file"]);
     
+    std::string gt_folder = config_.getTaskPath() + "GT/";
     
-    std::string file = config_.getIPAddress() + "GT/" + "0.jpg";
-    //std::cout<<"file = "<<file<<std::endl;
+    // access the root folder of the current task.
+    if(!boost::filesystem::exists(gt_folder) || !boost::filesystem::is_directory(gt_folder)) 
+        return 0;
+    
+    boost::filesystem::recursive_directory_iterator it(gt_folder);
+    boost::filesystem::recursive_directory_iterator endit;
+    
+    cv::Mat gt_frame;
+    // figure out the size of frames.
+    while(it != endit) {
+        if(boost::filesystem::is_regular_file(*it) && it->path().extension() == ".jpg") {            
+            gt_frame = cv::imread(it->path().string());
+            
+            break;
+        }
         
-    cv::Mat output;
-    output = cv::imread(file);
+        ++it;
+    }
     
-    //camera.Connect();
-    //output = camera.Capture(file);    
-    
-    cv::Size s = output.size();
-
-    //std::cout<<"output.width = "<<s.width<<std::endl;
-    //std::cout<<"output.height = "<<s.height<<std::endl;
-    
-    config_.setFrameHeight(s.height);
-    config_.setFrameWidth(s.width);
+    cv::Size gt_size = gt_frame.size();
+    config_.setFrameHeight(gt_size.height);
+    config_.setFrameWidth(gt_size.width);
     
     camera_.reset(new CRegressionCamera(config_.getIPAddress(), 0));
     //camera_->Connect();
@@ -195,12 +204,9 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
         return false;
     }
 
-    int w = 0;
-    int h = 0;
-    buffer_.frame_size(w, h);
-
-    config_.setFrameWidth(w);
-    config_.setFrameHeight(h);
+    buffer_.frame_size(width, height);
+    config_.setFrameWidth(width);
+    config_.setFrameHeight(height);
 
     // Check task type
     std::vector<std::map<std::string, std::string> > res = db.Query("select task_type, task_path from Tasks where task_name='"+task_name+"';");
