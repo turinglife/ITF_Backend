@@ -526,7 +526,7 @@ void CTask<Dtype>::record(int interval) {
         + config_.getTaskName() + "');");
 
         if (predicted_value > alarmer_.priority_high) {
-          std::string random_name = std::to_string(rand() % 9999 + 1000);
+          std::string random_name = std::to_string(rand() % 99999 + 10000);
           db.RunSQL("INSERT INTO DensityAlarmRecord VALUES (DEFAULT, "
             + std::to_string(predicted_value) + ", 'HIGH', '"
             + random_name
@@ -534,7 +534,7 @@ void CTask<Dtype>::record(int interval) {
             + config_.getTaskName() + "');");
 
           // Uncomment to save
-          cv::imwrite("./" + random_name +"_src.jpg", frame_);
+          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_src.jpg", frame_);
           cv::imwrite("./" + random_name +"_dst.jpg", dst_);
         } else if (predicted_value > alarmer_.priority_medium) {
           std::string random_name = std::to_string(rand() % 9999 + 1000);
@@ -543,8 +543,8 @@ void CTask<Dtype>::record(int interval) {
             + random_name
             + "', '"
             + config_.getTaskName() + "');");
-          cv::imwrite("./" + random_name +"_src.jpg", frame_);
-          cv::imwrite("./" + random_name +"_dst.jpg", dst_);
+          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_src.jpg", frame_);
+          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_dst.jpg", dst_);
         } else if (predicted_value > alarmer_.priority_low) {
           std::string random_name = std::to_string(rand() % 9999 + 1000);
           db.RunSQL("INSERT INTO DensityAlarmRecord VALUES (DEFAULT, "
