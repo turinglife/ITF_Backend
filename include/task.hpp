@@ -79,7 +79,7 @@ class CTask {
     // object for generating alarm information.
     CAlarm alarmer_;              
     // configuration for the task object.
-    CConfig config_;               
+    CConfig config_;
     
     // default value is TERMINAL state.
     int funcstatus_;               

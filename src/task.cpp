@@ -259,6 +259,11 @@ int CTask<Dtype>::Analyze() {
     cv::Mat pmap;
     std::thread tdb;
     if (getCurrentTaskType() == TaskType_t::COUNTING) {
+        
+        // Load the trained linear model.
+        std::string lm = config_.getTaskName() + "LM/" + "lm.csv";
+        util.LoadLinearModel(lm);
+    
         // Get the perspective map and square it to generate a better heat map
         pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
         pmap = pmap.mul(pmap);
@@ -278,7 +283,11 @@ int CTask<Dtype>::Analyze() {
         
         // Post-processing
         if (getCurrentTaskType() == TaskType_t::COUNTING) {
-            predicted_value = static_cast<int>(cv::sum(output)[0]);
+            int tmp_predicted_value = static_cast<int>(cv::sum(output)[0]);
+            
+            // Predict a value using linear model.
+            predicted_value = util.Predict(tmp_predicted_value);
+    
             dst_ = util.GenerateHeatMap(output, pmap);
             buffer_.put_dst(dst_, predicted_value);
         } else if (getCurrentTaskType() == TaskType_t::SEGMENTATION) {
