@@ -535,7 +535,7 @@ void CTask<Dtype>::record(int interval) {
 
           // Uncomment to save
           cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_src.jpg", frame_);
-          cv::imwrite("./" + random_name +"_dst.jpg", dst_);
+          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_dst.jpg", dst_);
         } else if (predicted_value > alarmer_.priority_medium) {
           std::string random_name = std::to_string(rand() % 9999 + 1000);
           db.RunSQL("INSERT INTO DensityAlarmRecord VALUES (DEFAULT, "
@@ -552,8 +552,8 @@ void CTask<Dtype>::record(int interval) {
             + random_name
             + "', '"
             + config_.getTaskName() + "');");
-          cv::imwrite("./" + random_name +"_src.jpg", frame_);
-          cv::imwrite("./" + random_name +"_dst.jpg", dst_);
+          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_src.jpg", frame_);
+          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_dst.jpg", dst_);
         }
     }
 }
