@@ -249,7 +249,7 @@ int CTask<Dtype>::Analyze() {
 
     int rows = config_.getFrameHeight();
     int cols = config_.getFrameWidth();
-    cv::Mat frame = cv::Mat(rows, cols, CV_8UC3);
+    frame_.create(rows, cols, CV_8UC3);
     unsigned int timestamp;
     
     // Write predicted number into disk every second
@@ -266,28 +266,26 @@ int CTask<Dtype>::Analyze() {
     
     //int index = 1;
     while (getFuncStatus()) {
-        if (!buffer_.fetch_frame(frame, timestamp)) {
+        if (!buffer_.fetch_src(frame_, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
         }
         
-        vector<float> feature = analyzer_->Analyze(frame);
+        vector<float> feature = analyzer_->Analyze(frame_);
         cv::Mat output(rows, cols, CV_32F, feature.data());
         
         // Post-processing
-        cv::Mat dst;
         if (getCurrentTaskType() == TaskType_t::COUNTING) {
             predicted_value = static_cast<int>(cv::sum(output)[0]);
-            dst = util.GenerateHeatMap(output, pmap);
-            cv::applyColorMap(dst, dst, cv::COLORMAP_JET);
-            buffer_.put_dst(dst, predicted_value);
+            dst_ = util.GenerateHeatMap(output, pmap);
+            buffer_.put_dst(dst_, predicted_value);
         } else if (getCurrentTaskType() == TaskType_t::SEGMENTATION) {
-            frame.copyTo(dst, output > 0.5);
-            buffer_.put_dst(dst, 0);
+            frame_.copyTo(dst_, output > 0.5);
+            buffer_.put_dst(dst_, 0);
         }
         
-        cv::imshow(config_.getTaskName() + "_ad_result", dst);
+        cv::imshow(config_.getTaskName() + "_ad_result", dst_);
         cv::waitKey(1);
         
         //cv::imwrite("/home/turinglife/Desktop/1/density/"+ std::to_string(index) + ".jpg", frame);
@@ -528,7 +526,7 @@ void CTask<Dtype>::record(int interval) {
         + config_.getTaskName() + "');");
 
         if (predicted_value > alarmer_.priority_high) {
-          std::string random_name = std::to_string(rand() % 9999 + 1000);
+          std::string random_name = std::to_string(rand() % 99999 + 10000);
           db.RunSQL("INSERT INTO DensityAlarmRecord VALUES (DEFAULT, "
             + std::to_string(predicted_value) + ", 'HIGH', '"
             + random_name
@@ -536,7 +534,8 @@ void CTask<Dtype>::record(int interval) {
             + config_.getTaskName() + "');");
 
           // Uncomment to save
-          // cv::imwrite("/path/to/your/prefered/random_name.jpg", cv::Mat);
+          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_src.jpg", frame_);
+          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_dst.jpg", dst_);
         } else if (predicted_value > alarmer_.priority_medium) {
           std::string random_name = std::to_string(rand() % 9999 + 1000);
           db.RunSQL("INSERT INTO DensityAlarmRecord VALUES (DEFAULT, "
@@ -544,6 +543,8 @@ void CTask<Dtype>::record(int interval) {
             + random_name
             + "', '"
             + config_.getTaskName() + "');");
+          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_src.jpg", frame_);
+          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_dst.jpg", dst_);
         } else if (predicted_value > alarmer_.priority_low) {
           std::string random_name = std::to_string(rand() % 9999 + 1000);
           db.RunSQL("INSERT INTO DensityAlarmRecord VALUES (DEFAULT, "
@@ -551,6 +552,8 @@ void CTask<Dtype>::record(int interval) {
             + random_name
             + "', '"
             + config_.getTaskName() + "');");
+          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_src.jpg", frame_);
+          cv::imwrite(config_.task_path() + "/Alarm/" + random_name +"_dst.jpg", dst_);
         }
     }
 }
