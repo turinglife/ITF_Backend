@@ -84,6 +84,9 @@ class CTask {
     // default value is TERMINAL state.
     int funcstatus_;               
     int camerastatus_;
+
+    cv::Mat frame_;
+    cv::Mat dst_;
     
     /**
      *
