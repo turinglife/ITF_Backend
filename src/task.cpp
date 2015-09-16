@@ -152,7 +152,6 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
         
     config_.setTaskName("trainer");
     config_.setTaskPath(tasks[0]["task_path"]);
-    config_.setIPAddress(tasks[0]["task_path"]);    
     config_.setPmapPath(tasks[0]["task_path"] + "PMap/" + density_detail[0]["pers_file"]);
     config_.setROIPath(tasks[0]["task_path"] + "ROI/" + density_detail[0]["roi_file"]);
     
@@ -182,9 +181,6 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
     cv::Size gt_size = gt_frame.size();
     config_.setFrameHeight(gt_size.height);
     config_.setFrameWidth(gt_size.width);
-    
-    camera_.reset(new CRegressionCamera(config_.getIPAddress(), 0));
-    //camera_->Connect();
     
     // Create buffer for communicating capturer with analyzer.
     cv::Mat frame(config_.getFrameHeight(), config_.getFrameWidth(), CV_8UC3);
@@ -325,8 +321,8 @@ int CTask<Dtype>::Train(std::string &filename) {
     /************************************************************************************/
     // generate gt vector for training linear model.
   
-    std::cout<<"filename_ = "<<config_.getIPAddress()<<std::endl;
-    std::string gt_folder = config_.getIPAddress() + "GT/";
+    std::cout<<"filename_ = "<<config_.getTaskPath()<<std::endl;
+    std::string gt_folder = config_.getTaskPath() + "GT/";
     std::vector<boost::filesystem::path> gt_frame, gt_coordinate;
     int current_frame = 0, current_coordinate = 0;
     cv::Mat output;
@@ -465,7 +461,7 @@ int CTask<Dtype>::Train(std::string &filename) {
     
     /************************************************************************************/
     // generate linear model.
-    std::string save_name = config_.getIPAddress() + "LM/" + filename + ".csv";
+    std::string save_name = config_.getTaskPath() + "LM/" + filename + ".csv";
     std::vector<double> model = util.TrainLinearModel(gt, predict, save_name);
     
     return  1;   
