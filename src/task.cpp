@@ -151,13 +151,13 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
     std::vector<std::map<std::string, std::string> > density_detail = db.Query("select * from DensityDetail where task_name='"+task_name+"';");
         
     config_.setTaskName("trainer");
-    
+    config_.setTaskPath(tasks[0]["task_path"]);
     config_.setIPAddress(tasks[0]["task_path"]);    
     config_.setPmapPath(tasks[0]["task_path"] + "PMap/" + density_detail[0]["pers_file"]);
     config_.setROIPath(tasks[0]["task_path"] + "ROI/" + density_detail[0]["roi_file"]);
     
     std::string gt_folder = config_.getTaskPath() + "GT/";
-    
+        
     // access the root folder of the current task.
     if(!boost::filesystem::exists(gt_folder) || !boost::filesystem::is_directory(gt_folder)) {
         std::cerr << "Cannot connect GT folder" << std::endl;
