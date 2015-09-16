@@ -159,8 +159,10 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
     std::string gt_folder = config_.getTaskPath() + "GT/";
     
     // access the root folder of the current task.
-    if(!boost::filesystem::exists(gt_folder) || !boost::filesystem::is_directory(gt_folder)) 
-        return 0;
+    if(!boost::filesystem::exists(gt_folder) || !boost::filesystem::is_directory(gt_folder)) {
+        std::cerr << "Cannot connect GT folder" << std::endl;
+        return false;
+    }
     
     boost::filesystem::recursive_directory_iterator it(gt_folder);
     boost::filesystem::recursive_directory_iterator endit;
