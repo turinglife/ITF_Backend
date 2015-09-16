@@ -269,7 +269,7 @@ int CTask<Dtype>::Analyze() {
     if (getCurrentTaskType() == TaskType_t::COUNTING) {
         
         // Load the trained linear model.
-        std::string lm = config_.getTaskName() + "LM/" + "lm.csv";
+        std::string lm = config_.getTaskPath() + "LM/" + "lm.csv";
         util.LoadLinearModel(lm);
     
         // Get the perspective map and square it to generate a better heat map
