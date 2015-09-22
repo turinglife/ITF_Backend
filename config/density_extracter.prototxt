@@ -1,7 +1,7 @@
 # overlap_ratio should between 0 and 1, with larger overlap_ratio, there will be more patches. 0.5 by default.
 # overlap_ratio: 0.8
 
-model: "/home/turinglife/Desktop/SDK/lib/model/crowd_counting_iter_18000.caffemodel"
-prototxt: "/home/turinglife/Desktop/SDK/lib/model/crowd_counting_train_val_1.prototxt"
-solver_mode: CPU
+model: "/home/lpzhang/Desktop/model/crowd_counting_iter_18000.caffemodel"
+prototxt: "/home/lpzhang/Desktop/model/crowd_counting_train_val_1.prototxt"
+solver_mode: GPU
 device_id: 0

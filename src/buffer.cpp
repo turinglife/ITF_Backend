@@ -126,7 +126,7 @@ bool CBuffer::put_src(IN const cv::Mat &frame, IN unsigned int timestamp) {
     memcpy(p_src_ + curr_w_src * head_.frame_size, frame.data, head_.frame_size);
     memcpy(p_timestamp_ + curr_w_src * sizeof(unsigned int), &timestamp, sizeof(unsigned int));
     *p_last_w_src_ = curr_w_src;
-    
+
     return true;
 }
 
@@ -139,16 +139,20 @@ bool CBuffer::put_dst(IN const cv::Mat &frame, int predicted_value) {
     memcpy(p_dst_map_ + curr_w_dst * head_.frame_size, frame.data, head_.frame_size);
     memcpy(p_dst_val_ + curr_w_dst * sizeof(int), &predicted_value, sizeof(int));
     *p_last_w_dst_ = curr_w_dst;
-    
+
     return true;
 }
 
 bool CBuffer::fetch_frame(OUT cv::Mat &frame, OUT unsigned int &timestamp) {
     // check whether the input buffer is empty or not;
-    if (*p_last_r_src_ == *p_last_w_src_) {
-        return false;
-    }
-    int curr_r_src = (*p_last_r_src_ + 1) % head_.src_buffer_num;
+    //if (*p_last_r_src_ == *p_last_w_src_) {
+    //    return false;
+    //}
+    //int curr_r_src = (*p_last_r_src_ + 1) % head_.src_buffer_num;
+    //memcpy(frame.data, p_src_ + curr_r_src * head_.frame_size, head_.frame_size);
+    //memcpy(&timestamp, p_timestamp_ + curr_r_src * sizeof(unsigned int), sizeof(unsigned int));
+
+    int curr_r_src = *p_last_r_src_;
     memcpy(frame.data, p_src_ + curr_r_src * head_.frame_size, head_.frame_size);
     memcpy(&timestamp, p_timestamp_ + curr_r_src * sizeof(unsigned int), sizeof(unsigned int));
 
@@ -160,12 +164,12 @@ bool CBuffer::fetch_src(OUT cv::Mat &frame, OUT unsigned int &timestamp) {
     if (*p_last_r_src_ == *p_last_w_src_) {
         return false;
     }
-    
+
     int curr_r_src = (*p_last_r_src_ + 1) % head_.src_buffer_num;
     memcpy(frame.data, p_src_ + curr_r_src * head_.frame_size, head_.frame_size);
     memcpy(&timestamp, p_timestamp_ + curr_r_src * sizeof(unsigned int), sizeof(unsigned int));
     *p_last_r_src_ = curr_r_src;
-    
+
     return true;
 }
 
