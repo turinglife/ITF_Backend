@@ -19,6 +19,7 @@
 #include "ndp_analyzer_tracking.hpp"
 #include "dp_analyzer_segmentation.hpp"
 #include "dp_analyzer_density.hpp"
+#include "dp_analyzer_stationary.hpp"
 #include "ndp_analyzer.hpp"
 #include "dp_analyzer.hpp"
 #include "analyzer.hpp"
@@ -34,7 +35,8 @@ class CTask {
  public:
     enum TaskType_t {
         COUNTING,
-        SEGMENTATION
+        SEGMENTATION,
+        STATIONARY
     };
     enum TaskStatus_t {     // Task state
         OFF = 0,
@@ -72,29 +74,29 @@ class CTask {
  private:
     CDbi ConnectDB();
     // object for grabing frames into buffer.
-    std::unique_ptr<CCamera> camera_;  
+    std::unique_ptr<CCamera> camera_;
     // object for analyzing frames from buffer.
-    std::unique_ptr<CAnalyzer<Dtype> > analyzer_;  
+    std::unique_ptr<CAnalyzer<Dtype> > analyzer_;
     CBuffer buffer_;
     // object for generating alarm information.
-    CAlarm alarmer_;              
+    CAlarm alarmer_;
     // configuration for the task object.
     CConfig config_;
-    
+
     // default value is TERMINAL state.
-    int funcstatus_;               
+    int funcstatus_;
     int camerastatus_;
 
     cv::Mat frame_;
     cv::Mat dst_;
-    
+
     /**
      *
      * @brief Write predicted number into MySQL db.
      * @param interval Specifiy how often (seconds) to write to disk.
      *
      */
-    
+
     void record(int interval);
 };
 

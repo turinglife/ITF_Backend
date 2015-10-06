@@ -108,7 +108,7 @@ bool CTask<Dtype>::InitAnalyzer(const std::string& task_name) {
         config_.setROIPath(res[0]["task_path"] + "ROI/" + density_detail[0]["roi_file"]);
         config_.setTaskPath(res[0]["task_path"]);
         analyzer_.reset(new CDPAnalyzerDensity<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight()));
-        
+
         std::vector<std::map<std::string, std::string> > alarm_detail = db.Query("select * from DensityAlarmStrategy where task_name='" +task_name+ "';");
         if (alarm_detail.size() > 0) {
           alarmer_.priority_high = std::atoi(alarm_detail[0]["priority_high"].c_str());
@@ -119,20 +119,24 @@ bool CTask<Dtype>::InitAnalyzer(const std::string& task_name) {
         // Segmentation
         config_.setTaskType(1);
         analyzer_.reset(new CDPAnalyzerSegmentation<Dtype>);
+    } else if (res[0]["task_type"].compare("STATIONARY") == 0) {
+        // Stationary
+        config_.setTaskType(2);
+        analyzer_.reset(new CDPAnalyzerStationary<Dtype>("SK", false, config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight()));
     } else {
         // not supporting.
         std::cerr << "To Be Continued" << std::endl;
         return false;
     }
-    
+
     return analyzer_->Init();
 }
 
 template <typename Dtype>
 bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
-    
+
     int width = 0, height = 0;
-    
+
     // camera_ cannot be initialzed twice or deleted if it is alreaday initialized
     if (camera_ != 0) {
         std::cerr << "Trainer is already initialized" << std::endl;
@@ -145,57 +149,57 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
         std::cerr << "Cannot connect to database" << std::endl;
         return false;
     }
-    
+
     // Load configuration
-    std::vector<std::map<std::string, std::string> > tasks = db.Query("select * from Tasks where task_name='"+task_name+"';");    
+    std::vector<std::map<std::string, std::string> > tasks = db.Query("select * from Tasks where task_name='"+task_name+"';");
     std::vector<std::map<std::string, std::string> > density_detail = db.Query("select * from DensityDetail where task_name='"+task_name+"';");
-        
+
     config_.setTaskName("trainer");
     config_.setTaskPath(tasks[0]["task_path"]);
     config_.setPmapPath(tasks[0]["task_path"] + "PMap/" + density_detail[0]["pers_file"]);
     config_.setROIPath(tasks[0]["task_path"] + "ROI/" + density_detail[0]["roi_file"]);
-    
+
     std::string gt_folder = config_.getTaskPath() + "GT/";
-        
+
     // access the root folder of the current task.
     if(!boost::filesystem::exists(gt_folder) || !boost::filesystem::is_directory(gt_folder)) {
         std::cerr << "Cannot connect GT folder" << std::endl;
         return false;
     }
-    
+
     boost::filesystem::recursive_directory_iterator it(gt_folder);
     boost::filesystem::recursive_directory_iterator endit;
-    
+
     cv::Mat gt_frame;
     // figure out the size of frames.
     while(it != endit) {
-        if(boost::filesystem::is_regular_file(*it) && it->path().extension() == ".jpg") {            
+        if(boost::filesystem::is_regular_file(*it) && it->path().extension() == ".jpg") {
             gt_frame = cv::imread(it->path().string());
-            
+
             break;
         }
-        
+
         ++it;
     }
-    
+
     cv::Size gt_size = gt_frame.size();
     config_.setFrameHeight(gt_size.height);
     config_.setFrameWidth(gt_size.width);
-    
+
     // Create buffer for communicating capturer with analyzer.
     cv::Mat frame(config_.getFrameHeight(), config_.getFrameWidth(), CV_8UC3);
     int imgSize = frame.total() * frame.elemSize();
     if (!buffer_.Init(config_.getFrameWidth(), config_.getFrameHeight(), imgSize, 50, 30, config_.getTaskName())) {
         std::cerr << "Cannot create buffer" << std::endl;
         return false;
-    }    
-    
+    }
+
     // analyzer_ cannot be initialzed twice or deleted if it is alreaday initialized
     if (analyzer_ != 0) {
         std::cerr << "Analyer is alrady initialized" << std::endl;
         return false;
     }
-    
+
     // analyzer applies for buffer to use.
     if (!buffer_.Init(config_.getTaskName())) {
         std::cerr << "Cannot create buffer" << std::endl;
@@ -213,7 +217,7 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
     config_.setTaskType(0);
     analyzer_.reset(new CDPAnalyzerDensity<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight()));
     analyzer_->Init();
-    
+
     return 1;
 }
 
@@ -236,8 +240,6 @@ int CTask<Dtype>::Capture(int fps) {
 
         cv::imshow(config_.getTaskName() + "_frame", frame);
         cv::waitKey(1000 / fps);
-        
-        //cv::imwrite("/home/turinglife/Desktop/1/" + std::to_string(timestamp) + ".jpg", frame);
     }
     return 1;
 }
@@ -256,24 +258,24 @@ int CTask<Dtype>::Analyze() {
     int cols = config_.getFrameWidth();
     frame_.create(rows, cols, CV_8UC3);
     unsigned int timestamp;
-    
+
     // Write predicted number into disk every second
     const int interval = 1;
     itf::Util util;
     cv::Mat pmap;
     std::thread tdb;
     if (getCurrentTaskType() == TaskType_t::COUNTING) {
-        
+
         // Load the trained linear model.
         std::string lm = config_.getTaskPath() + "LM/" + "lm.csv";
         util.LoadLinearModel(lm);
-    
+
         // Get the perspective map and square it to generate a better heat map
         pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
         pmap = pmap.mul(pmap);
         tdb = std::thread(&CTask::record, this, interval);
     }
-    
+
     //int index = 1;
     while (getFuncStatus()) {
         if (!buffer_.fetch_frame(frame_, timestamp)) {
@@ -281,46 +283,54 @@ int CTask<Dtype>::Analyze() {
             sleep(3);  // reduce useless while loop
             continue;
         }
-        
+
         vector<float> feature = analyzer_->Analyze(frame_);
-        cv::Mat output(rows, cols, CV_32F, feature.data());
-        
+
         // Post-processing
         if (getCurrentTaskType() == TaskType_t::COUNTING) {
+            cv::Mat output(rows, cols, CV_32F, feature.data());
+
             int tmp_predicted_value = static_cast<int>(cv::sum(output)[0]);
-            
+
             // Predict a value using linear model.
             predicted_value = util.Predict(tmp_predicted_value);
-    
+
             dst_ = util.GenerateHeatMap(output, pmap);
             buffer_.put_dst(dst_, predicted_value);
+
         } else if (getCurrentTaskType() == TaskType_t::SEGMENTATION) {
+            cv::Mat output(rows, cols, CV_32F, feature.data());
+
             frame_.copyTo(dst_, output > 0.5);
             buffer_.put_dst(dst_, 0);
+        } else if (getCurrentTaskType() == TaskType_t::STATIONARY) {
+            cv::Mat output(rows, cols, CV_8UC3, feature.data());
+
+            dst_ = output + frame_;
+            buffer_.put_dst(dst_, 0);
         }
-        
-        cv::imshow(config_.getTaskName() + "_ad_result", dst_);
-        cv::waitKey(1);
-        
-        //cv::imwrite("/home/turinglife/Desktop/1/density/"+ std::to_string(index) + ".jpg", frame);
-        //index++;
+
+        //cv::imshow(config_.getTaskName() + "_ad_result", dst_);
+        //cv::waitKey(1);
+
+        dst_.release();
     }
-    
+
     if (tdb.joinable()) tdb.join();
-    
+
     return  1;
 }
 
 template <typename Dtype>
 int CTask<Dtype>::Train(std::string &filename) {
-    
+
     std::vector<double> gt;
     std::vector<double> predict;
-    
-   
+
+
     /************************************************************************************/
     // generate gt vector for training linear model.
-  
+
     std::cout<<"filename_ = "<<config_.getTaskPath()<<std::endl;
     std::string gt_folder = config_.getTaskPath() + "GT/";
     std::vector<boost::filesystem::path> gt_frame, gt_coordinate;
@@ -328,26 +338,26 @@ int CTask<Dtype>::Train(std::string &filename) {
     cv::Mat output;
     unsigned int timestamp = 0;
     itf::Util util;
-    
+
     // access the root folder of the current task.
-    if(!boost::filesystem::exists(gt_folder) || !boost::filesystem::is_directory(gt_folder)) 
+    if(!boost::filesystem::exists(gt_folder) || !boost::filesystem::is_directory(gt_folder))
         return 0;
-    
+
     boost::filesystem::recursive_directory_iterator it(gt_folder);
     boost::filesystem::recursive_directory_iterator endit;
-    
+
     // figure out gt frames and gt coordinates.
     while(it != endit) {
         if(boost::filesystem::is_regular_file(*it) && it->path().extension() == ".jpg") {
             gt_frame.push_back(it->path());
-            
+
             std::string csv_path = it->path().parent_path().string() + "/" + it->path().stem().string() + ".csv";
             gt_coordinate.push_back(csv_path);
         }
-        
+
         ++it;
     }
-    
+
     // gt frames are put into buffer.
     while(current_frame < gt_frame.size()) {
         output = cv::imread(gt_frame[current_frame].string());
@@ -355,12 +365,12 @@ int CTask<Dtype>::Train(std::string &filename) {
         //std::cout<<"csv_ = "<<gt_coordinate[current_frame]<<std::endl;
 
         buffer_.put_src(output, timestamp);
-        
+
         //cv::imwrite("/home/turinglife/Desktop/1/" + std::to_string(current_frame + 1) + ".jpg", output);
-        
+
         current_frame++;
     }
-    
+
     cv::Mat roi_mask;
     roi_mask = util.ReadROItoMAT(config_.getROIPath(), config_.getFrameHeight(), config_.getFrameWidth());
     //std::ofstream myfile("/home/turinglife/Desktop/some_name.csv");
@@ -374,49 +384,49 @@ int CTask<Dtype>::Train(std::string &filename) {
         CvMLData mlData;
         mlData.read_csv(gt_coordinate[current_coordinate].c_str());
         const CvMat* tmp = mlData.get_values();
-        
+
         cv::Mat cvroi(tmp, true);
 
         //std::vector< std::vector<cv::Point> > contours;
         std::vector<cv::Point> contour;
         int counts = 0;
-        
+
         cv::Size s = roi_mask.size();
 
         std::cout<<"roi_mask.width = "<<s.width<<std::endl;
         std::cout<<"roi_mask.height = "<<s.height<<std::endl;
         std::cout<<"cvroi = "<<cvroi<<std::endl;
-        
+
         for (int i = 0; i < cvroi.rows; ++i) {
             contour.push_back(cv::Point(cvroi.at<float>(i, 0), cvroi.at<float>(i, 1)));
-            
+
             //std::cout<<"cvroi"<<cv::Point(cvroi.at<int>(i, 0), cvroi.at<int>(i, 1))<<std::endl;
-            
-            
+
+
             std::cout<<"roi_mask.at<int>(contour[i] = "<<roi_mask.at<float>(contour[i])<<std::endl;
             if(roi_mask.at<float>(contour[i]) == 1) {
                 counts++;
             }
         }
-        
+
         std::cout<<" "<<std::endl;
-        
-        
-        
+
+
+
         gt.push_back(counts);
-        
+
         current_coordinate++;
     }
-    
+
     int i = 0;
     while(i < gt.size()) {
         std::cout<<"gt[i] = "<<gt[i]<<std::endl;
         i++;
     }
-    
+
     /************************************************************************************/
     // generate predict vector for training linear model.
-        
+
     if (analyzer_ == 0) {
         std::cerr << "The analyzer has not been initialized yet." << std::endl;
         return 0;
@@ -437,34 +447,34 @@ int CTask<Dtype>::Train(std::string &filename) {
             //std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             //sleep(3);  // reduce useless while loop
             //continue;
-            
+
             break;
         }
-        
+
         vector<float> feature = analyzer_->Analyze(frame);
         cv::Mat output(rows, cols, CV_32F, feature.data());
         cv::Mat dst;
-        
+
         dst = util.GenerateHeatMap(output, pmap);
         int predicted_value = static_cast<int>(cv::sum(output)[0]);
         buffer_.put_dst(dst, predicted_value);
         predict.push_back(predicted_value);
-        
+
         //cv::imshow(config_.getTaskName() + "_ad_result", dst);
         //cv::waitKey(1);
-        
+
         //cv::imwrite("/home/turinglife/Desktop/1/density/"+ std::to_string(index) + ".jpg", dst);
         //std::cout<<std::to_string(index)<<", predicted_value = "<<predicted_value<<std::endl;
-        
+
         index++;
     }
-    
+
     /************************************************************************************/
     // generate linear model.
     std::string save_name = config_.getTaskPath() + "LM/" + filename + ".csv";
     std::vector<double> model = util.TrainLinearModel(gt, predict, save_name);
-    
-    return  1;   
+
+    return  1;
 }
 
 template <typename Dtype>

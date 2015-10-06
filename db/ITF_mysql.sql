@@ -35,7 +35,7 @@ CREATE TABLE Groups (
 CREATE TABLE Tasks (
     `task_name`         varchar(128),
     
-    `task_type`         enum('COUNTING', 'SEGMENTATION' , 'TRACK') NOT NULL,
+    `task_type`         enum('COUNTING', 'SEGMENTATION' , 'STATIONARY') NOT NULL,
     `task_status`       enum('ON', 'OFF') DEFAULT 'OFF',
 
     `camera_type`       enum('HTTP', 'RTSP' , 'LOCAL', 'FILE') NOT NULL,
@@ -132,6 +132,7 @@ INSERT INTO Tasks VALUES ('task_one', 'COUNTING', 'OFF', 'HTTP', 'OFF', 'data/',
 INSERT INTO Tasks VALUES ('task_two', 'COUNTING', 'OFF', 'HTTP', 'OFF', '$(HOME)/ITFcs1.0/tasks/task_two/', 'ON', 'ON', 'cuhk');
 INSERT INTO Tasks VALUES ('task_three', 'SEGMENTATION', 'OFF', 'HTTP', 'OFF', 'data/', 'ON', 'ON', 'cuhk');
 INSERT INTO Tasks VALUES ('task_four', 'SEGMENTATION', 'OFF', 'FILE', 'OFF', '$(HOME)/ITFcs1.0/tasks/task_four/', 'ON', 'ON', 'mmlab');
+INSERT INTO Tasks VALUES ('test', 'STATIONARY', 'OFF', 'HTTP', 'OFF', 'data/', 'OFF', 'OFF', 'mmlab');
 
 INSERT INTO Cameras VALUES ('cam_10182', 704, 576, 'mjpg/video.mjpg', '137.189.35.204', 10182, 'root', 'xgwangpj');
 INSERT INTO Cameras VALUES ('cam_10183', 704, 576, 'mjpg/video.mjpg', '137.189.35.204', 10183, 'root', 'xgwangpj');
@@ -140,6 +141,7 @@ INSERT INTO Cameras VALUES ('cam_10184', 704, 576, 'mjpg/video.mjpg', '137.189.3
 INSERT INTO Task_Camera VALUES ('task_one', 'cam_10182');
 INSERT INTO Task_Camera VALUES ('task_two', 'cam_10183');
 INSERT INTO Task_Camera VALUES ('task_three', 'cam_10184');
+INSERT INTO Task_Camera VALUES ('test', 'cam_10182');
 
 INSERT INTO Files VALUES ('./data/200608.mp4', 720, 576, 50, 1000,'task_four');
 
