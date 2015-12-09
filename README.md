@@ -24,6 +24,7 @@ Useful mysql commands
 - SELECT User FROM mysql.user;    # list current users.
 - DROP USER 'itf'@'localhost';    # remove an user.
 - show databases;
+- mysql -u username -p database_name < file.sql
 
 
 
