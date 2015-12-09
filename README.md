@@ -16,13 +16,14 @@ Dependencies:
 
 
 ==================================================================
-How to create db using command line
+Useful mysql commands
 
 - create user 'itf'@'localhost' identified by 'password';
 - create database ITF;
 - grant all on ITF.* to 'itf';
 - SELECT User FROM mysql.user;    # list current users.
 - DROP USER 'itf'@'localhost';    # remove an user.
+- show databases;
 
 
 
