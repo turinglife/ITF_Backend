@@ -22,6 +22,7 @@ How to create db using command line
 - create database ITF;
 - grant all on ITF.* to 'itf';
 - SELECT User FROM mysql.user;    # list current users.
+- DROP USER 'itf'@'localhost';    # remove an user.
 
 
 
