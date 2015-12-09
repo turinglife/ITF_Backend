@@ -18,7 +18,7 @@ Dependencies:
 ==================================================================
 Useful mysql commands
 
-- create user 'itf'@'localhost' identified by 'password';
+- create user 'itf'@'localhost' identified by 'password';  # 'root'@'localhost' identified by '123456'
 - create database ITF;
 - grant all on ITF.* to 'itf';
 - SELECT User FROM mysql.user;    # list current users.
