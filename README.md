@@ -16,11 +16,12 @@ Dependencies:
 
 
 ==================================================================
-- How to create db using command line
+How to create db using command line
 
-create user 'itf'@'localhost' identified by 'password';
+- create user 'itf'@'localhost' identified by 'password';
+- create database ITF;
+- grant all on ITF.* to 'itf';
+- SELECT User FROM mysql.user;    # dfdfd
 
-create database ITF;
 
-grant all on ITF.* to 'itf';
 
