@@ -16,6 +16,8 @@ Dependencies:
 
 
 ==================================================================
+- How to create db using command line
+
 create user 'itf'@'localhost' identified by 'password';
 
 create database ITF;
