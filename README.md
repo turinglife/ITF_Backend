@@ -15,3 +15,9 @@ mysql++ (http://yuanshuilee.blog.163.com/blog/static/217697275201391482712233/)
 
 mysql (https://www.linode.com/docs/databases/mysql/how-to-install-mysql-on-ubuntu-14-04)
 
+
+==================================================================
+create user 'itf'@'localhost' identified by 'password';
+create database ITF;
+grant all on ITF.* to 'itf';
+
