@@ -18,6 +18,8 @@ mysql (https://www.linode.com/docs/databases/mysql/how-to-install-mysql-on-ubunt
 
 ==================================================================
 create user 'itf'@'localhost' identified by 'password';
+
 create database ITF;
+
 grant all on ITF.* to 'itf';
 
