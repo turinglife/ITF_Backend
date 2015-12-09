@@ -27,6 +27,7 @@ Useful mysql commands
 - mysql -u username -p database_name < db/ITF_mysql.sql
 - use ITF;
 - show tables;
+- SELECT * from one_tables;
 
 
 
