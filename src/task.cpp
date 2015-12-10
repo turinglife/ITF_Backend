@@ -238,8 +238,13 @@ int CTask<Dtype>::Capture(int fps) {
         // Write a new frame into buffer
         buffer_.put_src(frame, timestamp);
 
-        cv::imshow(config_.getTaskName() + "_frame", frame);
-        cv::waitKey(1000 / fps);
+        //cv::imshow(config_.getTaskName() + "_frame", frame);
+        //cv::waitKey(1000 / fps);
+        
+        // if do not use the following code line, frame will be inserted into buffer very soon.
+        // it will cause buffer overflow.
+        // it will time out every 30 milliseconds
+        std::this_thread::sleep_for(std::chrono::milliseconds(30));
     }
     return 1;
 }
