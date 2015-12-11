@@ -16,8 +16,13 @@ template <typename Dtype>
 bool CDPAnalyzerDensity<Dtype>::Init() {
     // Setup Extracter
     itf::ExtracterParameter ep;
+    
+    std::string home_path(std::getenv("HOME"));
+    std::string path = home_path + "/ITF_SmartClient/config/";
+    std::string protofile = path + "density_extracter.prototxt";
+    
     // Read configuration file
-    if (!itf::Util::ReadProtoFromTextFile("./config/density_extracter.prototxt", &ep)) {
+    if (!itf::Util::ReadProtoFromTextFile(protofile.c_str(), &ep)) {
         std::cout << "Cannot read .prototxt file!" << std::endl;
         return false;
     }
