@@ -10,7 +10,6 @@ int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
     CHECK(!task_name.empty()) << "task_name cannot be empty";
     
-    
     google::InitGoogleLogging(argv[0]);
     LOG_IF(ERROR, argc < 2) << "task_name is missing!";
     
