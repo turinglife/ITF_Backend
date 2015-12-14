@@ -222,108 +222,73 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
 }
 
 template <typename Dtype>
-int CTask<Dtype>::Capture(int fps) {
-    // check if camera is initialized already
-    if (camera_ == 0) {
-        std::cout << "The camera has not been initialized yet." << std::endl;
-        return 0;
-    }
-
-    while (getCameraStatus()) {
-        cv::Mat frame;
-        unsigned int timestamp = camera_->Capture(frame);
-        if (frame.empty()) {
-            break;
-        }
-        // Write a new frame into buffer
-        buffer_.put_src(frame, timestamp);
-
-        //cv::imshow(config_.getTaskName() + "_frame", frame);
-        //cv::waitKey(1000 / fps);
-        
-        // if do not use the following code line, frame will be inserted into buffer very soon.
-        // it will cause buffer overflow.
-        // it will time out every 30 milliseconds
-        std::this_thread::sleep_for(std::chrono::milliseconds(30));
-    }
-    return 1;
+void CTask<Dtype>::Capture(int fps) {
+  while (getCameraStatus()) {
+    cv::Mat frame;
+    unsigned int timestamp = camera_->Capture(frame);
+    if (frame.empty()) break;
+    // Write a new frame into buffer
+    buffer_.put_src(frame, timestamp);
+    //cv::imshow(config_.getTaskName() + "_frame", frame);
+    //cv::waitKey(1000 / fps);
+    
+    // if do not use the following code line, frame will be inserted into buffer very soon.
+    // it will cause buffer overflow.
+    // it will time out every 30 milliseconds
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000/fps));
+  }
 }
 
 static int predicted_value = 0;
 
 template <typename Dtype>
-int CTask<Dtype>::Analyze() {
-    // check if camera is initialized already
-    if (analyzer_ == 0) {
-        std::cerr << "The analyzer has not been initialized yet." << std::endl;
-        return 0;
+void CTask<Dtype>::Analyze() {
+  int rows = config_.getFrameHeight();
+  int cols = config_.getFrameWidth();
+  frame_.create(rows, cols, CV_8UC3);
+  unsigned int timestamp;
+  // Write predicted number into disk every second
+  const int interval = 1;
+  itf::Util util;
+  cv::Mat pmap;
+  std::thread tdb;
+  if (getCurrentTaskType() == TaskType_t::COUNTING) {
+    // Load the trained linear model.
+    std::string lm = config_.getTaskPath() + "LM/" + "lm.csv";
+    util.LoadLinearModel(lm);
+    // Get the perspective map and square it to generate a better heat map
+    pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
+    pmap = pmap.mul(pmap);
+    tdb = std::thread(&CTask::record, this, interval);
+  }
+  while (getFuncStatus()) {
+    if (!buffer_.fetch_frame(frame_, timestamp)) {
+      std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
+      sleep(3);  // reduce useless while loop
+      continue;
     }
-
-    int rows = config_.getFrameHeight();
-    int cols = config_.getFrameWidth();
-    frame_.create(rows, cols, CV_8UC3);
-    unsigned int timestamp;
-
-    // Write predicted number into disk every second
-    const int interval = 1;
-    itf::Util util;
-    cv::Mat pmap;
-    std::thread tdb;
+    vector<float> feature = analyzer_->Analyze(frame_);
+    // Post-processing
     if (getCurrentTaskType() == TaskType_t::COUNTING) {
-
-        // Load the trained linear model.
-        std::string lm = config_.getTaskPath() + "LM/" + "lm.csv";
-        util.LoadLinearModel(lm);
-
-        // Get the perspective map and square it to generate a better heat map
-        pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
-        pmap = pmap.mul(pmap);
-        tdb = std::thread(&CTask::record, this, interval);
+      cv::Mat output(rows, cols, CV_32F, feature.data());
+      int tmp_predicted_value = static_cast<int>(cv::sum(output)[0]);
+      // Predict a value using linear model.
+      predicted_value = util.Predict(tmp_predicted_value);
+      dst_ = util.GenerateHeatMap(output, pmap);
+      buffer_.put_dst(dst_, predicted_value);
+    } else if (getCurrentTaskType() == TaskType_t::SEGMENTATION) {
+      cv::Mat output(rows, cols, CV_32F, feature.data());
+      frame_.copyTo(dst_, output > 0.5);
+      buffer_.put_dst(dst_, 0);
+    } else if (getCurrentTaskType() == TaskType_t::STATIONARY) {
+      cv::Mat output(rows, cols, CV_8UC3, feature.data());
+      dst_ = output + frame_;
+      buffer_.put_dst(dst_, 0);
     }
-
-    //int index = 1;
-    while (getFuncStatus()) {
-        if (!buffer_.fetch_frame(frame_, timestamp)) {
-            std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
-            sleep(3);  // reduce useless while loop
-            continue;
-        }
-
-        vector<float> feature = analyzer_->Analyze(frame_);
-
-        // Post-processing
-        if (getCurrentTaskType() == TaskType_t::COUNTING) {
-            cv::Mat output(rows, cols, CV_32F, feature.data());
-
-            int tmp_predicted_value = static_cast<int>(cv::sum(output)[0]);
-
-            // Predict a value using linear model.
-            predicted_value = util.Predict(tmp_predicted_value);
-
-            dst_ = util.GenerateHeatMap(output, pmap);
-            buffer_.put_dst(dst_, predicted_value);
-
-        } else if (getCurrentTaskType() == TaskType_t::SEGMENTATION) {
-            cv::Mat output(rows, cols, CV_32F, feature.data());
-
-            frame_.copyTo(dst_, output > 0.5);
-            buffer_.put_dst(dst_, 0);
-        } else if (getCurrentTaskType() == TaskType_t::STATIONARY) {
-            cv::Mat output(rows, cols, CV_8UC3, feature.data());
-
-            dst_ = output + frame_;
-            buffer_.put_dst(dst_, 0);
-        }
-
-        //cv::imshow(config_.getTaskName() + "_ad_result", dst_);
-        //cv::waitKey(1);
-
-        dst_.release();
-    }
-
-    if (tdb.joinable()) tdb.join();
-
-    return  1;
+    //cv::imshow(config_.getTaskName() + "_ad_result", dst_);
+    //cv::waitKey(1);
+  }
+  if (tdb.joinable()) tdb.join();
 }
 
 template <typename Dtype>

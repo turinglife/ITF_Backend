@@ -112,7 +112,7 @@ LIBRARY_DIRS += $(LIB_BUILD_DIR)
 CXXFLAGS += -MMD -MP 
 CXXFLAGS += -Wall
 CXXFLAGS += -std=c++11
-#CXXFLAGS += -O2
+CXXFLAGS += -O2
 
 # Complete build flags
 COMMON_FLAGS += $(foreach includedir,$(INCLUDE_DIRS),-I$(includedir))

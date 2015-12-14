@@ -51,8 +51,8 @@ class CTask {
     bool InitAnalyzer(const std::string& task_name);
     bool InitTrainer(const std::string& task_name);
 
-    int Capture(int fps);
-    int Analyze();
+    void Capture(int fps);
+    void Analyze();
     int Train(std::string &);
 
     bool setTaskStatus(TaskStatus_t status);

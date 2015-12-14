@@ -134,9 +134,9 @@ INSERT INTO Tasks VALUES ('task_three', 'SEGMENTATION', 'OFF', 'HTTP', 'OFF', 'd
 INSERT INTO Tasks VALUES ('task_four', 'SEGMENTATION', 'OFF', 'FILE', 'OFF', '$(HOME)/ITFcs1.0/tasks/task_four/', 'ON', 'ON', 'mmlab');
 INSERT INTO Tasks VALUES ('test', 'STATIONARY', 'OFF', 'HTTP', 'OFF', 'data/', 'OFF', 'OFF', 'mmlab');
 
-INSERT INTO Cameras VALUES ('cam_10182', 704, 576, 'mjpg/video.mjpg', '137.189.35.204', 10182, 'root', 'xgwangpj');
-INSERT INTO Cameras VALUES ('cam_10183', 704, 576, 'mjpg/video.mjpg', '137.189.35.204', 10183, 'root', 'xgwangpj');
-INSERT INTO Cameras VALUES ('cam_10184', 704, 576, 'mjpg/video.mjpg', '137.189.35.204', 10184, 'root', 'xgwangpj');
+INSERT INTO Cameras VALUES ('cam_10182', 704, 576, 'axis-cgi/mjpg/video.cgi', '137.189.35.204', 10182, 'root', 'xgwangpj');
+INSERT INTO Cameras VALUES ('cam_10183', 704, 576, 'axis-cgi/mjpg/video.cgi', '137.189.35.204', 10183, 'root', 'xgwangpj');
+INSERT INTO Cameras VALUES ('cam_10184', 704, 576, 'axis-cgi/mjpg/video.cgi', '137.189.35.204', 10184, 'root', 'xgwangpj');
 
 INSERT INTO Task_Camera VALUES ('task_one', 'cam_10182');
 INSERT INTO Task_Camera VALUES ('task_two', 'cam_10183');
