@@ -6,7 +6,6 @@
 #include "task.hpp"
 
 int main(int argc, char* argv[]) {
-
     google::InitGoogleLogging(argv[0]);
     LOG_IF(ERROR, argc < 2) << "task_name is missing!";
     
