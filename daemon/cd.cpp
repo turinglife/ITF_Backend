@@ -9,7 +9,7 @@
 const int kFPS = 25;
 
 int main(int argc, char* argv[]) {
-<<<<<<< HEAD
+
     google::InitGoogleLogging(argv[0]);
     LOG_IF(ERROR, argc < 2) << "task_name is missing!";
     
