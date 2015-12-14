@@ -9,8 +9,31 @@
 int main(int argc, char* argv[]) {
     std::string task_name(argv[1]);
     CHECK(!task_name.empty()) << "task_name cannot be empty";
+    
+    
+    google::InitGoogleLogging(argv[0]);
+    LOG_IF(ERROR, argc < 2) << "task_name is missing!";
+    
+    std::string home_path(std::getenv("HOME"));
+    std::string log_path = home_path + "/ITF_SmartClient/log/";
+  
+    google::SetLogDestination(google::GLOG_INFO, log_path.c_str());
+    google::SetLogDestination(google::GLOG_WARNING, log_path.c_str());
+    google::SetLogDestination(google::GLOG_ERROR, log_path.c_str());
+    google::SetLogDestination(google::GLOG_FATAL, log_path.c_str());
+    
+    // log to file
+    FLAGS_logtostderr = 0;
 
     CTask<float> task;
+    
+    // establish connection with client.
+    CComm server;
+    std::string socket_path = "RD_" + task_name;
+    if (!server.Establish(socket_path)) {
+        std::cerr << "Fail to establish connection" << std::endl;
+        return -1;
+    }
     
     // Initialize trainer
     if (!task.InitTrainer(task_name)) {
@@ -27,14 +50,6 @@ int main(int argc, char* argv[]) {
         // write log: segmetation does not need to generate a regression model.
         std::cout << "segmetation does not need to generate a regression model." << std::endl;
         
-        return -1;
-    }
-
-    // Server comm;
-    CComm server;
-    std::string socket_path = "RD_" + task_name;
-    if (!server.Establish(socket_path)) {
-        std::cerr << "Fail to establish connection" << std::endl;
         return -1;
     }
 
@@ -83,7 +98,7 @@ int main(int argc, char* argv[]) {
             
             server.Reply("OK");
             break;
-        } else {
+        } else if (action.length() > 1) {
             std::cerr << "No such command in rd!" << std::endl;
             server.Reply("NO");
         }
