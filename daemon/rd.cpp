@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
     google::SetLogDestination(google::GLOG_INFO, log_path.c_str());
     google::SetLogDestination(google::GLOG_WARNING, log_path.c_str());
     google::SetLogDestination(google::GLOG_ERROR, log_path.c_str());
-    google::SetLogDestination(google::GLOG_FATAL, log_path.c_str());
+    //google::SetLogDestination(google::GLOG_FATAL, log_path.c_str());
     
     // log to file
     FLAGS_logtostderr = 0;
