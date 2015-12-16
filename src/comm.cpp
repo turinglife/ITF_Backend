@@ -46,9 +46,8 @@ bool CComm::Receive(std::string& received_msg) {
 }
 
 bool CComm::Reply(const std::string& message) {
-  if (send(client_fd_, message.c_str(), message.length() + 1,
-      MSG_NOSIGNAL) < 0) {
-    perror("ERROR send");
+  if (write(client_fd_, message.c_str(), message.length() + 1) < 0) {
+    perror("ERROR write");
     return false;
   } else {
     close(client_fd_);
@@ -73,8 +72,8 @@ bool CComm::Send(const std::string& message, const std::string& socket_path,
     perror("ERROR connect");
     return false;
   }
-  if (send(sockfd, message.c_str(), message.length() + 1, MSG_NOSIGNAL) < 0) {
-    perror("ERROR send");
+  if (write(sockfd, message.c_str(), message.length() + 1) < 0) {
+    perror("ERROR write");
     return false;
   }
   char tmp_msg[256] = {0};
