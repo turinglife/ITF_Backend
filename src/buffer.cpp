@@ -15,16 +15,23 @@ bool CBuffer::Init(int src_width, int src_height, int unit_size, int src_num, in
     head_.header_size = sizeof(head_);
 
     shm_ = boost::interprocess::shared_memory_object(boost::interprocess::open_or_create, buffer_id_.c_str(), boost::interprocess::read_write);
-    /* header + index + timestamp + src + dst_map + dst_val */
-    shm_.truncate(head_.header_size + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + (head_.src_buffer_num + head_.dst_buffer_num) * head_.frame_size + head_.dst_buffer_num * sizeof(int));
+    /* header + camera_status + index + timestamp + src + dst_map + dst_val + alarm_unit*/
+    shm_.truncate(head_.header_size + sizeof(bool) + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + (head_.src_buffer_num + head_.dst_buffer_num) * head_.frame_size + head_.dst_buffer_num * sizeof(int) + (2 * head_.frame_size + sizeof(int) + sizeof(unsigned int)));
     // Header region
     region_header_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, 0, head_.header_size);
     std::memset(region_header_.get_address(), 0, region_header_.get_size());
     p_header_ = static_cast<unsigned char*>(region_header_.get_address());
     memcpy(p_header_, &head_, head_.header_size);
 
+    // Camera Status region
+    region_camera_status_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size, sizeof(bool));
+    std::memset(region_camera_status_.get_address(), 0, region_camera_status_.get_size());
+    p_camera_status_ = static_cast<unsigned char*>(region_camera_status_.get_address());
+    //bool init_camera_status = false;
+    //memcpy(p_camera_status_, &init_camera_status, sizeof(bool));
+
     // read and write index region
-    region_last_r_w_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size, 4 * sizeof(int));
+    region_last_r_w_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + sizeof(bool), 4 * sizeof(int));
     std::memset(region_last_r_w_.get_address(), 0, region_last_r_w_.get_size());
     p_last_r_w_ = static_cast<unsigned char*>(region_last_r_w_.get_address());
     p_last_r_src_ = (int *)p_last_r_w_;
@@ -39,24 +46,29 @@ bool CBuffer::Init(int src_width, int src_height, int unit_size, int src_num, in
     *p_last_w_dst_ = 0;
 
     // Timestamp region
-    region_timestamp_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + 4 * sizeof(int), head_.src_buffer_num * sizeof(unsigned int));
+    region_timestamp_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + sizeof(bool) + 4 * sizeof(int), head_.src_buffer_num * sizeof(unsigned int));
     std::memset(region_timestamp_.get_address(), 0, region_timestamp_.get_size());
     p_timestamp_ = static_cast<unsigned char*>(region_timestamp_.get_address());
 
     // Frame region
-    region_src_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int), head_.src_buffer_num * head_.frame_size);
+    region_src_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + sizeof(bool) + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int), head_.src_buffer_num * head_.frame_size);
     std::memset(region_src_.get_address(), 0, region_src_.get_size());
     p_src_ = static_cast<unsigned char*>(region_src_.get_address());
 
     // Output Map region
-    region_dst_map_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + head_.src_buffer_num * head_.frame_size, head_.dst_buffer_num * head_.frame_size);
+    region_dst_map_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + sizeof(bool) + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + head_.src_buffer_num * head_.frame_size, head_.dst_buffer_num * head_.frame_size);
     std::memset(region_dst_map_.get_address(), 0, region_dst_map_.get_size());
     p_dst_map_ = static_cast<unsigned char*>(region_dst_map_.get_address());
 
     // Output value region
-    region_dst_val_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + (head_.src_buffer_num +head_.dst_buffer_num) * head_.frame_size, head_.dst_buffer_num * sizeof(int));
+    region_dst_val_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + sizeof(bool) + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + (head_.src_buffer_num +head_.dst_buffer_num) * head_.frame_size, head_.dst_buffer_num * sizeof(int));
     std::memset(region_dst_val_.get_address(), 0, region_dst_val_.get_size());
     p_dst_val_ = static_cast<unsigned char*>(region_dst_val_.get_address());
+
+    // Alarm Unit region
+    region_alarm_unit_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + sizeof(bool) + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + (head_.src_buffer_num +head_.dst_buffer_num) * head_.frame_size + head_.dst_buffer_num * sizeof(int), 2 * head_.frame_size + sizeof(int) + sizeof(unsigned int));
+    std::memset(region_alarm_unit_.get_address(), 0, region_alarm_unit_.get_size());
+    p_alarm_unit_ = static_cast<unsigned char*>(region_alarm_unit_.get_address());
 
     // Init Timestamp to 0
     int init_value = 0;
@@ -67,6 +79,10 @@ bool CBuffer::Init(int src_width, int src_height, int unit_size, int src_num, in
     for (int i=0; i<head_.dst_buffer_num; ++i) {
         memcpy(p_dst_val_ + i * sizeof(int), &init_value, sizeof(int));
     }
+    // Init Alarm Unit
+    memcpy(p_alarm_unit_ + 2*head_.frame_size, &init_value, sizeof(int));
+    memcpy(p_alarm_unit_ + 2*head_.frame_size + sizeof(int), &init_value, sizeof(unsigned int));
+
     return true;
 }
 
@@ -79,8 +95,12 @@ bool CBuffer::Init(const std::string &buffer_id) {
     p_header_ = static_cast<unsigned char*>(region_header_.get_address());
     memcpy(&head_, p_header_, sizeof(HeaderInfo_t));
 
+    // Camera Status region
+    region_camera_status_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size, sizeof(bool));
+    p_camera_status_ = static_cast<unsigned char*>(region_camera_status_.get_address());
+
     // read and write index region
-    region_last_r_w_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size, 4 * sizeof(int));
+    region_last_r_w_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + sizeof(bool), 4 * sizeof(int));
     p_last_r_w_ = static_cast<unsigned char*>(region_last_r_w_.get_address());
     p_last_r_src_ = (int *)p_last_r_w_;
     p_last_w_src_ = (int *)((char *)p_last_r_src_ + sizeof(int));
@@ -88,22 +108,36 @@ bool CBuffer::Init(const std::string &buffer_id) {
     p_last_w_dst_ = (int *)((char *)p_last_r_dst_ + sizeof(int));
 
     // Timestamp region
-    region_timestamp_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + 4 * sizeof(int), head_.src_buffer_num * sizeof(unsigned int));
+    region_timestamp_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + sizeof(bool) + 4 * sizeof(int), head_.src_buffer_num * sizeof(unsigned int));
     p_timestamp_ = static_cast<unsigned char*>(region_timestamp_.get_address());
 
     // Frame region
-    region_src_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int), head_.src_buffer_num * head_.frame_size);
+    region_src_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + sizeof(bool) + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int), head_.src_buffer_num * head_.frame_size);
     p_src_ = static_cast<unsigned char*>(region_src_.get_address());
 
     // Output Map region
-    region_dst_map_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + head_.src_buffer_num * head_.frame_size, head_.dst_buffer_num * head_.frame_size);
+    region_dst_map_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + sizeof(bool) + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + head_.src_buffer_num * head_.frame_size, head_.dst_buffer_num * head_.frame_size);
     p_dst_map_ = static_cast<unsigned char*>(region_dst_map_.get_address());
 
     // Output value region
-    region_dst_val_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + (head_.src_buffer_num +head_.dst_buffer_num) * head_.frame_size, head_.dst_buffer_num * sizeof(int));
+    region_dst_val_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + sizeof(bool) + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + (head_.src_buffer_num +head_.dst_buffer_num) * head_.frame_size, head_.dst_buffer_num * sizeof(int));
     p_dst_val_ = static_cast<unsigned char*>(region_dst_val_.get_address());
 
+    // Alarm Unit region
+    region_alarm_unit_ = boost::interprocess::mapped_region(shm_, boost::interprocess::read_write, head_.header_size + sizeof(bool) + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + (head_.src_buffer_num +head_.dst_buffer_num) * head_.frame_size + head_.dst_buffer_num * sizeof(int), 2 * head_.frame_size + sizeof(int) + sizeof(unsigned int));
+    p_alarm_unit_ = static_cast<unsigned char*>(region_alarm_unit_.get_address());
+
     return true;
+}
+
+bool CBuffer::set_camera_valid(IN bool flag) {
+    memcpy(p_camera_status_, &flag, sizeof(bool));
+    return true;
+}
+
+bool CBuffer::is_camera_valid() {
+    bool *p_flag = (bool *)p_camera_status_;
+    return *p_flag;
 }
 
 bool CBuffer::frame_size(OUT int &width, OUT int &height) {
@@ -130,7 +164,7 @@ bool CBuffer::put_src(IN const cv::Mat &frame, IN unsigned int timestamp) {
     return true;
 }
 
-bool CBuffer::put_dst(IN const cv::Mat &frame, int predicted_value) {
+bool CBuffer::put_dst(IN const cv::Mat &frame, IN int predicted_value) {
     // check whether the output buffer is full or not;
     int curr_w_dst = (*p_last_w_dst_ + 1) % head_.dst_buffer_num;
     if (curr_w_dst == *p_last_r_dst_) {
@@ -182,6 +216,24 @@ bool CBuffer::fetch_dst(OUT cv::Mat &frame, OUT int &predicted_value) {
     memcpy(frame.data, p_dst_map_ + curr_r_dst * head_.frame_size, head_.frame_size);
     memcpy(&predicted_value, p_dst_val_ + curr_r_dst * sizeof(int), sizeof(int));
     *p_last_r_dst_ = curr_r_dst;
+    return true;
+}
+
+bool CBuffer::put_dst(IN const cv::Mat &src_img, IN const cv::Mat &dst_img, IN int predicted_value, IN unsigned int timestamp) {
+    memcpy(p_alarm_unit_, src_img.data, head_.frame_size);
+    memcpy(p_alarm_unit_ + head_.frame_size, dst_img.data, head_.frame_size);
+    memcpy(p_alarm_unit_ + 2 * head_.frame_size, &predicted_value, sizeof(int));
+    memcpy(p_alarm_unit_ + 2 * head_.frame_size + sizeof(int), &timestamp, sizeof(unsigned int));
+
+    return true;
+}
+
+bool CBuffer::fetch_dst(OUT cv::Mat &src_img, OUT cv::Mat &dst_img, OUT int &predicted_value, OUT unsigned int &timestamp){
+    memcpy(src_img.data, p_alarm_unit_, head_.frame_size);
+    memcpy(dst_img.data, p_alarm_unit_ + head_.frame_size, head_.frame_size);
+    memcpy(&predicted_value, p_alarm_unit_ + 2 * head_.frame_size, sizeof(int));
+    memcpy(&timestamp, p_alarm_unit_ + 2 * head_.frame_size + sizeof(int), sizeof(unsigned int));
+
     return true;
 }
 
