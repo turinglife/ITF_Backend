@@ -17,7 +17,6 @@
 class CComm {
 public:
     bool Establish(const std::string& socket_path);
-    bool Connect();
     
     // Receive will block the process until one client tries to connect it and send a message
     bool Receive(std::string& received_msg);
