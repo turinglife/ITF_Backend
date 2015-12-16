@@ -47,9 +47,10 @@ class CTask {
         RUNNING
     };
 
-    bool InitCapture(const std::string& task_name);
+    bool InitCapturer(const std::string& task_name);
     bool InitAnalyzer(const std::string& task_name);
     bool InitTrainer(const std::string& task_name);
+    bool InitAlarmer(const std::string& task_name);
 
     void Capture(int fps);
     void Analyze();

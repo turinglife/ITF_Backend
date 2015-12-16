@@ -6,7 +6,7 @@
 #include "task.hpp"
 
 template <typename Dtype>
-bool CTask<Dtype>::InitCapture(const std::string& task_name) {
+bool CTask<Dtype>::InitCapturer(const std::string& task_name) {
     // camera_ cannot be initialzed twice or deleted if it is alreaday initialized
     if (camera_ != 0) {
         std::cerr << "Camera is already initialized" << std::endl;
@@ -218,6 +218,15 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
     analyzer_.reset(new CDPAnalyzerDensity<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight()));
     analyzer_->Init();
 
+    return 1;
+}
+
+template <typename Dtype>
+bool CTask<Dtype>::InitAlarmer(const std::string& task_name) {
+
+    
+    
+    
     return 1;
 }
 
