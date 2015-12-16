@@ -28,6 +28,7 @@ Useful mysql commands
 - use ITF;
 - show tables;
 - SELECT * from one_tables;
+- DELETE from one_table; # it will delete all record rows and retain the structure of the table.
 
 
 
