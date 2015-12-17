@@ -232,20 +232,22 @@ bool CTask<Dtype>::InitAlarmer(const std::string& task_name) {
 
 template <typename Dtype>
 void CTask<Dtype>::Capture(int fps) {
-  while (getCameraStatus()) {
-    cv::Mat frame;
-    unsigned int timestamp = camera_->Capture(frame);
-    if (frame.empty()) break;
-    // Write a new frame into buffer
-    buffer_.put_src(frame, timestamp);
-    //cv::imshow(config_.getTaskName() + "_frame", frame);
-    //cv::waitKey(1000 / fps);
-    
-    // if do not use the following code line, frame will be inserted into buffer very soon.
-    // it will cause buffer overflow.
-    // it will time out every 30 milliseconds
-    std::this_thread::sleep_for(std::chrono::milliseconds(1000/fps));
-  }
+    buffer_.set_camera_valid(true);
+    while (getCameraStatus()) {
+        cv::Mat frame;
+        unsigned int timestamp = camera_->Capture(frame);
+        if (frame.empty()) break;
+        // Write a new frame into buffer
+        buffer_.put_src(frame, timestamp);
+        //cv::imshow(config_.getTaskName() + "_frame", frame);
+        //cv::waitKey(1000 / fps);
+
+        // if do not use the following code line, frame will be inserted into buffer very soon.
+        // it will cause buffer overflow.
+        // it will time out every 30 milliseconds
+        std::this_thread::sleep_for(std::chrono::milliseconds(1000/fps));
+    }
+    buffer_.set_camera_valid(false);
 }
 
 static int predicted_value = 0;
