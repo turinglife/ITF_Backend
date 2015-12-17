@@ -51,8 +51,8 @@ bool CComm::Receive(std::string& received_msg) {
 }
 
 bool CComm::Reply(const std::string& message) {
-    if (send(client_fd_, message.c_str(), message.length() + 1, MSG_NOSIGNAL) < 0) {
-        perror("ERROR send");
+    if (write(client_fd_, message.c_str(), message.length() + 1) < 0) {
+        perror("ERROR write");
         return false;
     } else {
         close(client_fd_);
@@ -64,7 +64,7 @@ bool CComm::Send(const std::string& message, const std::string& socket_path, std
     // create a new client
     int sockfd = socket(AF_UNIX, SOCK_STREAM, 0);
     if (sockfd < 0) {
-        perror("ERROR socket");
+        received = std::string(strerror(errno));
         return false;
     }
 
@@ -73,18 +73,18 @@ bool CComm::Send(const std::string& message, const std::string& socket_path, std
     snprintf(server_addr.sun_path, socket_path.length() + 1, "%s", socket_path.c_str());
 
     if (connect(sockfd, (struct sockaddr *) &server_addr, sizeof(server_addr)) < 0) {
-        perror("ERROR connect");
+        received = std::string(strerror(errno));
         return false;
     }
 
-    if (send(sockfd, message.c_str(), message.length() + 1, MSG_NOSIGNAL) < 0) {
-        perror("ERROR send");
+    if (write(sockfd, message.c_str(), message.length() + 1) < 0) {
+        received = std::string(strerror(errno));
         return false;
     }
 
     char tmp_msg[256] = {0};
     if (read(sockfd, tmp_msg, 255) <= 0) {
-        perror("ERROR read");
+        received = std::string(strerror(errno));
     } else {
         received = std::string(tmp_msg);
     }
