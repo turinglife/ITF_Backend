@@ -7,7 +7,7 @@
 
 int main(int argc, char* argv[]) {
     google::InitGoogleLogging(argv[0]);
-    LOG_IF(ERROR, argc < 2) << "task_name is missing!";
+    LOG_IF(FATAL, argc < 2) << "task_name is missing!";
     
     std::string home_path(std::getenv("HOME"));
     std::string log_path = home_path + "/ITF_SmartClient/log/";
@@ -26,12 +26,12 @@ int main(int argc, char* argv[]) {
     std::string socket_path = "AD_" + task_name;
     CComm server;
     if (!server.Establish(socket_path))
-        LOG(ERROR) << "Fail to establish connection";
+        LOG(FATAL) << "Fail to establish connection";
   
     CTask<float> task;
     // initialize analyzer
     if (!task.InitAnalyzer(task_name))
-        LOG(ERROR) << "initialze analyzer fail!";
+        LOG(FATAL) << "initialze analyzer fail!";
   
     std::thread worker;
     while (true) {
