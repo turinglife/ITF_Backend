@@ -24,18 +24,18 @@ int main(int argc, char* argv[]) {
     FLAGS_logtostderr = 0;
     
     std::string task_name(argv[1]);
-    
-    // establish connection with client
-    std::string socket_path = "CD_" + task_name;
-    CComm server;
-    if (!server.Establish(socket_path))
-        LOG(FATAL) << "Fail to establish connection";
-    
+
     // init 
     CTask<float> task;
     // initialize camera
     if (!task.InitCapturer(task_name))
         LOG(FATAL) << "initialze capture fail!";
+
+    // establish connection with client
+    std::string socket_path = "CD_" + task_name;
+    CComm server;
+    if (!server.Establish(socket_path))
+        LOG(FATAL) << "Fail to establish connection";
 
     std::thread worker;
     while (true) {

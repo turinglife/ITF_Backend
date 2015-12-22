@@ -22,17 +22,17 @@ int main(int argc, char* argv[]) {
     
     std::string task_name(argv[1]);
   
+    CTask<float> task;
+    // initialize analyzer
+    if (!task.InitAnalyzer(task_name))
+        LOG(FATAL) << "initialze analyzer fail!";
+
     // establish connection with client.
     std::string socket_path = "AD_" + task_name;
     CComm server;
     if (!server.Establish(socket_path))
         LOG(FATAL) << "Fail to establish connection";
-  
-    CTask<float> task;
-    // initialize analyzer
-    if (!task.InitAnalyzer(task_name))
-        LOG(FATAL) << "initialze analyzer fail!";
-  
+
     std::thread worker;
     while (true) {
         std::string action;
