@@ -15,27 +15,29 @@ int main(int argc, char* argv[]) {
     std::string home_path(std::getenv("HOME"));
     std::string log_path = home_path + "/ITF_SmartClient/log/";
   
-    google::SetLogDestination(google::GLOG_INFO, log_path.c_str());
-    google::SetLogDestination(google::GLOG_WARNING, log_path.c_str());
-    google::SetLogDestination(google::GLOG_ERROR, log_path.c_str());
+    //google::SetLogDestination(google::GLOG_INFO, log_path.c_str());
+    //google::SetLogDestination(google::GLOG_WARNING, log_path.c_str());
+    //google::SetLogDestination(google::GLOG_ERROR, log_path.c_str());
     //google::SetLogDestination(google::GLOG_FATAL, log_path.c_str());
     
-    // log to file
-    FLAGS_logtostderr = 0;
+    // FLAGS_logtostderr = 0: log to file
+    FLAGS_logtostderr = 1;
     
     std::string task_name(argv[1]);
-
+    
+    
     // init 
     CTask<float> task;
     // initialize camera
     if (!task.InitCapturer(task_name))
         LOG(FATAL) << "initialze capture fail!";
-
-    // establish connection with client
+    
+        // establish connection with client
     std::string socket_path = "CD_" + task_name;
     CComm server;
     if (!server.Establish(socket_path))
         LOG(FATAL) << "Fail to establish connection";
+
 
     std::thread worker;
     while (true) {
@@ -68,5 +70,6 @@ int main(int argc, char* argv[]) {
     // only unlink after this process ends
     unlink(socket_path.c_str());
     std::cout << task_name << ": cd exits successfully!" << std::endl;
+    
     return 0;
 }

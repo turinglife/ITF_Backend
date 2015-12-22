@@ -16,23 +16,16 @@ int main(int argc, char* argv[]) {
     std::string home_path(std::getenv("HOME"));
     std::string log_path = home_path + "/ITF_SmartClient/log/";
   
-    google::SetLogDestination(google::GLOG_INFO, log_path.c_str());
-    google::SetLogDestination(google::GLOG_WARNING, log_path.c_str());
-    google::SetLogDestination(google::GLOG_ERROR, log_path.c_str());
+    //google::SetLogDestination(google::GLOG_INFO, log_path.c_str());
+    //google::SetLogDestination(google::GLOG_WARNING, log_path.c_str());
+    //google::SetLogDestination(google::GLOG_ERROR, log_path.c_str());
     //google::SetLogDestination(google::GLOG_FATAL, log_path.c_str());
     
-    // log to file
-    FLAGS_logtostderr = 0;
+    // FLAGS_logtostderr = 0: log to file
+    FLAGS_logtostderr = 1;
 
     CTask<float> task;
     
-    // establish connection with client.
-    CComm server;
-    std::string socket_path = "RD_" + task_name;
-    if (!server.Establish(socket_path)) {
-        std::cerr << "Fail to establish connection" << std::endl;
-        return -1;
-    }
     
     // Initialize trainer
     if (!task.InitTrainer(task_name)) {
@@ -42,6 +35,15 @@ int main(int argc, char* argv[]) {
     } else {
         std::cout << "Trainer is initialized" << std::endl;
     }
+    
+        // establish connection with client.
+    CComm server;
+    std::string socket_path = "RD_" + task_name;
+    if (!server.Establish(socket_path)) {
+        std::cerr << "Fail to establish connection" << std::endl;
+        return -1;
+    }
+
     
 #if 1
     // if current type of task is segmentation, it is not necessary to generate a regression model.

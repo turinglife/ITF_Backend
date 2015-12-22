@@ -55,6 +55,7 @@ class CTask {
     void Capture(int fps);
     void Analyze();
     int Train(std::string &);
+    void Alarm();
 
     bool setTaskStatus(TaskStatus_t status);
 
@@ -69,6 +70,8 @@ class CTask {
     inline int getFuncStatus() { return funcstatus_; }
     inline void setCameraStatus(int camerastatus) { camerastatus_ = camerastatus; }
     inline int getCameraStatus() { return camerastatus_; }
+    inline void setAlarmerStatus(int alarmerstatus) { alarmerstatus_ = alarmerstatus; }
+    inline int getAlarmerStatus() { return alarmerstatus_; }
 
     bool FreeBuffer();
 
@@ -87,6 +90,7 @@ class CTask {
     // default value is TERMINAL state.
     int funcstatus_;
     int camerastatus_;
+    int alarmerstatus_;
 
     cv::Mat frame_;
     cv::Mat dst_;
@@ -98,7 +102,7 @@ class CTask {
      *
      */
 
-    void record(int interval);
+    //void record(int interval);
 };
 
 #endif  // ITF_TASK_H_

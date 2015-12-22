@@ -224,7 +224,7 @@ bool CBuffer::put_dst(IN const cv::Mat &src_img, IN const cv::Mat &dst_img, IN i
     memcpy(p_alarm_unit_ + head_.frame_size, dst_img.data, head_.frame_size);
     memcpy(p_alarm_unit_ + 2 * head_.frame_size, &predicted_value, sizeof(int));
     memcpy(p_alarm_unit_ + 2 * head_.frame_size + sizeof(int), &timestamp, sizeof(unsigned int));
-
+    
     return true;
 }
 
@@ -233,7 +233,7 @@ bool CBuffer::fetch_dst(OUT cv::Mat &src_img, OUT cv::Mat &dst_img, OUT int &pre
     memcpy(dst_img.data, p_alarm_unit_ + head_.frame_size, head_.frame_size);
     memcpy(&predicted_value, p_alarm_unit_ + 2 * head_.frame_size, sizeof(int));
     memcpy(&timestamp, p_alarm_unit_ + 2 * head_.frame_size + sizeof(int), sizeof(unsigned int));
-
+    
     return true;
 }
 

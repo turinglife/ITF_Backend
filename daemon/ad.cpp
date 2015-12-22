@@ -12,13 +12,13 @@ int main(int argc, char* argv[]) {
     std::string home_path(std::getenv("HOME"));
     std::string log_path = home_path + "/ITF_SmartClient/log/";
   
-    google::SetLogDestination(google::GLOG_INFO, log_path.c_str());
-    google::SetLogDestination(google::GLOG_WARNING, log_path.c_str());
-    google::SetLogDestination(google::GLOG_ERROR, log_path.c_str());
+    //google::SetLogDestination(google::GLOG_INFO, log_path.c_str());
+    //google::SetLogDestination(google::GLOG_WARNING, log_path.c_str());
+    //google::SetLogDestination(google::GLOG_ERROR, log_path.c_str());
     //google::SetLogDestination(google::GLOG_FATAL, log_path.c_str());
     
-    // log to file
-    FLAGS_logtostderr = 0;
+    // FLAGS_logtostderr = 0: log to file
+    FLAGS_logtostderr = 1;
     
     std::string task_name(argv[1]);
   
@@ -26,8 +26,8 @@ int main(int argc, char* argv[]) {
     // initialize analyzer
     if (!task.InitAnalyzer(task_name))
         LOG(FATAL) << "initialze analyzer fail!";
-
-    // establish connection with client.
+    
+        // establish connection with client.
     std::string socket_path = "AD_" + task_name;
     CComm server;
     if (!server.Establish(socket_path))
