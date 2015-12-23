@@ -496,33 +496,6 @@ int CTask<Dtype>::Train(std::string &filename) {
     return  1;
 }
 
-template <typename Dtype>
-bool CTask<Dtype>::setTaskStatus(TaskStatus_t status) {
-    CDbi db = ConnectDB();
-    if (!db.isConnected()) {
-        std::cerr << "Cannot connect to database" << std::endl;
-        return false;
-    }
-
-    std::string str_status;
-    if (status == TaskStatus_t::ON)
-        str_status = "ON";
-    else
-        str_status = "OFF";
-
-    bool ok = db.RunSQL("UPDATE Tasks SET task_status='"+str_status+"' WHERE task_name='"+getCurrentTaskName()+"';");
-    if (!ok) {
-        std::cerr << "UPDATE DB ... Fail" << std::endl;
-        return false;
-    } else {
-        std::cout << "UPDATE DB ... OK" << std::endl;
-    }
-    return true;
-}
-
-
-
-
 #if 0
 template <typename Dtype>
 void CTask<Dtype>::ShowDetails() {

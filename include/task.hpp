@@ -57,15 +57,12 @@ class CTask {
     int Train(std::string &);
     void Alarm();
 
-    bool setTaskStatus(TaskStatus_t status);
-
     void getCurrentCameraType();
 
     inline std::string getCurrentTaskName() { return config_.getTaskName(); }
     inline int getCurrentFrameWidth() { return config_.getFrameWidth(); }
     inline int getCurrentFrameHeight() { return config_.getFrameHeight(); }
     inline TaskType_t getCurrentTaskType() { return static_cast<TaskType_t>(config_.getTaskType()); }
-    inline int getTaskStatus() { return config_.getTaskStatus(); }
     inline void setFuncStatus(int funcstatus) { funcstatus_ = funcstatus; }
     inline int getFuncStatus() { return funcstatus_; }
     inline void setCameraStatus(int camerastatus) { camerastatus_ = camerastatus; }
