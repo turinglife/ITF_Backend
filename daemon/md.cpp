@@ -38,6 +38,7 @@ int main(int argc, char* argv[]) {
         LOG(ERROR) << "Fail to establish connection";
     
     std::thread worker;
+    int interval = 1;     // second
     while (true) {
         std::string action;
         server.Receive(action);
@@ -47,7 +48,7 @@ int main(int argc, char* argv[]) {
                 worker.join();
             task.setAlarmerStatus(CTask<float>::RUNNING);
             LOG(INFO) <<"start to create Alarm thread";
-            worker = std::thread(&CTask<float>::Alarm, &task);
+            worker = std::thread(&CTask<float>::Alarm, &task, interval);
             server.Reply("OK");
         } else if (action.compare("STOP") == 0) {
             task.setAlarmerStatus(CTask<float>::TERMINATE);

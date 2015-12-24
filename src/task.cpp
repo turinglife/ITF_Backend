@@ -350,14 +350,10 @@ void CTask<Dtype>::Analyze() {
 
 template <typename Dtype>
 void CTask<Dtype>::Train(std::string filename) {
-
     std::vector<double> gt;
     std::vector<double> predict;
 
-
-    /************************************************************************************/
     // generate gt vector for training linear model.
-
     std::cout<<"filename_ = "<<config_.getTaskPath()<<std::endl;
     std::string gt_folder = config_.getTaskPath() + "GT/";
     std::vector<boost::filesystem::path> gt_frame, gt_coordinate;
@@ -391,23 +387,12 @@ void CTask<Dtype>::Train(std::string filename) {
     // gt frames are put into buffer.
     while(current_frame < gt_frame.size()) {
         output = cv::imread(gt_frame[current_frame].string());
-        //std::cout<<"ret_ = "<<gt_frame[current_frame]<<std::endl;
-        //std::cout<<"csv_ = "<<gt_coordinate[current_frame]<<std::endl;
-
         buffer_.put_src(output, timestamp);
-
-        //cv::imwrite("/home/turinglife/Desktop/1/" + std::to_string(current_frame + 1) + ".jpg", output);
-
         current_frame++;
     }
 
     cv::Mat roi_mask;
     roi_mask = util.ReadROItoMAT(config_.getROIPath(), config_.getFrameHeight(), config_.getFrameWidth());
-    //std::ofstream myfile("/home/turinglife/Desktop/some_name.csv");
-    //if (myfile.is_open()) {
-    //    myfile << cv::format(roi_mask, "csv");
-    //    myfile.close();
-    //}
 
     // figure out the number of people in ROI.
     while(current_coordinate < gt_coordinate.size()) {
@@ -430,9 +415,6 @@ void CTask<Dtype>::Train(std::string filename) {
         for (int i = 0; i < cvroi.rows; ++i) {
             contour.push_back(cv::Point(cvroi.at<float>(i, 0), cvroi.at<float>(i, 1)));
 
-            //std::cout<<"cvroi"<<cv::Point(cvroi.at<int>(i, 0), cvroi.at<int>(i, 1))<<std::endl;
-
-
             std::cout<<"roi_mask.at<int>(contour[i] = "<<roi_mask.at<float>(contour[i])<<std::endl;
             if(roi_mask.at<float>(contour[i]) == 1) {
                 counts++;
@@ -440,7 +422,6 @@ void CTask<Dtype>::Train(std::string filename) {
         }
 
         std::cout<<" "<<std::endl;
-
         gt.push_back(counts);
 
         current_coordinate++;
@@ -452,9 +433,7 @@ void CTask<Dtype>::Train(std::string filename) {
         i++;
     }
 
-    /************************************************************************************/
     // generate predict vector for training linear model.
-
     if (analyzer_ == 0) {
         std::cerr << "The analyzer has not been initialized yet." << std::endl;
         return;
@@ -463,18 +442,13 @@ void CTask<Dtype>::Train(std::string filename) {
     int rows = config_.getFrameHeight();
     int cols = config_.getFrameWidth();
     cv::Mat frame(rows, cols, CV_8UC3);
-    //unsigned int timestamp;
 
-    //itf::Util util;
     // Get the perspective map and square it to generate a better heat map
     cv::Mat pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
     pmap = pmap.mul(pmap);
     int index = 1;
     while (getTrainerStatus()) {
         if (!buffer_.fetch_src(frame, timestamp)) {
-            //std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
-            //sleep(3);  // reduce useless while loop
-            //continue;
 
             break;
         }
@@ -488,16 +462,9 @@ void CTask<Dtype>::Train(std::string filename) {
         buffer_.put_dst(dst, predicted_value);
         predict.push_back(predicted_value);
 
-        //cv::imshow(config_.getTaskName() + "_ad_result", dst);
-        //cv::waitKey(1);
-
-        //cv::imwrite("/home/turinglife/Desktop/1/density/"+ std::to_string(index) + ".jpg", dst);
-        //std::cout<<std::to_string(index)<<", predicted_value = "<<predicted_value<<std::endl;
-
         index++;
     }
 
-    /************************************************************************************/
     // generate linear model.
     std::string save_name = config_.getTaskPath() + "LM/" + filename + ".csv";
     std::vector<double> model = util.TrainLinearModel(gt, predict, save_name);
@@ -516,6 +483,7 @@ CDbi CTask<Dtype>::ConnectDB() {
     CDbi db;
     db.Connect(server, user, pass);
     db.UseDB(db_name);
+    
     return db;
 }
 
@@ -524,9 +492,7 @@ CDbi CTask<Dtype>::ConnectDB() {
  * @param interval Specifiy how often (seconds) to write to disk.
 */
 template <typename Dtype>
-void CTask<Dtype>::Alarm() {    
-    int interval = 1;
-        
+void CTask<Dtype>::Alarm(int interval) {
     CDbi db = ConnectDB();
     srand (time(NULL));    
     
@@ -534,19 +500,15 @@ void CTask<Dtype>::Alarm() {
     int cols = config_.getFrameWidth();
     cv::Mat src_frame(rows, cols, CV_8UC3);
     cv::Mat dst_frame(rows, cols, CV_8UC3);
-
     
     int predicted_value;
     unsigned int timestamp;
-    int numoframes = 0;
         
-    while (getAlarmerStatus()) {
-        numoframes++;
-        
+    while (getAlarmerStatus()) {        
         if (!buffer_.fetch_dst(src_frame, dst_frame, predicted_value, timestamp)) {            
-            LOG(INFO) <<numoframes<<"th empty frame";
+            LOG(WARNING) <<"empty frame";
             
-            //break;
+            continue;
         }
                 
         sleep(interval);

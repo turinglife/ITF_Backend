@@ -60,7 +60,7 @@ class CTask {
     void Capture(int fps);
     void Analyze();
     void Train(std::string filename);
-    void Alarm();
+    void Alarm(int interval);
 
     void getCurrentCameraType();
     inline std::string getCurrentTaskName() { return config_.getTaskName(); }
