@@ -42,12 +42,10 @@ int main(int argc, char* argv[]) {
             if (worker.joinable()) 
                 worker.join();
             task.setFuncStatus(CTask<float>::RUNNING);
-            task.setTaskStatus(CTask<float>::ON);
             worker = std::thread(&CTask<float>::Analyze, &task);
             server.Reply("OK");
         } else if (action.compare("STOP") == 0) {
             task.setFuncStatus(CTask<float>::TERMINATE);
-            task.setTaskStatus(CTask<float>::OFF);
             if (worker.joinable()) 
                 worker.join();
             server.Reply("OK");

@@ -79,7 +79,6 @@ int main(int argc, char* argv[]) {
             //    t_work.join();
 
             task.setFuncStatus(CTask<float>::RUNNING);
-            task.setTaskStatus(CTask<float>::ON);
 
             // Start analyze thread
             //t_work = std::thread(&CTask<float>::Analyze, &task);
