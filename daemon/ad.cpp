@@ -38,16 +38,14 @@ int main(int argc, char* argv[]) {
         std::string action;
         server.Receive(action);
         if (action.compare("START") == 0) {
-            task.setFuncStatus(CTask<float>::TERMINATE);
+            task.setAnalyzerStatus(CTask<float>::TERMINATE);
             if (worker.joinable()) 
                 worker.join();
-            task.setFuncStatus(CTask<float>::RUNNING);
-            task.setTaskStatus(CTask<float>::ON);
+            task.setAnalyzerStatus(CTask<float>::RUNNING);
             worker = std::thread(&CTask<float>::Analyze, &task);
             server.Reply("OK");
         } else if (action.compare("STOP") == 0) {
-            task.setFuncStatus(CTask<float>::TERMINATE);
-            task.setTaskStatus(CTask<float>::OFF);
+            task.setAnalyzerStatus(CTask<float>::TERMINATE);
             if (worker.joinable()) 
                 worker.join();
             server.Reply("OK");
@@ -60,9 +58,10 @@ int main(int argc, char* argv[]) {
 
         }
     }
-    
+        
     // only unlink after this process ends
     unlink(socket_path.c_str());
     std::cout << task_name << ": ad exits successfully!" << std::endl;
-    return 0;
+    
+    return true;
 }

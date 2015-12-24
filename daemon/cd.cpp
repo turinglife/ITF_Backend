@@ -25,7 +25,6 @@ int main(int argc, char* argv[]) {
     
     std::string task_name(argv[1]);
     
-    
     // init 
     CTask<float> task;
     // initialize camera
@@ -65,11 +64,13 @@ int main(int argc, char* argv[]) {
            
         }
     }
-    
-    task.FreeBuffer();
+        
     // only unlink after this process ends
     unlink(socket_path.c_str());
+    
+    task.DestroyCapturer();
+
     std::cout << task_name << ": cd exits successfully!" << std::endl;
     
-    return 0;
+    return true;
 }

@@ -26,12 +26,11 @@ int main(int argc, char* argv[]) {
 
     CTask<float> task;
     
-    
     // Initialize trainer
     if (!task.InitTrainer(task_name)) {
         std::cerr << "init trainer fail" << std::endl;
         std::cerr << "rd exit" << std::endl;
-        return -1;
+        return false;
     } else {
         std::cout << "Trainer is initialized" << std::endl;
     }
@@ -41,77 +40,62 @@ int main(int argc, char* argv[]) {
     std::string socket_path = "RD_" + task_name;
     if (!server.Establish(socket_path)) {
         std::cerr << "Fail to establish connection" << std::endl;
-        return -1;
+        return false;
     }
 
-    
-#if 1
     // if current type of task is segmentation, it is not necessary to generate a regression model.
     if (task.getCurrentTaskType() == CTask<float>::SEGMENTATION) {
         // write log: segmetation does not need to generate a regression model.
         std::cout << "segmetation does not need to generate a regression model." << std::endl;
         
-        return -1;
+        return false;
     }
 
-    std::thread t_work;
-
+    std::thread worker;
     std::cout << "rd is ready" << std::endl;
-    //int fps = 30; 
-
     while (true) {
         std::string action;
         server.Receive(action);
 
         if (action.compare("START") == 0) {  // START
-            // capture gt images from foler
-            //task.setCameraStatus(CTask<float>::TERMINATE);
-            //if (t_work.joinable())
-            //    t_work.join();
+            task.setTrainerStatus(CTask<float>::TERMINATE);
 
-            //task.setCameraStatus(CTask<float>::RUNNING);
-            //t_work = std::thread(&CTask<float>::Capture, &task, fps);
-            //task.Capture(fps);
-            
-            // analyze gt images
-            //task.setFuncStatus(CTask<float>::TERMINATE);
-            //if (t_work.joinable())
-            //    t_work.join();
-
-            task.setFuncStatus(CTask<float>::RUNNING);
-            task.setTaskStatus(CTask<float>::ON);
-
-            // Start analyze thread
-            //t_work = std::thread(&CTask<float>::Analyze, &task);
-            //task.Analyze();
-            
             std::string lm_name = "lm";
-            task.Train(lm_name);
+            //task.Train(lm_name);            
             
+            if (worker.joinable()) 
+                worker.join();
+            task.setTrainerStatus(CTask<float>::RUNNING);
+            LOG(INFO) <<"start to create Train thread";
+            worker = std::thread(&CTask<float>::Train, &task, lm_name);
+            
+            // to ensure that the procedure of training linear model is completed before sending message to client.
+            if (worker.joinable()) 
+                worker.join();
+            
+            task.setTrainerStatus(CTask<float>::TERMINATE);
             server.Reply("OK");
             
+            // only once performed.
             break;
-            
-        } else if (action.compare("STOP") == 0) {  // STOP
-            //task.setCameraStatus(CTask<float>::TERMINATE);
-            //if (t_work.joinable())
-            //    t_work.join();
-            
+        } else if (action.compare("STOP") == 0) {  // STOP   
+            task.setTrainerStatus(CTask<float>::TERMINATE);
+            if (worker.joinable()) 
+                worker.join();
             server.Reply("OK");
             break;
+            
         } else if (action.length() > 1) {
             std::cerr << "No such command in rd!" << std::endl;
             server.Reply("NO");
         }
     }
 
-    task.FreeBuffer();
     // only unlink after this process ends
     unlink(socket_path.c_str());
-
-    std::cout << "rd is done" << std::endl;
-    return 0;
     
-#endif
+    task.DestroyTrainer();
+    std::cout << task_name << ": md exits successfully!" << std::endl;
     
+    return true;    
 }

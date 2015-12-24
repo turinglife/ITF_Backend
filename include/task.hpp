@@ -38,10 +38,10 @@ class CTask {
         SEGMENTATION,
         STATIONARY
     };
-    enum TaskStatus_t {     // Task state
-        OFF = 0,
-        ON
-    };
+    //enum TaskStatus_t {     // Task state
+    //    OFF = 0,
+    //    ON
+    //};
     enum Status_t {      // The state of specific function affiliated to the current task
         TERMINATE = 0,
         RUNNING
@@ -51,29 +51,34 @@ class CTask {
     bool InitAnalyzer(const std::string& task_name);
     bool InitTrainer(const std::string& task_name);
     bool InitAlarmer(const std::string& task_name);
-
+    
+    bool DestroyCapturer();
+    bool DestroyAnalyzer();
+    bool DestroyTrainer();
+    bool DestroyAlarmer();
+    
     void Capture(int fps);
     void Analyze();
-    int Train(std::string &);
+    void Train(std::string filename);
     void Alarm();
 
-    bool setTaskStatus(TaskStatus_t status);
-
     void getCurrentCameraType();
-
     inline std::string getCurrentTaskName() { return config_.getTaskName(); }
     inline int getCurrentFrameWidth() { return config_.getFrameWidth(); }
     inline int getCurrentFrameHeight() { return config_.getFrameHeight(); }
     inline TaskType_t getCurrentTaskType() { return static_cast<TaskType_t>(config_.getTaskType()); }
-    inline int getTaskStatus() { return config_.getTaskStatus(); }
-    inline void setFuncStatus(int funcstatus) { funcstatus_ = funcstatus; }
-    inline int getFuncStatus() { return funcstatus_; }
+        
+    // these functions are employed to inform AD, CD, RD, MD processes to start or stop current processing procedure 
+    // instead of creating or destroying these four processes. 
+    // the creating and destroying procedure of AD, CD, RD, MD processes are implemented in ad.cpp, cd.cpp, rd.cpp, md.cpp respectively.
+    inline void setAnalyzerStatus(int analyzerstatus) { analyzerstatus_ = analyzerstatus; }
+    inline int getAnalyzerStatus() { return analyzerstatus_; }
     inline void setCameraStatus(int camerastatus) { camerastatus_ = camerastatus; }
     inline int getCameraStatus() { return camerastatus_; }
+    inline void setTrainerStatus(int trainerstatus) { trainerstatus_ = trainerstatus; }
+    inline int getTrainerStatus() { return trainerstatus_; }
     inline void setAlarmerStatus(int alarmerstatus) { alarmerstatus_ = alarmerstatus; }
     inline int getAlarmerStatus() { return alarmerstatus_; }
-
-    bool FreeBuffer();
 
  private:
     CDbi ConnectDB();
@@ -88,21 +93,12 @@ class CTask {
     CConfig config_;
 
     // default value is TERMINAL state.
-    int funcstatus_;
+    // these functions are employed to inform AD, CD, RD, MD processes to start or stop current processing procedure
+    int analyzerstatus_;
     int camerastatus_;
+    int trainerstatus_;
     int alarmerstatus_;
 
-    cv::Mat frame_;
-    cv::Mat dst_;
-
-    /**
-     *
-     * @brief Write predicted number into MySQL db.
-     * @param interval Specifiy how often (seconds) to write to disk.
-     *
-     */
-
-    //void record(int interval);
 };
 
 #endif  // ITF_TASK_H_

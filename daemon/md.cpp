@@ -42,7 +42,6 @@ int main(int argc, char* argv[]) {
         std::string action;
         server.Receive(action);
             if (action.compare("START") == 0) {            
-            task.setFuncStatus(CTask<float>::RUNNING);
             task.setAlarmerStatus(CTask<float>::TERMINATE);
             if (worker.joinable()) 
                 worker.join();
@@ -66,12 +65,11 @@ int main(int argc, char* argv[]) {
         }
     }
     
-    //task.FreeBuffer();
     // only unlink after this process ends
     unlink(socket_path.c_str());
     std::cout << task_name << ": md exits successfully!" << std::endl;
 
-    return 0;
+    return true;
 
 
 }
