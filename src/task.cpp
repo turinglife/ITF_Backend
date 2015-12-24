@@ -219,7 +219,7 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
     analyzer_.reset(new CDPAnalyzerDensity<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight()));
     analyzer_->Init();
 
-    return 1;
+    return true;
 }
 
 template <typename Dtype>
@@ -258,7 +258,7 @@ bool CTask<Dtype>::InitAlarmer(const std::string& task_name) {
     }
     
     // return successfully
-    return 1;
+    return true;
 }
 
 template <typename Dtype>
@@ -360,7 +360,7 @@ int CTask<Dtype>::Train(std::string &filename) {
 
     // access the root folder of the current task.
     if(!boost::filesystem::exists(gt_folder) || !boost::filesystem::is_directory(gt_folder))
-        return 0;
+        return false;
 
     boost::filesystem::recursive_directory_iterator it(gt_folder);
     boost::filesystem::recursive_directory_iterator endit;
@@ -448,7 +448,7 @@ int CTask<Dtype>::Train(std::string &filename) {
 
     if (analyzer_ == 0) {
         std::cerr << "The analyzer has not been initialized yet." << std::endl;
-        return 0;
+        return false;
     }
 
     int rows = config_.getFrameHeight();
@@ -493,7 +493,7 @@ int CTask<Dtype>::Train(std::string &filename) {
     std::string save_name = config_.getTaskPath() + "LM/" + filename + ".csv";
     std::vector<double> model = util.TrainLinearModel(gt, predict, save_name);
 
-    return  1;
+    return true;
 }
 
 template <typename Dtype>
