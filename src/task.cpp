@@ -324,6 +324,10 @@ void CTask<Dtype>::Analyze() {
         if (getCurrentTaskType() == TaskType_t::COUNTING) {
             cv::Mat output(rows, cols, CV_32F, feature.data());
             int tmp_predicted_value = static_cast<int>(cv::sum(output)[0]);
+            if (tmp_predicted_value < 0) {
+                LOG(WARNING)<<"the predicted number of people is negative! ";
+                tmp_predicted_value = 0;
+            }
             // Predict a value using linear model.
             predicted_value = util.Predict(tmp_predicted_value);
             density_frame = util.GenerateHeatMap(output, pmap);
