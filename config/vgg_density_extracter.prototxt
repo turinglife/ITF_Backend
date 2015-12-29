@@ -1,0 +1,6 @@
+model: "/home/kwang/Dropbox/models/CUHK_density_v3.caffemodel"
+prototxt: "/home/kwang/Dropbox/models/CUHK_density_v3.prototxt"
+# default using GPU.
+device_id: 0
+scale: 8
+blob_name: "density"
