@@ -223,11 +223,6 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
 }
 
 template <typename Dtype>
-bool CTask<Dtype>::DestroyTrainer() {
-    return buffer_.destroy();
-}
-
-template <typename Dtype>
 bool CTask<Dtype>::InitAlarmer(const std::string& task_name) {
     int w = 0, h = 0;
     // Connect database

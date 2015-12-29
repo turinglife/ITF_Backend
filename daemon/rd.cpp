@@ -94,7 +94,6 @@ int main(int argc, char* argv[]) {
     // only unlink after this process ends
     unlink(socket_path.c_str());
     
-    task.DestroyTrainer();
     std::cout << task_name << ": md exits successfully!" << std::endl;
     
     return true;    
