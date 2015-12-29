@@ -463,6 +463,7 @@ void CTask<Dtype>::Train(std::string filename) {
 
         dst = util.GenerateHeatMap(output, pmap);
         int predicted_value = static_cast<int>(cv::sum(output)[0]);
+        if (predicted_value < 0) predicted_value = 0;
         buffer_.put_dst(dst, predicted_value);
         predict.push_back(predicted_value);
 
