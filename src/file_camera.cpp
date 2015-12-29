@@ -23,6 +23,7 @@ int CFileCamera::Disconnect() {
 
 time_t CFileCamera::Capture(cv::Mat& output) {
     cap_ >> output;
-    rawtime_ += 1;
+    //rawtime_ += 1;
+    time(&rawtime_);
     return rawtime_;
 }
