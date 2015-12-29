@@ -78,7 +78,7 @@ bool CTask<Dtype>::InitAnalyzer(const std::string& task_name) {
     
     // analyzer_ cannot be initialzed twice or deleted if it is alreaday initialized
     if (analyzer_ != 0) {
-        std::cerr << "Analyer is alrady initialized" << std::endl;
+        std::cerr << "Analyzer is alrady initialized" << std::endl;
         return false;
     }
 
@@ -196,7 +196,7 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
 
     // analyzer_ cannot be initialzed twice or deleted if it is alreaday initialized
     if (analyzer_ != 0) {
-        std::cerr << "Analyer is alrady initialized" << std::endl;
+        std::cerr << "Analyzer is alrady initialized" << std::endl;
         return false;
     }
 #if 0
