@@ -132,7 +132,7 @@ bool CTask<Dtype>::InitAnalyzer(const std::string& task_name) {
 template <typename Dtype>
 bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
 
-    int width = 0, height = 0;
+    //int width = 0, height = 0;
 
     // camera_ cannot be initialzed twice or deleted if it is alreaday initialized
     if (camera_ != 0) {
@@ -185,18 +185,21 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
 
     // Create buffer for communicating capturer with analyzer.
     cv::Mat frame(config_.getFrameHeight(), config_.getFrameWidth(), CV_8UC3);
-    int imgSize = frame.total() * frame.elemSize();
+    //int imgSize = frame.total() * frame.elemSize();
+    
+#if 0
     if (!buffer_.Init(config_.getFrameWidth(), config_.getFrameHeight(), imgSize, 50, 30, config_.getTaskName())) {
         std::cerr << "Cannot create buffer" << std::endl;
         return false;
     }
+#endif
 
     // analyzer_ cannot be initialzed twice or deleted if it is alreaday initialized
     if (analyzer_ != 0) {
         std::cerr << "Analyer is alrady initialized" << std::endl;
         return false;
     }
-
+#if 0
     // analyzer applies for buffer to use.
     if (!buffer_.Init(config_.getTaskName())) {
         std::cerr << "Cannot create buffer" << std::endl;
@@ -207,6 +210,7 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
     config_.setFrameWidth(width);
     config_.setFrameHeight(height);
 
+#endif
     // Check task type
     std::vector<std::map<std::string, std::string> > res = db.Query("select task_type, task_path from Tasks where task_name='"+task_name+"';");
 
@@ -363,8 +367,9 @@ void CTask<Dtype>::Train(std::string filename) {
     std::vector<boost::filesystem::path> gt_frame, gt_coordinate;
     int current_frame = 0, current_coordinate = 0;
     cv::Mat output;
-    unsigned int timestamp = 0;
+    //unsigned int timestamp = 0;
     itf::Util util;
+    std::vector<cv::Mat> frame_container;
 
     // access the root folder of the current task.
     if(!boost::filesystem::exists(gt_folder) || !boost::filesystem::is_directory(gt_folder)) {
@@ -391,7 +396,8 @@ void CTask<Dtype>::Train(std::string filename) {
     // gt frames are put into buffer.
     while(current_frame < gt_frame.size()) {
         output = cv::imread(gt_frame[current_frame].string());
-        buffer_.put_src(output, timestamp);
+        //buffer_.put_src(output, timestamp);
+        frame_container.push_back(output);
         current_frame++;
     }
 
@@ -419,7 +425,7 @@ void CTask<Dtype>::Train(std::string filename) {
         for (int i = 0; i < cvroi.rows; ++i) {
             contour.push_back(cv::Point(cvroi.at<float>(i, 0), cvroi.at<float>(i, 1)));
 
-            std::cout<<"roi_mask.at<int>(contour[i] = "<<roi_mask.at<float>(contour[i])<<std::endl;
+            std::cout<<"roi_mask.at<float>(contour["<<i<<"]) = "<<roi_mask.at<float>(contour[i])<<std::endl;
             if(roi_mask.at<float>(contour[i]) == 1) {
                 counts++;
             }
@@ -433,7 +439,7 @@ void CTask<Dtype>::Train(std::string filename) {
 
     int i = 0;
     while(i < gt.size()) {
-        std::cout<<"gt[i] = "<<gt[i]<<std::endl;
+        std::cout<<"gt["<<i<<"] = "<<gt[i]<<std::endl;
         i++;
     }
 
@@ -448,22 +454,32 @@ void CTask<Dtype>::Train(std::string filename) {
     cv::Mat frame(rows, cols, CV_8UC3);
 
     // Get the perspective map and square it to generate a better heat map
-    cv::Mat pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
-    pmap = pmap.mul(pmap);
-    int index = 1;
+    //cv::Mat pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
+    //pmap = pmap.mul(pmap);
+    int index = 0;
     while (getTrainerStatus()) {
-        if (!buffer_.fetch_src(frame, timestamp)) {
+        //if (!buffer_.fetch_src(frame, timestamp)) {
+        //if (!frame_container.pop_back(frame)) {    
 
+        //    break;
+        //}
+        
+        if (index >= frame_container.size()) {
             break;
         }
+        
+        frame = frame_container.at(index);
 
         vector<float> feature = analyzer_->Analyze(frame);
         cv::Mat output(rows, cols, CV_32F, feature.data());
-        cv::Mat dst;
+        //cv::Mat dst;
 
-        dst = util.GenerateHeatMap(output, pmap);
+        //dst = util.GenerateHeatMap(output, pmap);
         int predicted_value = static_cast<int>(cv::sum(output)[0]);
-        buffer_.put_dst(dst, predicted_value);
+        if (predicted_value < 0) {
+            predicted_value = 0;
+        }
+        //buffer_.put_dst(dst, predicted_value);
         predict.push_back(predicted_value);
 
         index++;
