@@ -29,13 +29,13 @@ int main(int argc, char* argv[]) {
     CTask<float> task;
     // initialize alarmer
     if (!task.InitAlarmer(task_name))
-        LOG(ERROR) << "initialze alarmer fail!";
+        LOG(FATAL) << "initialze alarmer fail!";
     
     // establish connection with client
     std::string socket_path = "MD_" + task_name;
     CComm server;
     if (!server.Establish(socket_path))
-        LOG(ERROR) << "Fail to establish connection";
+        LOG(FATAL) << "Fail to establish connection";
     
     std::thread worker;
     int interval = 1;     // second
