@@ -61,6 +61,8 @@ std::vector<Dtype> CDPAnalyzerDensity<Dtype>::Analyze(IN cv::Mat frame) {
     } else {
         cv::Mat foreground, dummy;
         fcn_extracter_->process(frame, foreground, dummy);
+        // CUHK_density_v3.caffemodel is trained with 10000x response of ground-truth
+        foreground *= 0.0001;
         feature.assign(reinterpret_cast<Dtype*>(foreground.datastart), reinterpret_cast<Dtype*>(foreground.dataend));
     }
     return feature;
