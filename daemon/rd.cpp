@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
     // only unlink after this process ends
     unlink(socket_path.c_str());
     
-    std::cout << task_name << ": Rd exits successfully!" << std::endl;
+    std::cout << task_name << ": rd exits successfully!" << std::endl;
     
     return true;    
 }
