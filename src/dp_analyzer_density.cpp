@@ -22,6 +22,7 @@ template <typename Dtype>
 bool CDPAnalyzerDensity<Dtype>::Init() {
     std::string home_path(std::getenv("HOME"));
     std::string path = home_path + "/ITF_SmartClient/config/";
+    itf::Util util;
     if (patch_based_) {
         std::string protofile = path + "density_extracter.prototxt";
         // Setup Extracter
@@ -36,7 +37,6 @@ bool CDPAnalyzerDensity<Dtype>::Init() {
         iextracter_.reset(ef.SpawnExtracter(itf::CExtracterFactory::Density));
         iextracter_->SetExtracterParameters(ep);
         iextracter_->SetImagesDim(this->frameheight_, this->framewidth_);
-        itf::Util util;
         std::vector<std::pair<float, float> > pair_vec = util.ReadPairToVec(pmap_path_);
         std::string pmap_path = "tmp_pers.csv";  // We need to think of a way to get a real path to the perspective map, now I just fake it.
         util.GeneratePerspectiveMap(pair_vec, this->frameheight_, this->framewidth_, pmap_path);
@@ -48,6 +48,7 @@ bool CDPAnalyzerDensity<Dtype>::Init() {
         itf::CSegmenterFactory sf;
         fcn_extracter_.reset(sf.SpawnSegmenter(itf::CSegmenterFactory::FCNN));
         fcn_extracter_->SetParameters(protofile);
+        roi_mask_ = util.ReadROItoMAT(roi_path_, this->frameheight_, this->framewidth_);
         return true;
     }
 }
@@ -61,6 +62,7 @@ std::vector<Dtype> CDPAnalyzerDensity<Dtype>::Analyze(IN cv::Mat frame) {
     } else {
         cv::Mat foreground, dummy;
         fcn_extracter_->process(frame, foreground, dummy);
+        foreground = foreground.mul(roi_mask_);
         // CUHK_density_v3.caffemodel is trained with 10000x response of ground-truth
         foreground *= 0.0001;
         feature.assign(reinterpret_cast<Dtype*>(foreground.datastart), reinterpret_cast<Dtype*>(foreground.dataend));
