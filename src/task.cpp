@@ -330,7 +330,7 @@ void CTask<Dtype>::Analyze() {
             }
             // Predict a value using linear model.
             predicted_value = util.Predict(tmp_predicted_value);
-            density_frame = util.GenerateHeatMap(output, pmap);
+            density_frame = util.GenerateHeatMap(output);
             if (predicted_value < 0) {
                 predicted_value = 0;
             }
