@@ -111,7 +111,10 @@ bool CTask<Dtype>::InitAnalyzer(const std::string& task_name) {
         config_.setPmapPath(res[0]["task_path"] + "PMap/" + density_detail[0]["pers_file"]);
         config_.setROIPath(res[0]["task_path"] + "ROI/" + density_detail[0]["roi_file"]);
         config_.setTaskPath(res[0]["task_path"]);
-        analyzer_.reset(new CDPAnalyzerDensity<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight()));
+        // this constructor is for patch_based model
+        // analyzer_.reset(new CDPAnalyzerDensity<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight()));
+        // this constructor is for vgg model
+        analyzer_.reset(new CDPAnalyzerDensity<Dtype>(config_.getROIPath()));
     } else if (res[0]["task_type"].compare("SEGMENTATION") == 0) {
         // Segmentation
         config_.setTaskType(1);
