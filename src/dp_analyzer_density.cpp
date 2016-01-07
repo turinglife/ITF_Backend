@@ -6,7 +6,8 @@
 #include "dp_analyzer_density.hpp"
 
 template <typename Dtype>
-CDPAnalyzerDensity<Dtype>::CDPAnalyzerDensity(const std::string &roi_path) {
+CDPAnalyzerDensity<Dtype>::CDPAnalyzerDensity(const std::string &roi_path, int framewidth, int frameheight)
+        : CDPAnalyzer<Dtype>(framewidth, frameheight) {
     patch_based_ = 0;
     roi_path_ = roi_path;
 }

@@ -114,7 +114,7 @@ bool CTask<Dtype>::InitAnalyzer(const std::string& task_name) {
         // this constructor is for patch_based model
         // analyzer_.reset(new CDPAnalyzerDensity<Dtype>(config_.getPmapPath(), config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight()));
         // this constructor is for vgg model
-        analyzer_.reset(new CDPAnalyzerDensity<Dtype>(config_.getROIPath()));
+        analyzer_.reset(new CDPAnalyzerDensity<Dtype>(config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight()));
     } else if (res[0]["task_type"].compare("SEGMENTATION") == 0) {
         // Segmentation
         config_.setTaskType(1);
