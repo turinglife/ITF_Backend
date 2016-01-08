@@ -6,13 +6,6 @@
 #include "dp_analyzer_density.hpp"
 
 template <typename Dtype>
-CDPAnalyzerDensity<Dtype>::CDPAnalyzerDensity(const std::string &roi_path, int framewidth, int frameheight)
-        : CDPAnalyzer<Dtype>(framewidth, frameheight) {
-    patch_based_ = 0;
-    roi_path_ = roi_path;
-}
-
-template <typename Dtype>
 CDPAnalyzerDensity<Dtype>::CDPAnalyzerDensity(const std::string &pmap_path, const std::string &roi_path, const int &framewidth, const int &frameheight) : CDPAnalyzer<Dtype>(framewidth, frameheight) {
     patch_based_ = 1;
     pmap_path_ = pmap_path;
@@ -24,6 +17,10 @@ bool CDPAnalyzerDensity<Dtype>::Init() {
     std::string home_path(std::getenv("HOME"));
     std::string path = home_path + "/ITF_SmartClient/config/";
     itf::Util util;
+    std::vector<std::pair<float, float> > pair_vec = util.ReadPairToVec(pmap_path_);
+    std::string pmap_path = "tmp_pers.csv";  // We need to think of a way to get a real path to the perspective map, now I just fake it.
+    util.GeneratePerspectiveMap(pair_vec, this->frameheight_, this->framewidth_, pmap_path);
+
     if (patch_based_) {
         std::string protofile = path + "density_extracter.prototxt";
         // Setup Extracter
@@ -38,9 +35,6 @@ bool CDPAnalyzerDensity<Dtype>::Init() {
         iextracter_.reset(ef.SpawnExtracter(itf::CExtracterFactory::Density));
         iextracter_->SetExtracterParameters(ep);
         iextracter_->SetImagesDim(this->frameheight_, this->framewidth_);
-        std::vector<std::pair<float, float> > pair_vec = util.ReadPairToVec(pmap_path_);
-        std::string pmap_path = "tmp_pers.csv";  // We need to think of a way to get a real path to the perspective map, now I just fake it.
-        util.GeneratePerspectiveMap(pair_vec, this->frameheight_, this->framewidth_, pmap_path);
         iextracter_->LoadPerspectiveMap(pmap_path);
         iextracter_->LoadROI(roi_path_);
         return true;
