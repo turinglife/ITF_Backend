@@ -354,8 +354,8 @@ void CTask<Dtype>::Analyze() {
 
 template <typename Dtype>
 void CTask<Dtype>::Train(std::string filename) {
-    std::vector<double> gt;
-    std::vector<double> predict;
+    std::vector<float> gt;
+    std::vector<float> predict;
 
     // generate gt vector for training linear model.
     std::cout<<"filename_ = "<<config_.getTaskPath()<<std::endl;
@@ -483,7 +483,7 @@ void CTask<Dtype>::Train(std::string filename) {
 
     // generate linear model.
     std::string save_name = config_.getTaskPath() + "LM/" + filename + ".csv";
-    std::vector<double> model = util.TrainLinearModel(gt, predict, save_name);
+    std::vector<float> model = util.TrainLinearModel(gt, predict, save_name);
 
     return;
 }

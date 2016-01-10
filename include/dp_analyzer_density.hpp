@@ -17,7 +17,6 @@
 template <typename Dtype>
 class CDPAnalyzerDensity: public CDPAnalyzer<Dtype> {
  public:
-    explicit CDPAnalyzerDensity(const std::string &roi_path);
     CDPAnalyzerDensity(const std::string &pmap_path, const std::string &roi_path,
         const int &framewidth, const int &frameheight);
     bool Init();
@@ -28,6 +27,7 @@ class CDPAnalyzerDensity: public CDPAnalyzer<Dtype> {
     std::unique_ptr<itf::ISegmenter> fcn_extracter_;
     std::string pmap_path_;
     std::string roi_path_;
+    cv::Mat roi_mask_;
     int patch_based_;
 };
 
