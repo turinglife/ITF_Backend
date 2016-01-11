@@ -7,7 +7,8 @@
 
 template <typename Dtype>
 CDPAnalyzerDensity<Dtype>::CDPAnalyzerDensity(const std::string &pmap_path, const std::string &roi_path, const int &framewidth, const int &frameheight) : CDPAnalyzer<Dtype>(framewidth, frameheight) {
-    patch_based_ = 1;
+    // Use VGG mode by default
+    patch_based_ = 0;
     pmap_path_ = pmap_path;
     roi_path_ = roi_path;
 }
