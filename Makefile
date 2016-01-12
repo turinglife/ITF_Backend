@@ -62,12 +62,11 @@ DAEMON_WARNS := $(addprefix $(BUILD_DIR)/, ${DAEMON_SRCS:.cpp=.o.$(WARNS_EXT)})
 ################################################
 # Derive include and lib directories
 ################################################
-INCLUDE_DIRS += ./include ./include/SQLiteCpp
+INCLUDE_DIRS += ./include
 
 LIBRARIES += opencv_core opencv_highgui opencv_imgproc opencv_video opencv_contrib \
              boost_system boost_filesystem boost_thread \
              rt \
-             sqlite3 \
              glog \
              protobuf \
              mlpack \
