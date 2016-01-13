@@ -556,8 +556,8 @@ void CTask<Dtype>::Counting() {
             predicted_value = 0;
         }
         buffer_.put_dst(original_frame, density_frame, predicted_value, timestamp);
-        cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
-        cv::waitKey(1);
+        // cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
+        // cv::waitKey(1);
     }
 }
 
@@ -579,8 +579,8 @@ void CTask<Dtype>::Segmentation() {
         cv::Mat output(rows, cols, CV_32F, feature.data());
         original_frame.copyTo(density_frame, output > 0.5);
         buffer_.put_dst(density_frame, 0);
-        cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
-        cv::waitKey(1);
+        // cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
+        // cv::waitKey(1);
     }
 }
 
@@ -602,8 +602,8 @@ void CTask<Dtype>::Stationary() {
         cv::Mat output(rows, cols, CV_8UC3, feature.data());
         density_frame = output + original_frame;
         buffer_.put_dst(density_frame, 0);
-        cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
-        cv::waitKey(1);
+        // cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
+        // cv::waitKey(1);
     }
 }
 
