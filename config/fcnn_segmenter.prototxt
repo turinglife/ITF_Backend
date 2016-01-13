@@ -1,3 +1,15 @@
-model: "/home/lpzhang/Desktop/model/frame_rgb_4_model.caffemodel"
-prototxt: "/home/lpzhang/Desktop/model/frame_rgb_1.prototxt"
+############# Using traditional segmentor ############.
+model: "/home/kwang/Desktop/SDK/lib/model/frame_rgb_4_model.caffemodel"
+prototxt: "/home/kwang/Desktop/SDK/lib/model/frame_rgb_1.prototxt"
+# default using GPU.
 device_id: 0
+scale: 4
+blob_name: "probs"
+
+############# Using VGG based segmentor ############.
+# model: "/home/kwang/Desktop/SDK/lib/model/CUHK_segmentation_v2.caffemodel"
+# prototxt: "/home/kwang/Desktop/SDK/lib/model/CUHK_segmentation_v2.prototxt"
+# # default using GPU.
+# device_id: 0
+# scale: 8
+# blob_name: "probs"

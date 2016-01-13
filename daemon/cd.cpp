@@ -43,14 +43,14 @@ int main(int argc, char* argv[]) {
         std::string action;
         server.Receive(action);
             if (action.compare("START") == 0) {
-            task.setCameraStatus(CTask<float>::TERMINATE);
+            task.setState(CTask<float>::TERMINATE);
             if (worker.joinable()) 
                 worker.join();
-            task.setCameraStatus(CTask<float>::RUNNING);
+            task.setState(CTask<float>::RUNNING);
             worker = std::thread(&CTask<float>::Capture, &task, kFPS);
             server.Reply("OK");
         } else if (action.compare("STOP") == 0) {
-            task.setCameraStatus(CTask<float>::TERMINATE);
+            task.setState(CTask<float>::TERMINATE);
             if (worker.joinable()) 
                 worker.join();
             server.Reply("OK");
