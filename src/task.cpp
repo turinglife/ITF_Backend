@@ -646,10 +646,14 @@ void CTask<Dtype>::CrossLine() {
             continue;
         }
         vector<float> feature = analyzer_->Analyze(frame);
+        std::vector<int> density(feature.begin(), feature.end() - 2);
+        std::vector<int> predicted_value(feature.end() - 2, feature.end());
         // Post-processing
-        cv::Mat output(h, w, CV_8UC3, feature.data());
+        cv::Mat output(h, w, CV_8UC3, density.data());
         cv::Mat padding(rows, cols, CV_8UC3, cv::Scalar(0, 0, 0));
         padding(roi_) += output;
+        // float predicted_value_1 = predicted_value[0];
+        // float predicted_value_2 = predicted_value[1];
         // cv::imshow(config_.getTaskName() + "_ad_result", padding);
         // cv::waitKey(1);
     }

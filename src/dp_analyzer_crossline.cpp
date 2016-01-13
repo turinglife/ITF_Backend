@@ -46,6 +46,8 @@ std::vector<Dtype> CDPAnalyzerCrossLine<Dtype>::Analyze(IN cv::Mat frame) {
     cv::Mat flow_out = cl_.VisualizeFlow(x_feature, y_feature);
     vector<Dtype> feature;
     feature.assign(reinterpret_cast<Dtype*>(flow_out.datastart), reinterpret_cast<Dtype*>(flow_out.dataend));
+    feature.push_back(predicted[0]);
+    feature.push_back(predicted[1]);
     cv::swap(prevImg_, nextImg_);
     return feature;
 }
