@@ -537,7 +537,7 @@ void CTask<Dtype>::Counting() {
         cv::Mat original_frame, density_frame;
         original_frame.create(rows, cols, CV_8UC3);
         unsigned int timestamp;
-        if (!buffer_.fetch_src(original_frame, timestamp)) {
+        if (!buffer_.fetch_frame(original_frame, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
@@ -569,7 +569,7 @@ void CTask<Dtype>::Segmentation() {
         cv::Mat original_frame, density_frame;
         original_frame.create(rows, cols, CV_8UC3);
         unsigned int timestamp;
-        if (!buffer_.fetch_src(original_frame, timestamp)) {
+        if (!buffer_.fetch_frame(original_frame, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
@@ -592,7 +592,7 @@ void CTask<Dtype>::Stationary() {
         cv::Mat original_frame, density_frame;
         original_frame.create(rows, cols, CV_8UC3);
         unsigned int timestamp;
-        if (!buffer_.fetch_src(original_frame, timestamp)) {
+        if (!buffer_.fetch_frame(original_frame, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
