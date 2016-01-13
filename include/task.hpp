@@ -17,6 +17,7 @@
 #include "dp_analyzer_density.hpp"
 #include "dp_analyzer_segmentation.hpp"
 #include "dp_analyzer_stationary.hpp"
+#include "dp_analyzer_crossline.hpp"
 #include "common.hpp"
 
 template <typename Dtype>
@@ -25,7 +26,8 @@ class CTask {
     enum TaskType_t {
         COUNTING,
         SEGMENTATION,
-        STATIONARY
+        STATIONARY,
+        CROSSLINE
     };
     // The state of specific function affiliated to the current task
     enum Status_t {
