@@ -126,37 +126,25 @@ CREATE TABLE DensityPredict (
 
 -- Insert Values
 INSERT INTO Groups VALUES ('mmlab');
-INSERT INTO Groups VALUES ('cuhk');
 
-INSERT INTO Tasks VALUES ('task_one', 'COUNTING', 'OFF', 'HTTP', 'OFF', 'data/', 'ON', 'ON', 'mmlab');
-INSERT INTO Tasks VALUES ('task_two', 'COUNTING', 'OFF', 'HTTP', 'OFF', '$(HOME)/ITFcs1.0/tasks/task_two/', 'ON', 'ON', 'cuhk');
-INSERT INTO Tasks VALUES ('task_three', 'SEGMENTATION', 'OFF', 'HTTP', 'OFF', 'data/', 'ON', 'ON', 'cuhk');
-INSERT INTO Tasks VALUES ('task_four', 'SEGMENTATION', 'OFF', 'FILE', 'OFF', '$(HOME)/ITFcs1.0/tasks/task_four/', 'ON', 'ON', 'mmlab');
-INSERT INTO Tasks VALUES ('test', 'STATIONARY', 'OFF', 'HTTP', 'OFF', 'data/', 'OFF', 'OFF', 'mmlab');
+INSERT INTO Tasks VALUES ('task_one', 'COUNTING', 'OFF', 'HTTP', 'OFF', 'data/task_one/', 'ON', 'ON', 'mmlab');
+INSERT INTO Tasks VALUES ('task_two', 'SEGMENTATION', 'OFF', 'FILE', 'OFF', 'data/task_two/', 'ON', 'ON', 'mmlab');
 
 INSERT INTO Cameras VALUES ('cam_10182', 704, 576, 'axis-cgi/mjpg/video.cgi', '137.189.35.204', 10182, 'root', 'xgwangpj');
-INSERT INTO Cameras VALUES ('cam_10183', 704, 576, 'axis-cgi/mjpg/video.cgi', '137.189.35.204', 10183, 'root', 'xgwangpj');
-INSERT INTO Cameras VALUES ('cam_10184', 704, 576, 'axis-cgi/mjpg/video.cgi', '137.189.35.204', 10184, 'root', 'xgwangpj');
 
 INSERT INTO Task_Camera VALUES ('task_one', 'cam_10182');
-INSERT INTO Task_Camera VALUES ('task_two', 'cam_10183');
-INSERT INTO Task_Camera VALUES ('task_three', 'cam_10184');
-INSERT INTO Task_Camera VALUES ('test', 'cam_10182');
 
-INSERT INTO Files VALUES ('./data/200608.mp4', 720, 576, 50, 1000,'task_four');
+INSERT INTO Files VALUES ('./data/200608.mp4', 720, 576, 50, 1000, 'task_two');
 
-INSERT INTO DensityDetail VALUES ('task_one_pers.csv', 'task_one_roi.csv', 'task_one_lm.csv', 'task_one');
-INSERT INTO DensityDetail VALUES ('task_two_pers.csv', 'task_two_roi.csv', 'task_two_lm.csv', 'task_two');
+INSERT INTO DensityDetail VALUES ('pers.csv', 'roi.csv', 'lm.csv', 'task_one');
 
 INSERT INTO DensityAlarmStrategy VALUES (7, 10, 20, 'task_one');
-INSERT INTO DensityAlarmStrategy VALUES (76, 99, 222, 'task_two');
 
 INSERT INTO DensityAlarmRecord VALUES ('2012-02-14 18:30:21', 67, 'LOW', 'c8h3vwn23r', 'task_one');
 INSERT INTO DensityAlarmRecord VALUES (now(), 88, 'LOW', 'oc9v2kd9vj', 'task_one');
 
 INSERT INTO DensityPredict VALUES (now(), 67, 'task_one');
 INSERT INTO DensityPredict VALUES (now(), 88, 'task_one');
-
 
 -- -- Show
 -- SHOW TABLES;
