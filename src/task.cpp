@@ -537,7 +537,7 @@ void CTask<Dtype>::Counting() {
         cv::Mat original_frame, density_frame;
         original_frame.create(rows, cols, CV_8UC3);
         unsigned int timestamp;
-        if (!buffer_.fetch_src(original_frame, timestamp)) {
+        if (!buffer_.fetch_frame(original_frame, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
@@ -556,8 +556,8 @@ void CTask<Dtype>::Counting() {
             predicted_value = 0;
         }
         buffer_.put_dst(original_frame, density_frame, predicted_value, timestamp);
-        cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
-        cv::waitKey(1);
+        // cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
+        // cv::waitKey(1);
     }
 }
 
@@ -569,7 +569,7 @@ void CTask<Dtype>::Segmentation() {
         cv::Mat original_frame, density_frame;
         original_frame.create(rows, cols, CV_8UC3);
         unsigned int timestamp;
-        if (!buffer_.fetch_src(original_frame, timestamp)) {
+        if (!buffer_.fetch_frame(original_frame, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
@@ -579,8 +579,8 @@ void CTask<Dtype>::Segmentation() {
         cv::Mat output(rows, cols, CV_32F, feature.data());
         original_frame.copyTo(density_frame, output > 0.5);
         buffer_.put_dst(density_frame, 0);
-        cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
-        cv::waitKey(1);
+        // cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
+        // cv::waitKey(1);
     }
 }
 
@@ -592,7 +592,7 @@ void CTask<Dtype>::Stationary() {
         cv::Mat original_frame, density_frame;
         original_frame.create(rows, cols, CV_8UC3);
         unsigned int timestamp;
-        if (!buffer_.fetch_src(original_frame, timestamp)) {
+        if (!buffer_.fetch_frame(original_frame, timestamp)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
@@ -602,8 +602,8 @@ void CTask<Dtype>::Stationary() {
         cv::Mat output(rows, cols, CV_8UC3, feature.data());
         density_frame = output + original_frame;
         buffer_.put_dst(density_frame, 0);
-        cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
-        cv::waitKey(1);
+        // cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
+        // cv::waitKey(1);
     }
 }
 

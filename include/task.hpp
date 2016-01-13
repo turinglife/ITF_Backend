@@ -52,6 +52,9 @@ class CTask {
     inline int getFrameWidth() { return config_.getFrameWidth(); }
     inline int getFrameHeight() { return config_.getFrameHeight(); }
     inline TaskType_t getTaskType() { return static_cast<TaskType_t>(config_.getTaskType()); }
+    // Each task object is associate with one specific daemon process.
+    // And each daemon process (i.e. CD, AD, MD and RD) is under the control of state
+    // Since daemon processes are independent from each other, we can rely on just one state variable.
     inline void setState(int state) { state_ = state; }
     inline int getState() { return state_; }
 
