@@ -120,12 +120,31 @@ bool CTask<Dtype>::InitAnalyzer(const std::string& task_name) {
         // Stationary
         config_.setTaskType(2);
         analyzer_.reset(new CDPAnalyzerStationary<Dtype>("SK", false, config_.getROIPath(), config_.getFrameWidth(), config_.getFrameHeight()));
-    } else {
+    } else if (res[0]["task_type"].compare("CROSSLINE") == 0) {
+        // CrossLine
+        config_.setTaskType(3);
+        std::vector<std::map<std::string, std::string> > density_detail = db.Query("select * from DensityDetail where task_name='" +task_name+ "';");
+        itf::Util util;
+        std::vector<std::pair<float, float> > pair_vec = util.ReadPairToVec(res[0]["task_path"] + "PMap/" + density_detail[0]["pers_file"]);
+        std::string pmap_path = "tmp_pers.csv";
+        util.GeneratePerspectiveMap(pair_vec, config_.getFrameHeight(), config_.getFrameWidth(), pmap_path);
+
+        CvMLData mlData;
+        mlData.read_csv((res[0]["task_path"] + "ROI/" + density_detail[0]["roi_file"]).c_str());
+        const CvMat* tmp = mlData.get_values();
+        cv::Mat cvroi(tmp, true);
+        cv::Point2i p1(cvroi.at<float>(0, 0), cvroi.at<float>(0, 1));
+        cv::Point2i p2(cvroi.at<float>(1, 0), cvroi.at<float>(1, 1));
+
+        cv::Point2i p5;
+        cv::Point2i p6;
+        util.BrewPoints(p1, p2, 100, &roi_, &p5, &p6);
+        analyzer_.reset(new CDPAnalyzerCrossLine<Dtype>(roi_, p5, p6));
+    }else {
         // not supporting.
         std::cerr << "To Be Continued" << std::endl;
         return false;
     }
-
     return analyzer_->Init();
 }
 
@@ -294,6 +313,9 @@ void CTask<Dtype>::Analyze() {
             break;
         case TaskType_t::STATIONARY:
             Stationary();
+            break;
+        case TaskType_t::CROSSLINE:
+            CrossLine();
             break;
         default:
             LOG(WARNING) << "No Such Task Type";
@@ -603,6 +625,36 @@ void CTask<Dtype>::Stationary() {
         density_frame = output + original_frame;
         buffer_.put_dst(density_frame, 0);
         // cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
+        // cv::waitKey(1);
+    }
+}
+
+template<typename Dtype>
+void CTask<Dtype>::CrossLine() {
+    int rows = config_.getFrameHeight();
+    int cols = config_.getFrameWidth();
+
+    int h = abs(roi_.tl().y - roi_.br().y);
+    int w = abs(roi_.tl().x - roi_.br().x);
+    while (getState()) {
+        cv::Mat frame;
+        frame.create(rows, cols, CV_8UC3);
+        unsigned int timestamp;
+        if (!buffer_.fetch_frame(frame, timestamp)) {
+            std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
+            sleep(3);  // reduce useless while loop
+            continue;
+        }
+        vector<float> feature = analyzer_->Analyze(frame);
+        std::vector<int> density(feature.begin(), feature.end() - 2);
+        std::vector<int> predicted_value(feature.end() - 2, feature.end());
+        // Post-processing
+        cv::Mat output(h, w, CV_8UC3, density.data());
+        cv::Mat padding(rows, cols, CV_8UC3, cv::Scalar(0, 0, 0));
+        padding(roi_) += output;
+        // float predicted_value_1 = predicted_value[0];
+        // float predicted_value_2 = predicted_value[1];
+        // cv::imshow(config_.getTaskName() + "_ad_result", padding);
         // cv::waitKey(1);
     }
 }
