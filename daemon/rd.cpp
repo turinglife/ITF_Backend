@@ -44,7 +44,7 @@ int main(int argc, char* argv[]) {
     }
 
     // if current type of task is segmentation, it is not necessary to generate a regression model.
-    if (task.getCurrentTaskType() == CTask<float>::SEGMENTATION) {
+    if (task.getTaskType() == CTask<float>::SEGMENTATION) {
         // write log: segmetation does not need to generate a regression model.
         std::cout << "segmetation does not need to generate a regression model." << std::endl;
         
@@ -58,14 +58,14 @@ int main(int argc, char* argv[]) {
         server.Receive(action);
 
         if (action.compare("START") == 0) {  // START
-            task.setTrainerStatus(CTask<float>::TERMINATE);
+            task.setState(CTask<float>::TERMINATE);
 
             std::string lm_name = "lm";
             //task.Train(lm_name);            
             
             if (worker.joinable()) 
                 worker.join();
-            task.setTrainerStatus(CTask<float>::RUNNING);
+            task.setState(CTask<float>::RUNNING);
             LOG(INFO) <<"start to create Train thread";
             worker = std::thread(&CTask<float>::Train, &task, lm_name);
             
@@ -73,13 +73,13 @@ int main(int argc, char* argv[]) {
             if (worker.joinable()) 
                 worker.join();
             
-            task.setTrainerStatus(CTask<float>::TERMINATE);
+            task.setState(CTask<float>::TERMINATE);
             server.Reply("OK");
             
             // only once performed.
             break;
         } else if (action.compare("STOP") == 0) {  // STOP   
-            task.setTrainerStatus(CTask<float>::TERMINATE);
+            task.setState(CTask<float>::TERMINATE);
             if (worker.joinable()) 
                 worker.join();
             server.Reply("OK");

@@ -266,7 +266,7 @@ bool CTask<Dtype>::InitAlarmer(const std::string& task_name) {
 template <typename Dtype>
 void CTask<Dtype>::Capture(int fps) {
     buffer_.set_camera_valid(true);
-    while (getCameraStatus()) {
+    while (getState()) {
         cv::Mat frame;
         time_t timestamp = camera_->Capture(frame);
         if (frame.empty()) break;
@@ -295,7 +295,7 @@ void CTask<Dtype>::Analyze() {
     //std::thread tdb;
     int predicted_value = 0;
     
-    if (getCurrentTaskType() == TaskType_t::COUNTING) {
+    if (getTaskType() == TaskType_t::COUNTING) {
         // the section is better to move to InitAnalyzer.
         
         // Load the trained linear model.
@@ -307,7 +307,7 @@ void CTask<Dtype>::Analyze() {
         //tdb = std::thread(&CTask::record, this, interval);
     }
     
-    while (getAnalyzerStatus()) {
+    while (getState()) {
         cv::Mat original_frame, density_frame;
         original_frame.create(rows, cols, CV_8UC3);
         unsigned int timestamp;
@@ -318,7 +318,7 @@ void CTask<Dtype>::Analyze() {
         }
         vector<float> feature = analyzer_->Analyze(original_frame);
         // Post-processing
-        if (getCurrentTaskType() == TaskType_t::COUNTING) {
+        if (getTaskType() == TaskType_t::COUNTING) {
             cv::Mat output(rows, cols, CV_32F, feature.data());
             int tmp_predicted_value = static_cast<int>(cv::sum(output)[0]);
             if (tmp_predicted_value < 0) {
@@ -337,11 +337,11 @@ void CTask<Dtype>::Analyze() {
             buffer_.put_dst(original_frame, density_frame, predicted_value, timestamp);
             //LOG(INFO)<<"ad return 4 value = "<<buffer_.fetch_dst(src_frame, dst_frame, predicted_value, timestamp);
             
-        } else if (getCurrentTaskType() == TaskType_t::SEGMENTATION) {
+        } else if (getTaskType() == TaskType_t::SEGMENTATION) {
             cv::Mat output(rows, cols, CV_32F, feature.data());
             original_frame.copyTo(density_frame, output > 0.5);
             buffer_.put_dst(density_frame, 0);
-        } else if (getCurrentTaskType() == TaskType_t::STATIONARY) {
+        } else if (getTaskType() == TaskType_t::STATIONARY) {
             cv::Mat output(rows, cols, CV_8UC3, feature.data());
             density_frame = output + original_frame;
             buffer_.put_dst(density_frame, 0);
@@ -453,7 +453,7 @@ void CTask<Dtype>::Train(std::string filename) {
     //cv::Mat pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
     //pmap = pmap.mul(pmap);
     int index = 0;
-    while (getTrainerStatus()) {
+    while (getState()) {
         //if (!buffer_.fetch_src(frame, timestamp)) {
         //if (!frame_container.pop_back(frame)) {    
 
@@ -520,7 +520,7 @@ void CTask<Dtype>::Alarm(int interval) {
     int predicted_value;
     unsigned int timestamp;
         
-    while (getAlarmerStatus()) {        
+    while (getState()) {
         if (!buffer_.fetch_dst(src_frame, dst_frame, predicted_value, timestamp)) {            
             LOG(WARNING) <<"empty frame";
             
