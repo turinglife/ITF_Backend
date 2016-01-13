@@ -77,6 +77,7 @@ class CTask {
     CConfig config_;
     // default value is TERMINAL state.
     int state_;
+    cv::Rect roi_;
 };
 
 #endif  // ITF_TASK_H_
