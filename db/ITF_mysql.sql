@@ -35,7 +35,7 @@ CREATE TABLE Groups (
 CREATE TABLE Tasks (
     `task_name`         varchar(128),
     
-    `task_type`         enum('COUNTING', 'SEGMENTATION' , 'STATIONARY') NOT NULL,
+    `task_type`         enum('COUNTING', 'SEGMENTATION' , 'STATIONARY', 'CROSSLINE') NOT NULL,
     `task_status`       enum('ON', 'OFF') DEFAULT 'OFF',
 
     `camera_type`       enum('HTTP', 'RTSP' , 'LOCAL', 'FILE') NOT NULL,
@@ -43,7 +43,6 @@ CREATE TABLE Tasks (
 
     `task_path`         varchar(128) NOT NULL,
     `alarm_switch`      enum('ON', 'OFF') DEFAULT 'OFF',
-    `report_switch`     enum('ON', 'OFF') DEFAULT 'OFF',
 
     `group_name`        varchar(128) NOT NULL,
 
@@ -127,16 +126,19 @@ CREATE TABLE DensityPredict (
 -- Insert Values
 INSERT INTO Groups VALUES ('mmlab');
 
-INSERT INTO Tasks VALUES ('task_one', 'COUNTING', 'OFF', 'HTTP', 'OFF', 'data/task_one/', 'ON', 'ON', 'mmlab');
-INSERT INTO Tasks VALUES ('task_two', 'SEGMENTATION', 'OFF', 'FILE', 'OFF', 'data/task_two/', 'ON', 'ON', 'mmlab');
+INSERT INTO Tasks VALUES ('task_one', 'COUNTING', 'OFF', 'HTTP', 'OFF', 'data/task_one/', 'ON', 'mmlab');
+INSERT INTO Tasks VALUES ('task_two', 'SEGMENTATION', 'OFF', 'FILE', 'OFF', 'data/task_two/', 'ON', 'mmlab');
+INSERT INTO Tasks VALUES ('task_three', 'CROSSLINE', 'OFF', 'FILE', 'OFF', 'data/task_three/', 'ON', 'mmlab');
 
 INSERT INTO Cameras VALUES ('cam_10182', 704, 576, 'axis-cgi/mjpg/video.cgi', '137.189.35.204', 10182, 'root', 'xgwangpj');
 
 INSERT INTO Task_Camera VALUES ('task_one', 'cam_10182');
 
-INSERT INTO Files VALUES ('./data/200608.mp4', 720, 576, 50, 1000, 'task_two');
+INSERT INTO Files VALUES ('./data/104207.avi', 720, 576, 25, 1000, 'task_two');
+INSERT INTO Files VALUES ('./data/104207.avi', 720, 576, 25, 1000, 'task_three');
 
 INSERT INTO DensityDetail VALUES ('pers.csv', 'roi.csv', 'lm.csv', 'task_one');
+INSERT INTO DensityDetail VALUES ('pers.csv', 'roi.csv', 'lm.csv', 'task_three');
 
 INSERT INTO DensityAlarmStrategy VALUES (7, 10, 20, 'task_one');
 
