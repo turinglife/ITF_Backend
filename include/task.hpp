@@ -57,6 +57,10 @@ class CTask {
 
  private:
     CDbi ConnectDB();
+    void Counting();
+    void Segmentation();
+    void Stationary();
+    void CrossLine();
     // object for grabing frames into buffer.
     std::unique_ptr<CCamera> camera_;
     // object for analyzing frames from buffer.
