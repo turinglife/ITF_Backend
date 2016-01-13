@@ -266,7 +266,7 @@ bool CTask<Dtype>::InitAlarmer(const std::string& task_name) {
 template <typename Dtype>
 void CTask<Dtype>::Capture(int fps) {
     buffer_.set_camera_valid(true);
-    while (getCameraStatus()) {
+    while (getState()) {
         cv::Mat frame;
         time_t timestamp = camera_->Capture(frame);
         if (frame.empty()) break;
@@ -285,71 +285,19 @@ void CTask<Dtype>::Capture(int fps) {
 
 template <typename Dtype>
 void CTask<Dtype>::Analyze() {
-    int rows = config_.getFrameHeight();
-    int cols = config_.getFrameWidth();
-
-    // Write predicted number into disk every second
-    //const int interval = 1;
-    itf::Util util;
-    cv::Mat pmap;
-    //std::thread tdb;
-    int predicted_value = 0;
-    
-    if (getCurrentTaskType() == TaskType_t::COUNTING) {
-        // the section is better to move to InitAnalyzer.
-        
-        // Load the trained linear model.
-        std::string lm = config_.getTaskPath() + "LM/" + "lm.csv";
-        util.LoadLinearModel(lm);
-        // Get the perspective map and square it to generate a better heat map
-        pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
-        pmap = pmap.mul(pmap);
-        //tdb = std::thread(&CTask::record, this, interval);
+    switch (getTaskType()) {
+        case TaskType_t::COUNTING:
+            Counting();
+            break;
+        case TaskType_t::SEGMENTATION:
+            Segmentation();
+            break;
+        case TaskType_t::STATIONARY:
+            Stationary();
+            break;
+        default:
+            LOG(WARNING) << "No Such Task Type";
     }
-    
-    while (getAnalyzerStatus()) {
-        cv::Mat original_frame, density_frame;
-        original_frame.create(rows, cols, CV_8UC3);
-        unsigned int timestamp;
-        if (!buffer_.fetch_frame(original_frame, timestamp)) {
-            std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
-            sleep(3);  // reduce useless while loop
-            continue;
-        }
-        vector<float> feature = analyzer_->Analyze(original_frame);
-        // Post-processing
-        if (getCurrentTaskType() == TaskType_t::COUNTING) {
-            cv::Mat output(rows, cols, CV_32F, feature.data());
-            int tmp_predicted_value = static_cast<int>(cv::sum(output)[0]);
-            if (tmp_predicted_value < 0) {
-                LOG(WARNING)<<"the predicted number of people is negative! ";
-                tmp_predicted_value = 0;
-            }
-            // Predict a value using linear model.
-            predicted_value = util.Predict(tmp_predicted_value);
-            density_frame = util.GenerateHeatMap(output, pmap);
-            if (predicted_value < 0) {
-                predicted_value = 0;
-            }
-            //LOG(INFO)<<"predicted_value = "<<predicted_value;
-            //LOG(INFO)<<"put_src with 2 parameters = "<<buffer_.put_dst(density_frame, predicted_value);
-            //LOG(INFO)<<"put_src with 4 parameters = "<<
-            buffer_.put_dst(original_frame, density_frame, predicted_value, timestamp);
-            //LOG(INFO)<<"ad return 4 value = "<<buffer_.fetch_dst(src_frame, dst_frame, predicted_value, timestamp);
-            
-        } else if (getCurrentTaskType() == TaskType_t::SEGMENTATION) {
-            cv::Mat output(rows, cols, CV_32F, feature.data());
-            original_frame.copyTo(density_frame, output > 0.5);
-            buffer_.put_dst(density_frame, 0);
-        } else if (getCurrentTaskType() == TaskType_t::STATIONARY) {
-            cv::Mat output(rows, cols, CV_8UC3, feature.data());
-            density_frame = output + original_frame;
-            buffer_.put_dst(density_frame, 0);
-        }
-        //cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
-        //cv::waitKey(1);
-    }
-    //if (tdb.joinable()) tdb.join();
 }
 
 template <typename Dtype>
@@ -453,7 +401,7 @@ void CTask<Dtype>::Train(std::string filename) {
     //cv::Mat pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
     //pmap = pmap.mul(pmap);
     int index = 0;
-    while (getTrainerStatus()) {
+    while (getState()) {
         //if (!buffer_.fetch_src(frame, timestamp)) {
         //if (!frame_container.pop_back(frame)) {    
 
@@ -520,7 +468,7 @@ void CTask<Dtype>::Alarm(int interval) {
     int predicted_value;
     unsigned int timestamp;
         
-    while (getAlarmerStatus()) {        
+    while (getState()) {
         if (!buffer_.fetch_dst(src_frame, dst_frame, predicted_value, timestamp)) {            
             LOG(WARNING) <<"empty frame";
             
@@ -570,6 +518,93 @@ void CTask<Dtype>::Alarm(int interval) {
     LOG(INFO) <<"exit successfully";
     
     return;
+}
+
+template <typename Dtype>
+void CTask<Dtype>::Counting() {
+    int rows = config_.getFrameHeight();
+    int cols = config_.getFrameWidth();
+    itf::Util util;
+    cv::Mat pmap;
+    int predicted_value = 0;
+    // Load the trained linear model.
+    std::string lm = config_.getTaskPath() + "LM/" + "lm.csv";
+    util.LoadLinearModel(lm);
+    // Get the perspective map and square it to generate a better heat map
+    pmap = util.ReadPMAPtoMAT("tmp_pers.csv");
+    pmap = pmap.mul(pmap);
+    while (getState()) {
+        cv::Mat original_frame, density_frame;
+        original_frame.create(rows, cols, CV_8UC3);
+        unsigned int timestamp;
+        if (!buffer_.fetch_src(original_frame, timestamp)) {
+            std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
+            sleep(3);  // reduce useless while loop
+            continue;
+        }
+        vector<float> feature = analyzer_->Analyze(original_frame);
+        // Post-processing
+        cv::Mat output(rows, cols, CV_32F, feature.data());
+        int tmp_predicted_value = static_cast<int>(cv::sum(output)[0]);
+        if (tmp_predicted_value < 0) {
+            tmp_predicted_value = 0;
+        }
+        // Predict a value using linear model.
+        predicted_value = util.Predict(tmp_predicted_value);
+        density_frame = util.GenerateHeatMap(output, pmap);
+        if (predicted_value < 0) {
+            predicted_value = 0;
+        }
+        buffer_.put_dst(original_frame, density_frame, predicted_value, timestamp);
+        cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
+        cv::waitKey(1);
+    }
+}
+
+template<typename Dtype>
+void CTask<Dtype>::Segmentation() {
+    int rows = config_.getFrameHeight();
+    int cols = config_.getFrameWidth();
+    while (getState()) {
+        cv::Mat original_frame, density_frame;
+        original_frame.create(rows, cols, CV_8UC3);
+        unsigned int timestamp;
+        if (!buffer_.fetch_src(original_frame, timestamp)) {
+            std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
+            sleep(3);  // reduce useless while loop
+            continue;
+        }
+        vector<float> feature = analyzer_->Analyze(original_frame);
+        // Post-processing
+        cv::Mat output(rows, cols, CV_32F, feature.data());
+        original_frame.copyTo(density_frame, output > 0.5);
+        buffer_.put_dst(density_frame, 0);
+        cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
+        cv::waitKey(1);
+    }
+}
+
+template<typename Dtype>
+void CTask<Dtype>::Stationary() {
+    int rows = config_.getFrameHeight();
+    int cols = config_.getFrameWidth();
+    while (getState()) {
+        cv::Mat original_frame, density_frame;
+        original_frame.create(rows, cols, CV_8UC3);
+        unsigned int timestamp;
+        if (!buffer_.fetch_src(original_frame, timestamp)) {
+            std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
+            sleep(3);  // reduce useless while loop
+            continue;
+        }
+        vector<float> feature = analyzer_->Analyze(original_frame);
+        // Post-processing
+        cv::Mat output(rows, cols, CV_8UC3, feature.data());
+        density_frame = output + original_frame;
+        buffer_.put_dst(density_frame, 0);
+        cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
+        cv::waitKey(1);
+    }
 }
 
 INSTANTIATE_MYCLASS(CTask);

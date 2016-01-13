@@ -43,15 +43,15 @@ int main(int argc, char* argv[]) {
         std::string action;
         server.Receive(action);
             if (action.compare("START") == 0) {            
-            task.setAlarmerStatus(CTask<float>::TERMINATE);
+            task.setState(CTask<float>::TERMINATE);
             if (worker.joinable()) 
                 worker.join();
-            task.setAlarmerStatus(CTask<float>::RUNNING);
+            task.setState(CTask<float>::RUNNING);
             LOG(INFO) <<"start to create Alarm thread";
             worker = std::thread(&CTask<float>::Alarm, &task, interval);
             server.Reply("OK");
         } else if (action.compare("STOP") == 0) {
-            task.setAlarmerStatus(CTask<float>::TERMINATE);
+            task.setState(CTask<float>::TERMINATE);
             if (worker.joinable()) 
                 worker.join();
             server.Reply("OK");
