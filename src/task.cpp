@@ -636,6 +636,8 @@ void CTask<Dtype>::CrossLine() {
 
     int h = abs(roi_.tl().y - roi_.br().y);
     int w = abs(roi_.tl().x - roi_.br().x);
+    float predicted_value_1 = 0;
+    float predicted_value_2 = 0;
     while (getState()) {
         cv::Mat frame;
         frame.create(rows, cols, CV_8UC3);
@@ -646,14 +648,14 @@ void CTask<Dtype>::CrossLine() {
             continue;
         }
         vector<float> feature = analyzer_->Analyze(frame);
-        std::vector<int> density(feature.begin(), feature.end() - 2);
+        std::vector<float> density(feature.begin(), feature.end() - 2);
         std::vector<int> predicted_value(feature.end() - 2, feature.end());
         // Post-processing
         cv::Mat output(h, w, CV_8UC3, density.data());
-        cv::Mat padding(rows, cols, CV_8UC3, cv::Scalar(0, 0, 0));
-        padding(roi_) += output;
-        float predicted_value_1 = predicted_value[0];
-        float predicted_value_2 = predicted_value[1];
+        cv::Mat padding(rows, cols, CV_8UC3, cv::Scalar(255, 255, 255));
+        output.copyTo(padding(roi_));
+        predicted_value_1 += predicted_value[0];
+        predicted_value_2 += predicted_value[1];
         buffer_.put_dst(timestamp, padding.clone(), padding.clone(), predicted_value_1, predicted_value_2);
         //cv::imshow(config_.getTaskName() + "_ad_result", padding);
         //cv::waitKey(1);
