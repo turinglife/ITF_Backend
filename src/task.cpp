@@ -75,7 +75,7 @@ bool CTask<Dtype>::DestroyCapturer() {
 template <typename Dtype>
 bool CTask<Dtype>::InitAnalyzer(const std::string& task_name) {
     int w = 0, h = 0;
-    
+
     // analyzer_ cannot be initialzed twice or deleted if it is alreaday initialized
     if (analyzer_ != 0) {
         std::cerr << "Analyzer is alrady initialized" << std::endl;
@@ -205,7 +205,7 @@ bool CTask<Dtype>::InitTrainer(const std::string& task_name) {
     // Create buffer for communicating capturer with analyzer.
     cv::Mat frame(config_.getFrameHeight(), config_.getFrameWidth(), CV_8UC3);
     //int imgSize = frame.total() * frame.elemSize();
-    
+
 #if 0
     if (!buffer_.Init(config_.getFrameWidth(), config_.getFrameHeight(), imgSize, 50, 30, config_.getTaskName())) {
         std::cerr << "Cannot create buffer" << std::endl;
@@ -261,7 +261,7 @@ bool CTask<Dtype>::InitAlarmer(const std::string& task_name) {
     buffer_.frame_size(w, h);
     config_.setFrameWidth(w);
     config_.setFrameHeight(h);
-    
+
     // Check task type
     std::vector<std::map<std::string, std::string> > res = db.Query("select task_type, task_path from Tasks where task_name='"+task_name+"';");
     if (res[0]["task_type"].compare("COUNTING") == 0) {
@@ -270,15 +270,15 @@ bool CTask<Dtype>::InitAlarmer(const std::string& task_name) {
             alarmer_.priority_high = std::atoi(alarm_detail[0]["priority_high"].c_str());
             alarmer_.priority_medium = std::atoi(alarm_detail[0]["priority_medium"].c_str());
             alarmer_.priority_low = std::atoi(alarm_detail[0]["priority_low"].c_str());
-            
+
             config_.setTaskPath(res[0]["task_path"]);
         } else {
             LOG(ERROR)<<"These is no any record in table DensityAlarmStrategy";
-            
+
             return false;
         }
     }
-    
+
     return true;
 }
 
@@ -290,7 +290,7 @@ void CTask<Dtype>::Capture(int fps) {
         time_t timestamp = camera_->Capture(frame);
         if (frame.empty()) break;
         // Write a new frame into buffer
-        buffer_.put_src(frame, static_cast<unsigned int>(timestamp));
+        buffer_.put_src(static_cast<unsigned int>(timestamp), frame);
         //cv::imshow(config_.getTaskName() + "_frame", frame);
         //cv::waitKey(1000 / fps);
 
@@ -340,10 +340,10 @@ void CTask<Dtype>::Train(std::string filename) {
     // access the root folder of the current task.
     if(!boost::filesystem::exists(gt_folder) || !boost::filesystem::is_directory(gt_folder)) {
         LOG(ERROR)<<"the folder of the current task is not exist.";
-        
+
         return;
     }
-    
+
     boost::filesystem::recursive_directory_iterator it(gt_folder);
     boost::filesystem::recursive_directory_iterator endit;
 
@@ -425,15 +425,15 @@ void CTask<Dtype>::Train(std::string filename) {
     int index = 0;
     while (getState()) {
         //if (!buffer_.fetch_src(frame, timestamp)) {
-        //if (!frame_container.pop_back(frame)) {    
+        //if (!frame_container.pop_back(frame)) {
 
         //    break;
         //}
-        
+
         if (index >= frame_container.size()) {
             break;
         }
-        
+
         frame = frame_container.at(index);
 
         vector<float> feature = analyzer_->Analyze(frame);
@@ -469,7 +469,7 @@ CDbi CTask<Dtype>::ConnectDB() {
     CDbi db;
     db.Connect(server, user, pass);
     db.UseDB(db_name);
-    
+
     return db;
 }
 
@@ -480,23 +480,23 @@ CDbi CTask<Dtype>::ConnectDB() {
 template <typename Dtype>
 void CTask<Dtype>::Alarm(int interval) {
     CDbi db = ConnectDB();
-    srand (time(NULL));    
-    
+    srand (time(NULL));
+
     int rows = config_.getFrameHeight();
     int cols = config_.getFrameWidth();
     cv::Mat src_frame(rows, cols, CV_8UC3);
     cv::Mat dst_frame(rows, cols, CV_8UC3);
-    
+
     int predicted_value;
     unsigned int timestamp;
-        
+
     while (getState()) {
-        if (!buffer_.fetch_dst(src_frame, dst_frame, predicted_value, timestamp)) {            
+        if (!buffer_.fetch_dst(timestamp, src_frame, dst_frame, predicted_value)) {
             LOG(WARNING) <<"empty frame";
-            
+
             continue;
         }
-                
+
         sleep(interval);
         db.RunSQL("INSERT INTO DensityPredict VALUES (DEFAULT, "
         + std::to_string(predicted_value) + ", '"
@@ -534,11 +534,11 @@ void CTask<Dtype>::Alarm(int interval) {
             + config_.getTaskName() + "');");
           cv::imwrite(config_.getTaskPath() + "Alarm/" + file_name +"_src.jpg", src_frame);
           cv::imwrite(config_.getTaskPath() + "Alarm/" + file_name +"_dst.jpg", dst_frame);
-        }        
+        }
     }
-    
+
     LOG(INFO) <<"exit successfully";
-    
+
     return;
 }
 
@@ -559,7 +559,7 @@ void CTask<Dtype>::Counting() {
         cv::Mat original_frame, density_frame;
         original_frame.create(rows, cols, CV_8UC3);
         unsigned int timestamp;
-        if (!buffer_.fetch_frame(original_frame, timestamp)) {
+        if (!buffer_.fetch_src(timestamp, original_frame, true)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
@@ -577,9 +577,9 @@ void CTask<Dtype>::Counting() {
         if (predicted_value < 0) {
             predicted_value = 0;
         }
-        buffer_.put_dst(original_frame, density_frame, predicted_value, timestamp);
-        // cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
-        // cv::waitKey(1);
+        buffer_.put_dst(timestamp, original_frame, density_frame, predicted_value);
+        //cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
+        //cv::waitKey(1);
     }
 }
 
@@ -591,7 +591,7 @@ void CTask<Dtype>::Segmentation() {
         cv::Mat original_frame, density_frame;
         original_frame.create(rows, cols, CV_8UC3);
         unsigned int timestamp;
-        if (!buffer_.fetch_frame(original_frame, timestamp)) {
+        if (!buffer_.fetch_src(timestamp, original_frame, true)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
@@ -600,9 +600,9 @@ void CTask<Dtype>::Segmentation() {
         // Post-processing
         cv::Mat output(rows, cols, CV_32F, feature.data());
         original_frame.copyTo(density_frame, output > 0.5);
-        buffer_.put_dst(density_frame, 0);
-        // cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
-        // cv::waitKey(1);
+        buffer_.put_dst(timestamp, density_frame);
+        //cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
+        //cv::waitKey(1);
     }
 }
 
@@ -614,7 +614,7 @@ void CTask<Dtype>::Stationary() {
         cv::Mat original_frame, density_frame;
         original_frame.create(rows, cols, CV_8UC3);
         unsigned int timestamp;
-        if (!buffer_.fetch_frame(original_frame, timestamp)) {
+        if (!buffer_.fetch_src(timestamp, original_frame, true)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
@@ -623,7 +623,7 @@ void CTask<Dtype>::Stationary() {
         // Post-processing
         cv::Mat output(rows, cols, CV_8UC3, feature.data());
         density_frame = output + original_frame;
-        buffer_.put_dst(density_frame, 0);
+        buffer_.put_dst(timestamp, density_frame);
         // cv::imshow(config_.getTaskName() + "_ad_result", density_frame);
         // cv::waitKey(1);
     }
@@ -640,7 +640,7 @@ void CTask<Dtype>::CrossLine() {
         cv::Mat frame;
         frame.create(rows, cols, CV_8UC3);
         unsigned int timestamp;
-        if (!buffer_.fetch_frame(frame, timestamp)) {
+        if (!buffer_.fetch_src(timestamp, frame, true)) {
             std::cerr << "ad: No Available Frame for " << config_.getTaskName() << std::endl;
             sleep(3);  // reduce useless while loop
             continue;
@@ -652,10 +652,11 @@ void CTask<Dtype>::CrossLine() {
         cv::Mat output(h, w, CV_8UC3, density.data());
         cv::Mat padding(rows, cols, CV_8UC3, cv::Scalar(0, 0, 0));
         padding(roi_) += output;
-        // float predicted_value_1 = predicted_value[0];
-        // float predicted_value_2 = predicted_value[1];
-        // cv::imshow(config_.getTaskName() + "_ad_result", padding);
-        // cv::waitKey(1);
+        float predicted_value_1 = predicted_value[0];
+        float predicted_value_2 = predicted_value[1];
+        buffer_.put_dst(timestamp, padding.clone(), padding.clone(), predicted_value_1, predicted_value_2);
+        //cv::imshow(config_.getTaskName() + "_ad_result", padding);
+        //cv::waitKey(1);
     }
 }
 

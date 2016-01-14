@@ -28,10 +28,12 @@ CDPAnalyzerStationary<Dtype>::CDPAnalyzerStationary(const std::string &mode, con
 
 template <typename Dtype>
 bool CDPAnalyzerStationary<Dtype>::Init() {
+    std::string home_path(std::getenv("HOME"));
+    std::string path = home_path + "/ITF_SmartClient/config/";
     // Setup Extracter
     itf::CSegmenterFactory sf;
     isegmenter_.reset(sf.SpawnSegmenter(itf::CSegmenterFactory::FCNN));
-    isegmenter_->SetParameters("./config/fcnn_segmenter.prototxt");
+    isegmenter_->SetParameters(path + "fcnn_segmenter.prototxt");
 
     // Prepare roi_mask_
     if (roi_status_) {
