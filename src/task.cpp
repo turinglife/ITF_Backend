@@ -124,6 +124,7 @@ bool CTask<Dtype>::InitAnalyzer(const std::string& task_name) {
         // CrossLine
         config_.setTaskType(3);
         std::vector<std::map<std::string, std::string> > density_detail = db.Query("select * from DensityDetail where task_name='" +task_name+ "';");
+        config_.setTaskPath(res[0]["task_path"]);
         itf::Util util;
         std::vector<std::pair<float, float> > pair_vec = util.ReadPairToVec(res[0]["task_path"] + "PMap/" + density_detail[0]["pers_file"]);
         std::string pmap_path = "tmp_pers.csv";
@@ -638,6 +639,9 @@ void CTask<Dtype>::CrossLine() {
     int w = abs(roi_.tl().x - roi_.br().x);
     float predicted_value_1 = 0;
     float predicted_value_2 = 0;
+    // load linear model
+    itf::Util util;
+    std::vector<float> linear_model = util.ReadCSV(config_.getTaskPath() + "LM/lm.csv");
     while (getState()) {
         cv::Mat frame;
         frame.create(rows, cols, CV_8UC3);
@@ -649,13 +653,13 @@ void CTask<Dtype>::CrossLine() {
         }
         vector<float> feature = analyzer_->Analyze(frame);
         std::vector<float> density(feature.begin(), feature.end() - 2);
-        std::vector<int> predicted_value(feature.end() - 2, feature.end());
+        std::vector<float> predicted_value(feature.end() - 2, feature.end());
         // Post-processing
         cv::Mat output(h, w, CV_8UC3, density.data());
         cv::Mat padding(rows, cols, CV_8UC3, cv::Scalar(255, 255, 255));
         output.copyTo(padding(roi_));
-        predicted_value_1 += predicted_value[0];
-        predicted_value_2 += predicted_value[1];
+        predicted_value_1 += predicted_value[0] * linear_model[0];
+        predicted_value_2 += predicted_value[1] * linear_model[1];
         buffer_.put_dst(timestamp, padding.clone(), padding.clone(), predicted_value_1, predicted_value_2);
         //cv::imshow(config_.getTaskName() + "_ad_result", padding);
         //cv::waitKey(1);
