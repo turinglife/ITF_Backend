@@ -15,15 +15,15 @@
 template <typename Dtype>
 class CDPAnalyzerCrossLine : public CDPAnalyzer<Dtype> {
  public:
-    CDPAnalyzerCrossLine(const cv::Rect& roi, const cv::Point2i& p1, const cv::Point2i& p2);
+    CDPAnalyzerCrossLine(const cv::Rect& roi,
+        const cv::Point2i& p1, const cv::Point2i& p2);
     bool Init();
     std::vector<Dtype> Analyze(IN cv::Mat frame);
- 
+
  private:
     itf::Crossline cl_;
     cv::Rect roi_;
     cv::Mat pmap_;
-    std::string pmap_path_;
     cv::Mat nextImg_;
     cv::Mat prevImg_;
     cv::Point2i p1_;
