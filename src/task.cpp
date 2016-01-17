@@ -669,7 +669,7 @@ void CTask<Dtype>::CrossLine() {
         std::vector<float> predicted_value (feature.end() - 2, feature.end());
         predicted_value_1 += predicted_value[0] * linear_model[0];
         predicted_value_2 += predicted_value[1] * linear_model[1];
-        buffer_.put_dst(timestamp, flow_map.clone(), density_map.clone(), predicted_value_1, predicted_value_2);
+        buffer_.put_dst(timestamp, flow_padding.clone(), density_padding.clone(), predicted_value_1, predicted_value_2);
         // cv::imshow(config_.getTaskName() + "_ad_flow_padding", flow_padding);
         // cv::imshow(config_.getTaskName() + "_ad_density_padding", density_padding);
         // cv::waitKey(1);
