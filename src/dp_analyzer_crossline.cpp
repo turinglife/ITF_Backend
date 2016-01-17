@@ -44,15 +44,26 @@ std::vector<Dtype> CDPAnalyzerCrossLine<Dtype>::Analyze(IN cv::Mat frame) {
     float* y_feature;
     // Extract features
     cl_.Process(prevImg_, nextImg_, &density_feature, &x_feature, &y_feature);
+    // Calculate predicted values (two directions)
     std::vector<float> predicted = cl_.CalcPredict(p1_, p2_,
         density_feature, x_feature, y_feature);
-    cv::Mat flow_out = cl_.VisualizeFlow(x_feature, y_feature);
-    vector<Dtype> feature;
-    feature.assign(reinterpret_cast<Dtype*>(flow_out.datastart),
-        reinterpret_cast<Dtype*>(flow_out.dataend));
+    cv::swap(prevImg_, nextImg_);
+    // Get flow map and store as a vector
+    cv::Mat flow_map = cl_.VisualizeFlow(x_feature, y_feature);
+    vector<Dtype> flow_vec(reinterpret_cast<Dtype*>(flow_map.datastart),
+        reinterpret_cast<Dtype*>(flow_map.dataend));
+    // Get density map and store as a vector
+    cv::Mat density_map = cl_.VisualizeDensity(density_feature);
+    vector<Dtype> density_vec(reinterpret_cast<Dtype*>(density_map.datastart),
+        reinterpret_cast<Dtype*>(density_map.dataend));
+    // Concate vectors
+    std::vector<Dtype> feature;
+    feature.insert(feature.end(), flow_vec.begin(), flow_vec.end());
+    feature.insert(feature.end(), density_vec.begin(), density_vec.end());
+    // Add predicted values at end of the vector
     feature.push_back(predicted[0]);
     feature.push_back(predicted[1]);
-    cv::swap(prevImg_, nextImg_);
+
     return feature;
 }
 

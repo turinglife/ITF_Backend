@@ -652,17 +652,27 @@ void CTask<Dtype>::CrossLine() {
             continue;
         }
         vector<float> feature = analyzer_->Analyze(frame);
-        std::vector<float> density(feature.begin(), feature.end() - 2);
-        std::vector<float> predicted_value(feature.end() - 2, feature.end());
         // Post-processing
-        cv::Mat output(h, w, CV_8UC3, density.data());
-        cv::Mat padding(rows, cols, CV_8UC3, cv::Scalar(255, 255, 255));
-        output.copyTo(padding(roi_));
+        // Get the size of output map. Note: the last two elements are predicted values
+        size_t map_size = (feature.size() - 2) / 2;
+        // Recover flow map
+        std::vector<float> flow(feature.begin(), feature.begin() + map_size);
+        cv::Mat flow_map(h, w, CV_8UC3, flow.data());
+        cv::Mat flow_padding(rows, cols, CV_8UC3, cv::Scalar(255, 255, 255));
+        flow_map.copyTo(flow_padding(roi_));
+        // Recover density map
+        std::vector<float> density(feature.begin() + map_size , feature.end() - 2);
+        cv::Mat density_map(h, w, CV_8UC3, density.data());
+        cv::Mat density_padding(rows, cols, CV_8UC3, cv::Scalar(128, 0, 0));
+        density_map.copyTo(density_padding(roi_));
+        // Retrive predicted values (two directions)
+        std::vector<float> predicted_value (feature.end() - 2, feature.end());
         predicted_value_1 += predicted_value[0] * linear_model[0];
         predicted_value_2 += predicted_value[1] * linear_model[1];
-        buffer_.put_dst(timestamp, padding.clone(), padding.clone(), predicted_value_1, predicted_value_2);
-        //cv::imshow(config_.getTaskName() + "_ad_result", padding);
-        //cv::waitKey(1);
+        buffer_.put_dst(timestamp, flow_map.clone(), density_map.clone(), predicted_value_1, predicted_value_2);
+        // cv::imshow(config_.getTaskName() + "_ad_flow_padding", flow_padding);
+        // cv::imshow(config_.getTaskName() + "_ad_density_padding", density_padding);
+        // cv::waitKey(1);
     }
 }
 
