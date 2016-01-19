@@ -136,7 +136,12 @@ bool CTask<Dtype>::InitAnalyzer(const std::string& task_name) {
         cv::Mat cvroi(tmp, true);
         cv::Point2i p1(cvroi.at<float>(0, 0), cvroi.at<float>(0, 1));
         cv::Point2i p2(cvroi.at<float>(1, 0), cvroi.at<float>(1, 1));
-
+        // Set left point as the start end for each line
+        if (p1.x > p2.x) {
+          cv::Point2i p3 = p2;
+          p2 = p1;
+          p1 = p3;
+        }
         cv::Point2i p5;
         cv::Point2i p6;
         util.BrewPoints(p1, p2, 100, &roi_, &p5, &p6);
