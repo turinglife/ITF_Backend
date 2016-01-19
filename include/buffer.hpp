@@ -58,7 +58,6 @@ class CBuffer {
         int frame_size;
         int src_buffer_num;
         int dst_buffer_num;
-        int header_size;
     };
     HeaderInfo_t head_;  //headerinfo keep the static info of buffer and frame;
 
