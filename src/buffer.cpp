@@ -6,7 +6,6 @@
 #include "buffer.hpp"
 
 bool CBuffer::Init(int src_width, int src_height, int unit_size, int src_num, int dst_num, const std::string &buffer_id) {
-    //buffer_id_ = buffer_id;
     //Init buffer name
     buffer_id_header_ = buffer_id + std::string("_header");
     buffer_id_src_ = buffer_id + std::string("_src");
@@ -19,197 +18,203 @@ bool CBuffer::Init(int src_width, int src_height, int unit_size, int src_num, in
     head_.frame_size = unit_size;
     head_.src_buffer_num = src_num + 1;
     head_.dst_buffer_num = dst_num + 1;
-    head_.header_size = sizeof(head_);
 
-    // Create Share Memory
-    //shm_ = boost::interprocess::shared_memory_object(boost::interprocess::open_or_create, buffer_id_.c_str(), boost::interprocess::read_write);
-    shm_header_ = boost::interprocess::shared_memory_object(boost::interprocess::open_or_create, buffer_id_header_.c_str(), boost::interprocess::read_write);
-    shm_src_ = boost::interprocess::shared_memory_object(boost::interprocess::open_or_create, buffer_id_src_.c_str(), boost::interprocess::read_write);
-    shm_dst_ = boost::interprocess::shared_memory_object(boost::interprocess::open_or_create, buffer_id_dst_.c_str(), boost::interprocess::read_write);
-    shm_alarm_ = boost::interprocess::shared_memory_object(boost::interprocess::open_or_create, buffer_id_alarm_.c_str(), boost::interprocess::read_write);
+    std::cout << "before create shm" << std::endl;
+    try {
+        // Create Share Memory
+        /* header + camera_status + index + timestamp + src + dst_map + dst_val + alarm_unit*/
+        shm_header_ = boost::interprocess::shared_memory_object(boost::interprocess::create_only, buffer_id_header_.c_str(), boost::interprocess::read_write);
+        shm_src_ = boost::interprocess::shared_memory_object(boost::interprocess::create_only, buffer_id_src_.c_str(), boost::interprocess::read_write);
+        shm_dst_ = boost::interprocess::shared_memory_object(boost::interprocess::create_only, buffer_id_dst_.c_str(), boost::interprocess::read_write);
+        shm_alarm_ = boost::interprocess::shared_memory_object(boost::interprocess::create_only, buffer_id_alarm_.c_str(), boost::interprocess::read_write);
+        std::cout << "create shm" << std::endl;
 
-    /* header + camera_status + index + timestamp + src + dst_map + dst_val + alarm_unit*/
-    //shm_.truncate(head_.header_size + sizeof(bool) + 4 * sizeof(int) + head_.src_buffer_num * sizeof(unsigned int) + (head_.src_buffer_num + head_.dst_buffer_num) * head_.frame_size + head_.dst_buffer_num * sizeof(int) + (2 * head_.frame_size + sizeof(int) + sizeof(unsigned int)));
-    /*header + camera_status*/
-    shm_header_.truncate(head_.header_size + sizeof(bool));
-    /*index + timestamp + src_frame*/
-    shm_src_.truncate(2*sizeof(int) + head_.src_buffer_num*(sizeof(unsigned int) + head_.frame_size));
-    /*index + timestamp + dst_frame_1 + dst_frame_2 + dst_val_1 + dst_val_2*/
-    shm_dst_.truncate(2*sizeof(int) + head_.dst_buffer_num*(sizeof(unsigned int) + 2*head_.frame_size + 2*sizeof(int)));
-    /*alarm unit for counting include timestamp, src_frame, dst_frame, dst_val*/
-    shm_alarm_.truncate(sizeof(unsigned int) + 2*head_.frame_size + sizeof(int));
+        /*header + camera_status*/
+        shm_header_.truncate(sizeof(HeaderInfo_t) + sizeof(bool));
+        /*index + timestamp + src_frame*/
+        shm_src_.truncate(2*sizeof(int) + head_.src_buffer_num*(sizeof(unsigned int) + head_.frame_size));
+        /*index + timestamp + dst_frame_1 + dst_frame_2 + dst_val_1 + dst_val_2*/
+        shm_dst_.truncate(2*sizeof(int) + head_.dst_buffer_num*(sizeof(unsigned int) + 2*head_.frame_size + 2*sizeof(int)));
+        /*alarm unit for counting include timestamp, src_frame, dst_frame, dst_val*/
+        shm_alarm_.truncate(sizeof(unsigned int) + 2*head_.frame_size + sizeof(int));
+        std::cout << "create truncate" << std::endl;
 
-    /*shm_header_*/
-    // Header region
-    region_header_ = boost::interprocess::mapped_region(shm_header_, boost::interprocess::read_write, 0, head_.header_size);
-    std::memset(region_header_.get_address(), 0, region_header_.get_size());
-    p_header_ = static_cast<unsigned char*>(region_header_.get_address());
-    memcpy(p_header_, &head_, head_.header_size);
+        /*shm_header_*/
+        // Header region
+        region_header_ = boost::interprocess::mapped_region(shm_header_, boost::interprocess::read_write, 0, sizeof(HeaderInfo_t));
+        std::memset(region_header_.get_address(), 0, region_header_.get_size());
+        p_header_ = static_cast<unsigned char*>(region_header_.get_address());
+        memcpy(p_header_, &head_, sizeof(HeaderInfo_t));
+        // Camera Status region
+        region_camera_status_ = boost::interprocess::mapped_region(shm_header_, boost::interprocess::read_write, sizeof(HeaderInfo_t), sizeof(bool));
+        std::memset(region_camera_status_.get_address(), 1, region_camera_status_.get_size());
+        p_camera_status_ = static_cast<unsigned char*>(region_camera_status_.get_address());
+        std::cout << "create header" << std::endl;
 
-    // Camera Status region
-    region_camera_status_ = boost::interprocess::mapped_region(shm_header_, boost::interprocess::read_write, head_.header_size, sizeof(bool));
-    std::memset(region_camera_status_.get_address(), 0, region_camera_status_.get_size());
-    p_camera_status_ = static_cast<unsigned char*>(region_camera_status_.get_address());
+        /*shm_src_*/
+        // read and write src index region
+        region_index_src_ = boost::interprocess::mapped_region(shm_src_, boost::interprocess::read_write, 0, 2*sizeof(int));
+        std::memset(region_index_src_.get_address(), 0, region_index_src_.get_size());
+        p_index_src_ = static_cast<unsigned char*>(region_index_src_.get_address());
+        p_last_r_src_ = (int *)p_index_src_;
+        p_last_w_src_ = (int *)((char *)p_last_r_src_ + sizeof(int));
+        // src timestamp region
+        region_timestamp_src_ = boost::interprocess::mapped_region(shm_src_, boost::interprocess::read_write, 2*sizeof(int), head_.src_buffer_num*sizeof(unsigned int));
+        std::memset(region_timestamp_src_.get_address(), 0, region_timestamp_src_.get_size());
+        p_timestamp_src_ = static_cast<unsigned char*>(region_timestamp_src_.get_address());
+        // src frame region
+        region_src_frame_ = boost::interprocess::mapped_region(shm_src_, boost::interprocess::read_write, 2*sizeof(int) + head_.src_buffer_num*sizeof(unsigned int), head_.src_buffer_num*head_.frame_size);
+        std::memset(region_src_frame_.get_address(), 0, region_src_frame_.get_size());
+        p_src_frame_ = static_cast<unsigned char*>(region_src_frame_.get_address());
+        std::cout << "create src" << std::endl;
 
-    /*shm_src_*/
-    // read and write src index region
-    region_index_src_ = boost::interprocess::mapped_region(shm_src_, boost::interprocess::read_write, 0, 2*sizeof(int));
-    std::memset(region_index_src_.get_address(), 0, region_index_src_.get_size());
-    p_index_src_ = static_cast<unsigned char*>(region_index_src_.get_address());
-    p_last_r_src_ = (int *)p_index_src_;
-    p_last_w_src_ = (int *)((char *)p_last_r_src_ + sizeof(int));
+        /*shm_dst_*/
+        // read and write dst index region
+        region_index_dst_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 0, 2*sizeof(int));
+        std::memset(region_index_dst_.get_address(), 0, region_index_dst_.get_size());
+        p_index_dst_ = static_cast<unsigned char*>(region_index_dst_.get_address());
+        p_last_r_dst_ = (int *)p_index_dst_;
+        p_last_w_dst_ = (int *)((char *)p_last_r_dst_ + sizeof(int));
+        // dst timestamp region
+        region_timestamp_dst_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int), head_.dst_buffer_num*sizeof(unsigned int));
+        std::memset(region_timestamp_dst_.get_address(), 0, region_timestamp_dst_.get_size());
+        p_timestamp_dst_ = static_cast<unsigned char*>(region_timestamp_dst_.get_address());
+        // dst frame 1 region
+        region_dst_frame_1_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*sizeof(unsigned int), head_.dst_buffer_num*head_.frame_size);
+        std::memset(region_dst_frame_1_.get_address(), 0, region_dst_frame_1_.get_size());
+        p_dst_frame_1_ = static_cast<unsigned char*>(region_dst_frame_1_.get_address());
+        // dst frame 2 region
+        region_dst_frame_2_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*(sizeof(unsigned int) + head_.frame_size), head_.dst_buffer_num*head_.frame_size);
+        std::memset(region_dst_frame_2_.get_address(), 0, region_dst_frame_2_.get_size());
+        p_dst_frame_2_ = static_cast<unsigned char*>(region_dst_frame_2_.get_address());
+        // dst val 1 region
+        region_dst_val_1_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*(sizeof(unsigned int) + 2*head_.frame_size), head_.dst_buffer_num*sizeof(int));
+        std::memset(region_dst_val_1_.get_address(), 0, region_dst_val_1_.get_size());
+        p_dst_val_1_ = static_cast<unsigned char*>(region_dst_val_1_.get_address());
+        // dst val 2 region
+        region_dst_val_2_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*(sizeof(unsigned int) + 2*head_.frame_size + sizeof(int)), head_.dst_buffer_num*sizeof(int));
+        std::memset(region_dst_val_2_.get_address(), 0, region_dst_val_2_.get_size());
+        p_dst_val_2_ = static_cast<unsigned char*>(region_dst_val_2_.get_address());
+        std::cout << "create dst" << std::endl;
 
-    // src timestamp region
-    region_timestamp_src_ = boost::interprocess::mapped_region(shm_src_, boost::interprocess::read_write, 2*sizeof(int), head_.src_buffer_num*sizeof(unsigned int));
-    std::memset(region_timestamp_src_.get_address(), 0, region_timestamp_src_.get_size());
-    p_timestamp_src_ = static_cast<unsigned char*>(region_timestamp_src_.get_address());
+        /*shm_alarm_*/
+        // Counint Alarm Unit region
+        region_alarm_unit_ = boost::interprocess::mapped_region(shm_alarm_, boost::interprocess::read_write, 0, sizeof(unsigned int) + 2*head_.frame_size + sizeof(int));
+        std::memset(region_alarm_unit_.get_address(), 0, region_alarm_unit_.get_size());
+        p_alarm_unit_ = static_cast<unsigned char*>(region_alarm_unit_.get_address());
+        std::cout << "create alarm" << std::endl;
 
-    // src frame region
-    region_src_frame_ = boost::interprocess::mapped_region(shm_src_, boost::interprocess::read_write, 2*sizeof(int) + head_.src_buffer_num*sizeof(unsigned int), head_.src_buffer_num*head_.frame_size);
-    std::memset(region_src_frame_.get_address(), 0, region_src_frame_.get_size());
-    p_src_frame_ = static_cast<unsigned char*>(region_src_frame_.get_address());
-
-    /*shm_dst_*/
-    // read and write dst index region
-    region_index_dst_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 0, 2*sizeof(int));
-    std::memset(region_index_dst_.get_address(), 0, region_index_dst_.get_size());
-    p_index_dst_ = static_cast<unsigned char*>(region_index_dst_.get_address());
-    p_last_r_dst_ = (int *)p_index_dst_;
-    p_last_w_dst_ = (int *)((char *)p_last_r_dst_ + sizeof(int));
-
-    // dst timestamp region
-    region_timestamp_dst_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int), head_.dst_buffer_num*sizeof(unsigned int));
-    std::memset(region_timestamp_dst_.get_address(), 0, region_timestamp_dst_.get_size());
-    p_timestamp_dst_ = static_cast<unsigned char*>(region_timestamp_dst_.get_address());
-
-    // dst frame 1 region
-    region_dst_frame_1_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*sizeof(unsigned int), head_.dst_buffer_num*head_.frame_size);
-    std::memset(region_dst_frame_1_.get_address(), 0, region_dst_frame_1_.get_size());
-    p_dst_frame_1_ = static_cast<unsigned char*>(region_dst_frame_1_.get_address());
-
-    // dst frame 2 region
-    region_dst_frame_2_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*(sizeof(unsigned int) + head_.frame_size), head_.dst_buffer_num*head_.frame_size);
-    std::memset(region_dst_frame_2_.get_address(), 0, region_dst_frame_2_.get_size());
-    p_dst_frame_2_ = static_cast<unsigned char*>(region_dst_frame_2_.get_address());
-
-    // dst val 1 region
-    region_dst_val_1_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*(sizeof(unsigned int) + 2*head_.frame_size), head_.dst_buffer_num*sizeof(int));
-    std::memset(region_dst_val_1_.get_address(), 0, region_dst_val_1_.get_size());
-    p_dst_val_1_ = static_cast<unsigned char*>(region_dst_val_1_.get_address());
-
-    // dst val 2 region
-    region_dst_val_2_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*(sizeof(unsigned int) + 2*head_.frame_size + sizeof(int)), head_.dst_buffer_num*sizeof(int));
-    std::memset(region_dst_val_2_.get_address(), 0, region_dst_val_2_.get_size());
-    p_dst_val_2_ = static_cast<unsigned char*>(region_dst_val_2_.get_address());
-
-    /*shm_alarm_*/
-    // Counint Alarm Unit region
-    region_alarm_unit_ = boost::interprocess::mapped_region(shm_alarm_, boost::interprocess::read_write, 0, sizeof(unsigned int) + 2*head_.frame_size + sizeof(int));
-    std::memset(region_alarm_unit_.get_address(), 0, region_alarm_unit_.get_size());
-    p_alarm_unit_ = static_cast<unsigned char*>(region_alarm_unit_.get_address());
-
-    /*INIT*/
-    // Init camera_status
-    bool init_camera_status = true;
-    memcpy(p_camera_status_, &init_camera_status, sizeof(bool));
-
-    // Init src timestamp to 0
-    int init_value = 0;
-    for (int i=0; i<head_.src_buffer_num; ++i) {
-        memcpy(p_timestamp_src_ + i*sizeof(unsigned int), &init_value, sizeof(unsigned int));
+        /*INIT*/
+        // Init camera_status
+        bool init_camera_status = true;
+        memcpy(p_camera_status_, &init_camera_status, sizeof(bool));
+        // Init src timestamp to 0
+        int init_value = 0;
+        for (int i=0; i<head_.src_buffer_num; ++i) {
+            memcpy(p_timestamp_src_ + i*sizeof(unsigned int), &init_value, sizeof(unsigned int));
+        }
+        // Init index
+        *p_last_r_src_ = 0;
+        *p_last_w_src_ = 0;
+        *p_last_r_dst_ = 0;
+        *p_last_w_dst_ = 0;
+        // Init dst timestamp and value to 0
+        for (int i=0; i<head_.dst_buffer_num; ++i) {
+            memcpy(p_timestamp_dst_ + i*sizeof(unsigned int), &init_value, sizeof(unsigned int));
+            memcpy(p_dst_val_1_ + i*sizeof(int), &init_value, sizeof(int));
+            memcpy(p_dst_val_2_ + i*sizeof(int), &init_value, sizeof(int));
+        }
+        // Init Alarm Unit
+        memcpy(p_alarm_unit_ + 2*head_.frame_size, &init_value, sizeof(int));
+        memcpy(p_alarm_unit_ + 2*head_.frame_size + sizeof(int), &init_value, sizeof(unsigned int));
+        std::cout << "after create shm" << std::endl;
+    } catch(boost::interprocess::interprocess_exception &ex) {
+        return Init(buffer_id);
     }
-
-    // Init index
-    *p_last_r_src_ = 0;
-    *p_last_w_src_ = 0;
-    *p_last_r_dst_ = 0;
-    *p_last_w_dst_ = 0;
-
-    // Init dst timestamp and value to 0
-    for (int i=0; i<head_.dst_buffer_num; ++i) {
-        memcpy(p_timestamp_dst_ + i*sizeof(unsigned int), &init_value, sizeof(unsigned int));
-        memcpy(p_dst_val_1_ + i*sizeof(int), &init_value, sizeof(int));
-        memcpy(p_dst_val_2_ + i*sizeof(int), &init_value, sizeof(int));
-    }
-
-    // Init Alarm Unit
-    memcpy(p_alarm_unit_ + 2*head_.frame_size, &init_value, sizeof(int));
-    memcpy(p_alarm_unit_ + 2*head_.frame_size + sizeof(int), &init_value, sizeof(unsigned int));
 
     return true;
 }
 
 bool CBuffer::Init(const std::string &buffer_id) {
-    //buffer_id_ = buffer_id;
     //Init buffer name
     buffer_id_header_ = buffer_id + std::string("_header");
     buffer_id_src_ = buffer_id + std::string("_src");
     buffer_id_dst_ = buffer_id + std::string("_dst");
     buffer_id_alarm_ = buffer_id + std::string("_alarm");
 
-    // Create Share Memory
-    //shm_ = boost::interprocess::shared_memory_object(boost::interprocess::open_or_create, buffer_id_.c_str(), boost::interprocess::read_write);
-    shm_header_ = boost::interprocess::shared_memory_object(boost::interprocess::open_or_create, buffer_id_header_.c_str(), boost::interprocess::read_write);
-    shm_src_ = boost::interprocess::shared_memory_object(boost::interprocess::open_or_create, buffer_id_src_.c_str(), boost::interprocess::read_write);
-    shm_dst_ = boost::interprocess::shared_memory_object(boost::interprocess::open_or_create, buffer_id_dst_.c_str(), boost::interprocess::read_write);
-    shm_alarm_ = boost::interprocess::shared_memory_object(boost::interprocess::open_or_create, buffer_id_alarm_.c_str(), boost::interprocess::read_write);
+    std::cout << "before open shm" << std::endl;
+    try {
+        // Create Share Memory
+        shm_header_ = boost::interprocess::shared_memory_object(boost::interprocess::open_only, buffer_id_header_.c_str(), boost::interprocess::read_write);
+        shm_src_ = boost::interprocess::shared_memory_object(boost::interprocess::open_only, buffer_id_src_.c_str(), boost::interprocess::read_write);
+        shm_dst_ = boost::interprocess::shared_memory_object(boost::interprocess::open_only, buffer_id_dst_.c_str(), boost::interprocess::read_write);
+        shm_alarm_ = boost::interprocess::shared_memory_object(boost::interprocess::open_only, buffer_id_alarm_.c_str(), boost::interprocess::read_write);
+        std::cout << "create shm" << std::endl;
 
-    /*shm_header_*/
-    // Header region
-    region_header_ = boost::interprocess::mapped_region(shm_header_, boost::interprocess::read_write, 0, head_.header_size);
-    p_header_ = static_cast<unsigned char*>(region_header_.get_address());
-    memcpy(&head_, p_header_, sizeof(HeaderInfo_t));
+        /*shm_header_*/
+        // Header region
+        region_header_ = boost::interprocess::mapped_region(shm_header_, boost::interprocess::read_write, 0, sizeof(HeaderInfo_t));
+        p_header_ = static_cast<unsigned char*>(region_header_.get_address());
+        memcpy(&head_, p_header_, sizeof(HeaderInfo_t));
+        // Camera Status region
+        region_camera_status_ = boost::interprocess::mapped_region(shm_header_, boost::interprocess::read_write, sizeof(HeaderInfo_t), sizeof(bool));
+        p_camera_status_ = static_cast<unsigned char*>(region_camera_status_.get_address());
+        std::cout << "create header" << std::endl;
 
-    // Camera Status region
-    region_camera_status_ = boost::interprocess::mapped_region(shm_header_, boost::interprocess::read_write, head_.header_size, sizeof(bool));
-    p_camera_status_ = static_cast<unsigned char*>(region_camera_status_.get_address());
+        /*shm_src_*/
+        // read and write src index region
+        region_index_src_ = boost::interprocess::mapped_region(shm_src_, boost::interprocess::read_write, 0, 2*sizeof(int));
+        p_index_src_ = static_cast<unsigned char*>(region_index_src_.get_address());
+        p_last_r_src_ = (int *)p_index_src_;
+        p_last_w_src_ = (int *)((char *)p_last_r_src_ + sizeof(int));
 
-    /*shm_src_*/
-    // read and write src index region
-    region_index_src_ = boost::interprocess::mapped_region(shm_src_, boost::interprocess::read_write, 0, 2*sizeof(int));
-    p_index_src_ = static_cast<unsigned char*>(region_index_src_.get_address());
-    p_last_r_src_ = (int *)p_index_src_;
-    p_last_w_src_ = (int *)((char *)p_last_r_src_ + sizeof(int));
+        // src timestamp region
+        region_timestamp_src_ = boost::interprocess::mapped_region(shm_src_, boost::interprocess::read_write, 2*sizeof(int), head_.src_buffer_num*sizeof(unsigned int));
+        p_timestamp_src_ = static_cast<unsigned char*>(region_timestamp_src_.get_address());
 
-    // src timestamp region
-    region_timestamp_src_ = boost::interprocess::mapped_region(shm_src_, boost::interprocess::read_write, 2*sizeof(int), head_.src_buffer_num*sizeof(unsigned int));
-    p_timestamp_src_ = static_cast<unsigned char*>(region_timestamp_src_.get_address());
+        // src frame region
+        region_src_frame_ = boost::interprocess::mapped_region(shm_src_, boost::interprocess::read_write, 2*sizeof(int) + head_.src_buffer_num*sizeof(unsigned int), head_.src_buffer_num*head_.frame_size);
+        p_src_frame_ = static_cast<unsigned char*>(region_src_frame_.get_address());
+        std::cout << "create src" << std::endl;
 
-    // src frame region
-    region_src_frame_ = boost::interprocess::mapped_region(shm_src_, boost::interprocess::read_write, 2*sizeof(int) + head_.src_buffer_num*sizeof(unsigned int), head_.src_buffer_num*head_.frame_size);
-    p_src_frame_ = static_cast<unsigned char*>(region_src_frame_.get_address());
+        /*shm_dst_*/
+        // read and write dst index region
+        region_index_dst_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 0, 2*sizeof(int));
+        p_index_dst_ = static_cast<unsigned char*>(region_index_dst_.get_address());
+        p_last_r_dst_ = (int *)p_index_dst_;
+        p_last_w_dst_ = (int *)((char *)p_last_r_dst_ + sizeof(int));
 
-    /*shm_dst_*/
-    // read and write dst index region
-    region_index_dst_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 0, 2*sizeof(int));
-    p_index_dst_ = static_cast<unsigned char*>(region_index_dst_.get_address());
-    p_last_r_dst_ = (int *)p_index_dst_;
-    p_last_w_dst_ = (int *)((char *)p_last_r_dst_ + sizeof(int));
+        // dst timestamp region
+        region_timestamp_dst_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int), head_.dst_buffer_num*sizeof(unsigned int));
+        p_timestamp_dst_ = static_cast<unsigned char*>(region_timestamp_dst_.get_address());
 
-    // dst timestamp region
-    region_timestamp_dst_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int), head_.dst_buffer_num*sizeof(unsigned int));
-    p_timestamp_dst_ = static_cast<unsigned char*>(region_timestamp_dst_.get_address());
+        // dst frame 1 region
+        region_dst_frame_1_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*sizeof(unsigned int), head_.dst_buffer_num*head_.frame_size);
+        p_dst_frame_1_ = static_cast<unsigned char*>(region_dst_frame_1_.get_address());
 
-    // dst frame 1 region
-    region_dst_frame_1_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*sizeof(unsigned int), head_.dst_buffer_num*head_.frame_size);
-    p_dst_frame_1_ = static_cast<unsigned char*>(region_dst_frame_1_.get_address());
+        // dst frame 2 region
+        region_dst_frame_2_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*(sizeof(unsigned int) + head_.frame_size), head_.dst_buffer_num*head_.frame_size);
+        p_dst_frame_2_ = static_cast<unsigned char*>(region_dst_frame_2_.get_address());
 
-    // dst frame 2 region
-    region_dst_frame_2_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*(sizeof(unsigned int) + head_.frame_size), head_.dst_buffer_num*head_.frame_size);
-    p_dst_frame_2_ = static_cast<unsigned char*>(region_dst_frame_2_.get_address());
+        // dst val 1 region
+        region_dst_val_1_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*(sizeof(unsigned int) + 2*head_.frame_size), head_.dst_buffer_num*sizeof(int));
+        p_dst_val_1_ = static_cast<unsigned char*>(region_dst_val_1_.get_address());
 
-    // dst val 1 region
-    region_dst_val_1_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*(sizeof(unsigned int) + 2*head_.frame_size), head_.dst_buffer_num*sizeof(int));
-    p_dst_val_1_ = static_cast<unsigned char*>(region_dst_val_1_.get_address());
+        // dst val 2 region
+        region_dst_val_2_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*(sizeof(unsigned int) + 2*head_.frame_size + sizeof(int)), head_.dst_buffer_num*sizeof(int));
+        p_dst_val_2_ = static_cast<unsigned char*>(region_dst_val_2_.get_address());
+        std::cout << "create dst" << std::endl;
 
-    // dst val 2 region
-    region_dst_val_2_ = boost::interprocess::mapped_region(shm_dst_, boost::interprocess::read_write, 2*sizeof(int) + head_.dst_buffer_num*(sizeof(unsigned int) + 2*head_.frame_size + sizeof(int)), head_.dst_buffer_num*sizeof(int));
-    p_dst_val_2_ = static_cast<unsigned char*>(region_dst_val_2_.get_address());
-
-    /*shm_alarm_*/
-    // Counint Alarm Unit region
-    region_alarm_unit_ = boost::interprocess::mapped_region(shm_alarm_, boost::interprocess::read_write, 0, sizeof(unsigned int) + 2*head_.frame_size + sizeof(int));
-    p_alarm_unit_ = static_cast<unsigned char*>(region_alarm_unit_.get_address());
+        /*shm_alarm_*/
+        // Counint Alarm Unit region
+        region_alarm_unit_ = boost::interprocess::mapped_region(shm_alarm_, boost::interprocess::read_write, 0, sizeof(unsigned int) + 2*head_.frame_size + sizeof(int));
+        p_alarm_unit_ = static_cast<unsigned char*>(region_alarm_unit_.get_address());
+        std::cout << "create alarm" << std::endl;
+        std::cout << "after open shm" << std::endl;
+    } catch(boost::interprocess::interprocess_exception &ex) {
+        std::cout << "open_only: " << ex.what() << std::endl;
+        return false;
+    }
 
     return true;
 }
