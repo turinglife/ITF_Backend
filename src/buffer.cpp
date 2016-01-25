@@ -354,7 +354,7 @@ bool CBuffer::put_dst(IN unsigned int timestamp, IN const cv::Mat &dst_1) {
 
     return true;
 }
-bool CBuffer::fetch_dst(OUT unsigned int timestamp, OUT cv::Mat &dst_1, IN bool flag) {
+bool CBuffer::fetch_dst(OUT unsigned int &timestamp, OUT cv::Mat &dst_1, IN bool flag) {
     // flag determine whether keep the dst frame after fetching
     // flag is true, then keep the dst frame (buffer index unchange)
     if (flag) {
@@ -390,7 +390,7 @@ bool CBuffer::put_dst(IN unsigned int timestamp, IN const cv::Mat &dst_1, IN int
 
     return true;
 }
-bool CBuffer::fetch_dst(OUT unsigned int timestamp, OUT cv::Mat &dst_1, OUT int &val_1, IN bool flag) {
+bool CBuffer::fetch_dst(OUT unsigned int &timestamp, OUT cv::Mat &dst_1, OUT int &val_1, IN bool flag) {
     // flag determine whether keep the dst frame after fetching
     // flag is true, then keep the dst (buffer index unchange)
     if (flag) {
@@ -424,7 +424,7 @@ bool CBuffer::put_dst(IN unsigned int timestamp, IN const cv::Mat &src, IN const
     //return true;
     return put_dst(timestamp, dst, val);
 }
-bool CBuffer::fetch_dst(OUT unsigned int timestamp, OUT cv::Mat &src, OUT cv::Mat &dst, OUT int &val) {
+bool CBuffer::fetch_dst(OUT unsigned int &timestamp, OUT cv::Mat &src, OUT cv::Mat &dst, OUT int &val) {
     memcpy(&timestamp, p_alarm_unit_, sizeof(unsigned int));
     memcpy(src.data, p_alarm_unit_ + sizeof(unsigned int), head_.frame_size);
     memcpy(dst.data, p_alarm_unit_ + sizeof(unsigned int) + head_.frame_size, head_.frame_size);
@@ -448,7 +448,7 @@ bool CBuffer::put_dst(IN unsigned int timestamp, IN const cv::Mat &dst_1, IN con
 
     return true;;
 }
-bool CBuffer::fetch_dst(OUT unsigned int timestamp, OUT cv::Mat &dst_1, OUT cv::Mat &dst_2, OUT int &val_1, OUT int &val_2, IN bool flag) {
+bool CBuffer::fetch_dst(OUT unsigned int &timestamp, OUT cv::Mat &dst_1, OUT cv::Mat &dst_2, OUT int &val_1, OUT int &val_2, IN bool flag) {
     // flag determine whether keep the dst frame after fetching
     // flag is true, then keep the dst (buffer index unchange)
     if (flag) {

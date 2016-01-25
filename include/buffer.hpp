@@ -34,20 +34,20 @@ class CBuffer {
     //bool put_dst(IN unsigned int timestamp, IN const cv::Mat &src, IN const cv::Mat &dst_1);
     //bool fetch_dst(OUT unsigned int timestamp, OUT cv::Mat &src, OUT cv::Mat &dst_1, IN bool flag);  // This function fetch the destination;
     bool put_dst(IN unsigned int timestamp, IN const cv::Mat &dst_1);
-    bool fetch_dst(OUT unsigned int timestamp, OUT cv::Mat &dst_1, IN bool flag);  // This function fetch the destination;
+    bool fetch_dst(OUT unsigned int &timestamp, OUT cv::Mat &dst_1, IN bool flag);  // This function fetch the destination;
 
     /* for counting */
     bool put_dst(IN unsigned int timestamp, IN const cv::Mat &dst_1, IN int val_1); // This Function put alarm_unit(src, dst, value, timestamp) to buffer
-    bool fetch_dst(OUT unsigned int timestamp, OUT cv::Mat &dst_1, OUT int &val_1, IN bool flag);  // This function fetch the destination;
+    bool fetch_dst(OUT unsigned int &timestamp, OUT cv::Mat &dst_1, OUT int &val_1, IN bool flag);  // This function fetch the destination;
     /* for counting alarm */
     bool put_dst(IN unsigned int timestamp, IN const cv::Mat &src, IN const cv::Mat &dst, IN int val); // This Function put alarm_unit(src, dst, value, timestamp) to buffer
-    bool fetch_dst(OUT unsigned int timestamp, OUT cv::Mat &src, OUT cv::Mat &dst, OUT int &val);  // This function fetch the destination;
+    bool fetch_dst(OUT unsigned int &timestamp, OUT cv::Mat &src, OUT cv::Mat &dst, OUT int &val);  // This function fetch the destination;
 
     /* for crossline */
     //bool put_dst(IN unsigned int timestamp, IN const cv::Mat &src, IN const cv::Mat &dst_1, IN const cv::Mat &dst_2, IN int val_1, IN int val_2); // This Function put alarm_unit(src, dst, value, timestamp) to buffer
     //bool fetch_dst(OUT unsigned int timestamp, OUT cv::Mat &src, OUT cv::Mat &dst_1, OUT cv::Mat &dst_2, OUT int &val_1, OUT int &val_2, IN bool flag);  // This function fetch the destination;
     bool put_dst(IN unsigned int timestamp, IN const cv::Mat &dst_1, IN const cv::Mat &dst_2, IN int val_1, IN int val_2); // This Function put alarm_unit(src, dst, value, timestamp) to buffer
-    bool fetch_dst(OUT unsigned int timestamp, OUT cv::Mat &dst_1, OUT cv::Mat &dst_2, OUT int &val_1, OUT int &val_2, IN bool flag);  // This function fetch the destination;
+    bool fetch_dst(OUT unsigned int &timestamp, OUT cv::Mat &dst_1, OUT cv::Mat &dst_2, OUT int &val_1, OUT int &val_2, IN bool flag);  // This function fetch the destination;
 
     bool destroy();
 
